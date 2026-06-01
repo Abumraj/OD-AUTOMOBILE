@@ -61,7 +61,10 @@ function AdminSidebar() {
                         <span className="material-symbols-outlined">help</span>
                         <span className="font-label-md text-label-md">Support</span>
                     </Link>
-                    <button className="flex items-center space-x-3 text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container-highest transition-colors w-full text-left">
+                    <button 
+                        onClick={() => window.location.href = '/admin/login'}
+                        className="flex items-center space-x-3 text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container-highest transition-colors w-full text-left"
+                    >
                         <span className="material-symbols-outlined">logout</span>
                         <span className="font-label-md text-label-md">Sign Out</span>
                     </button>

@@ -5,9 +5,80 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AdminDashboardController extends Controller
 {
+    // Authentication
+    public function login(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string'
+        ]);
+
+        $admin = DB::table('admin_users')
+            ->where('email', $validated['email'])
+            ->where('is_active', true)
+            ->first();
+
+        if (!$admin || !Hash::check($validated['password'], $admin->password)) {
+            return response()->json([
+                'error' => 'Invalid credentials',
+                'message' => 'Email or password is incorrect'
+            ], 401);
+        }
+
+        // Update last login
+        DB::table('admin_users')
+            ->where('id', $admin->id)
+            ->update(['last_login_at' => now()]);
+
+        // Store admin session
+        $request->session()->put('admin_id', $admin->id);
+        $request->session()->put('admin_name', $admin->name);
+        $request->session()->put('admin_email', $admin->email);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'admin' => [
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'email' => $admin->email
+            ]
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->session()->forget(['admin_id', 'admin_name', 'admin_email']);
+        $request->session()->flush();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out successfully'
+        ]);
+    }
+
+    public function checkAuth(Request $request)
+    {
+        if ($request->session()->has('admin_id')) {
+            return response()->json([
+                'authenticated' => true,
+                'admin' => [
+                    'id' => $request->session()->get('admin_id'),
+                    'name' => $request->session()->get('admin_name'),
+                    'email' => $request->session()->get('admin_email')
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'authenticated' => false
+        ]);
+    }
+
     public function getStats()
     {
         $totalQuotes = DB::table('quotes')->count();

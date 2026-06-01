@@ -1,1 +1,1 @@
-a:3:{s:6:"_token";s:40:"UoP6iMDpWxcHrgR6dWY8KwgA6aJsuEzi54SJWPJV";s:9:"_previous";a:1:{s:3:"url";s:33:"http://localhost:8000/favicon.ico";}s:6:"_flash";a:2:{s:3:"old";a:0:{}s:3:"new";a:0:{}}}
+a:6:{s:6:"_token";s:40:"UoP6iMDpWxcHrgR6dWY8KwgA6aJsuEzi54SJWPJV";s:9:"_previous";a:1:{s:3:"url";s:44:"http://localhost:8000/api/admin/fleet-health";}s:6:"_flash";a:2:{s:3:"old";a:0:{}s:3:"new";a:0:{}}s:8:"admin_id";i:1;s:10:"admin_name";s:5:"Admin";s:11:"admin_email";s:21:"admin@odlogistics.com";}

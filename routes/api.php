@@ -32,7 +32,13 @@ Route::middleware('api')->group(function () {
     Route::get('/performance-settings', [AdminDashboardController::class, 'getPerformanceSettings']);
     Route::get('/services', [AdminDashboardController::class, 'getServices']);
 
-    Route::prefix('admin')->group(function () {
+    // Admin authentication routes (no middleware)
+    Route::post('/admin/login', [AdminDashboardController::class, 'login']);
+    Route::post('/admin/logout', [AdminDashboardController::class, 'logout']);
+    Route::get('/admin/check-auth', [AdminDashboardController::class, 'checkAuth']);
+
+    // Protected admin routes
+    Route::prefix('admin')->middleware('admin.auth')->group(function () {
         Route::get('/stats', [AdminDashboardController::class, 'getStats']);
         Route::get('/kanban', [AdminDashboardController::class, 'getKanbanData']);
         Route::get('/activity', [AdminDashboardController::class, 'getActivityStream']);

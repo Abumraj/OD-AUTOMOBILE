@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminTopBar from '../components/admin/AdminTopBar';
 import AdminOverview from './admin/AdminOverview';
@@ -12,14 +12,65 @@ import AdminAuctionsPage from './admin/AdminAuctionsPage';
 import AdminLegalPagesPage from './admin/AdminLegalPagesPage';
 import AdminCarouselPage from './admin/AdminCarouselPage';
 import AdminServicesPage from './admin/AdminServicesPage';
+import AdminLoginPage from './admin/AdminLoginPage';
 
 function AdminDashboard() {
+    const [authenticated, setAuthenticated] = useState(null);
+    const [admin, setAdmin] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        checkAuth();
+    }, []);
+
+    const checkAuth = async () => {
+        try {
+            const response = await fetch('/api/admin/check-auth');
+            const data = await response.json();
+            
+            if (data.authenticated) {
+                setAuthenticated(true);
+                setAdmin(data.admin);
+            } else {
+                setAuthenticated(false);
+                navigate('/admin/login');
+            }
+        } catch (error) {
+            console.error('Auth check error:', error);
+            setAuthenticated(false);
+            navigate('/admin/login');
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/admin/logout', { method: 'POST' });
+            setAuthenticated(false);
+            setAdmin(null);
+            navigate('/admin/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
+    if (authenticated === null) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center">
+                <div className="animate-pulse text-on-surface-variant">Loading...</div>
+            </div>
+        );
+    }
+
+    if (!authenticated) {
+        return <AdminLoginPage />;
+    }
+
     return (
         <div className="overflow-hidden bg-surface min-h-screen">
             <AdminSidebar />
             
             <main className="ml-64 flex flex-col h-screen bg-surface">
-                <AdminTopBar />
+                <AdminTopBar admin={admin} onLogout={handleLogout} />
                 
                 <div className="flex-grow overflow-y-auto p-gutter">
                     <Routes>

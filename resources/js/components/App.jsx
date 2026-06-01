@@ -11,12 +11,14 @@ import ContactPage from '../pages/ContactPage';
 import QuotePage from '../pages/QuotePage';
 import LegalPage from '../pages/LegalPage';
 import AdminDashboard from '../pages/AdminDashboard';
+import AdminLoginPage from '../pages/admin/AdminLoginPage';
 
 function App() {
     return (
         <Router>
             <div className="dark">
                 <Routes>
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin/*" element={<AdminDashboard />} />
                     <Route path="*" element={
                         <div className="bg-primary-container text-on-background font-body-md overflow-x-hidden">
