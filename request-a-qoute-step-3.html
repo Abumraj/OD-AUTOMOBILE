@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Get a Quote - Contact Details | OD Automotive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#464651",
+                        "on-primary-container": "#7b7fd8",
+                        "surface": "#121414",
+                        "on-surface": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#3538a3",
+                        "inverse-on-surface": "#2f3131",
+                        "on-secondary": "#552000",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#333535",
+                        "on-secondary-fixed": "#341100",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#4b1b00",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "secondary": "#ffb692",
+                        "on-background": "#e2e2e2",
+                        "inverse-surface": "#e2e2e2",
+                        "on-error": "#690005",
+                        "background": "#121414",
+                        "primary-fixed": "#e1e0ff",
+                        "surface-container": "#1e2020",
+                        "outline": "#918f9d",
+                        "surface-container-low": "#1a1c1c",
+                        "surface-container-high": "#282a2b",
+                        "secondary-fixed-dim": "#ffb692",
+                        "on-primary-fixed": "#060467",
+                        "on-primary": "#21247b",
+                        "surface-tint": "#c0c1ff",
+                        "primary": "#c0c1ff",
+                        "surface-dim": "#121414",
+                        "surface-container-lowest": "#0c0f0f",
+                        "surface-bright": "#37393a",
+                        "tertiary-container": "#06007a",
+                        "secondary-container": "#ea6b1b",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#787cea",
+                        "on-secondary-fixed-variant": "#793100",
+                        "tertiary-fixed": "#e1e0ff",
+                        "secondary-fixed": "#ffdbcb",
+                        "on-tertiary-fixed": "#05006d",
+                        "on-primary-fixed-variant": "#393d92",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#c0c1ff",
+                        "inverse-primary": "#5155ab",
+                        "surface-variant": "#333535",
+                        "primary-container": "#0d0d6b",
+                        "on-surface-variant": "#c7c5d3",
+                        "on-tertiary": "#1c1c8d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "md": "24px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "base": "8px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["IBM Plex Sans"],
+                        "display-lg": ["IBM Plex Sans"],
+                        "body-md": ["Inter"],
+                        "title-md": ["IBM Plex Sans"],
+                        "caption": ["Inter"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface border-b border-white/10 docked full-width top-0 z-50">
+<div class="flex justify-between items-center px-gutter w-full max-w-container-max mx-auto h-20">
+<div class="text-title-md font-title-md font-bold text-secondary">OD Automotive</div>
+<nav class="hidden md:flex items-center gap-md">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Home</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Services</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Tracking</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Contact</a>
+</nav>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-primary p-2">notifications</button>
+<button class="material-symbols-outlined text-primary p-2">account_circle</button>
+<button class="bg-secondary-container text-on-secondary px-6 py-2 font-bold hover:opacity-80 scale-95 transition-all">Place Bid</button>
+</div>
+</div>
+</header>
+<main class="flex-grow bg-[#050533] flex flex-col items-center py-xl px-gutter relative overflow-hidden">
+<!-- Abstract Background Element -->
+<div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-secondary/10 blur-[100px] rounded-full"></div>
+<div class="w-full max-w-[640px] z-10">
+<!-- Progress Indicator -->
+<div class="mb-xl">
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-md text-label-md text-secondary">Step 3 of 4: Contact Details</span>
+<span class="font-label-md text-label-md text-on-surface-variant">75% Complete</span>
+</div>
+<div class="h-1 bg-primary-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container transition-all duration-500 w-[75%]"></div>
+</div>
+</div>
+<div class="mb-lg">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Almost there.</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Please provide your contact information so our logistics experts can reach out with your custom quote.</p>
+</div>
+<!-- Form Card -->
+<div class="bg-white rounded-xl p-md md:p-lg shadow-2xl">
+<form class="space-y-md">
+<div class="grid grid-cols-1 gap-md">
+<!-- Full Name -->
+<div>
+<label class="block font-label-md text-label-md text-primary-container mb-xs" for="full_name">Full Name</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 text-surface p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded" id="full_name" placeholder="John Doe" type="text"/>
+</div>
+<!-- Email Address -->
+<div>
+<label class="block font-label-md text-label-md text-primary-container mb-xs" for="email">Email Address</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 text-surface p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded" id="email" placeholder="john@example.com" type="email"/>
+</div>
+<!-- Phone Number -->
+<div>
+<label class="block font-label-md text-label-md text-primary-container mb-xs" for="phone">Phone Number</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 text-surface p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded" id="phone" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+<!-- Preferred Contact Method -->
+<div>
+<label class="block font-label-md text-label-md text-primary-container mb-sm">Preferred Contact Method</label>
+<div class="grid grid-cols-2 gap-sm">
+<label class="flex items-center gap-sm p-sm border border-outline-variant/20 rounded cursor-pointer hover:bg-primary-container/5 transition-colors group">
+<input class="text-secondary-container focus:ring-secondary-container" name="contact_method" type="radio" value="email"/>
+<span class="font-body-md text-body-md text-surface group-hover:text-primary-container">Email</span>
+</label>
+<label class="flex items-center gap-sm p-sm border border-outline-variant/20 rounded cursor-pointer hover:bg-primary-container/5 transition-colors group">
+<input class="text-secondary-container focus:ring-secondary-container" name="contact_method" type="radio" value="phone"/>
+<span class="font-body-md text-body-md text-surface group-hover:text-primary-container">Phone Call</span>
+</label>
+</div>
+</div>
+</div>
+<div class="pt-md mt-lg flex items-center justify-between gap-md border-t border-outline-variant/10">
+<button class="flex items-center gap-xs text-primary-container font-bold px-4 py-2 hover:bg-primary-container/5 transition-all rounded group" type="button">
+<span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                            Previous
+                        </button>
+<button class="bg-secondary-container text-on-secondary px-xl py-3 font-bold hover:opacity-90 active:scale-95 transition-all rounded-lg flex items-center gap-sm shadow-lg shadow-secondary-container/20" type="button">
+                            Next Step
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Trust Badge Section -->
+<div class="mt-lg flex items-center justify-center gap-md opacity-60">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-caption text-caption text-on-surface">Data Encrypted</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span class="font-caption text-caption text-on-surface">Secure Quote Flow</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-white/10 mt-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md px-gutter py-lg max-w-container-max mx-auto">
+<div class="flex flex-col gap-sm">
+<div class="text-title-md font-title-md font-bold text-secondary">OD Automotive</div>
+<p class="font-caption text-caption text-on-surface-variant">Precision logistics and automotive transport services for global standards.</p>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-body-md text-body-md text-on-surface font-bold mb-xs">Quick Links</span>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Terms of Service</a>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-body-md text-body-md text-on-surface font-bold mb-xs">Resources</span>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Carrier Terms</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Cookie Settings</a>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-body-md text-body-md text-on-surface font-bold mb-xs">Legal</span>
+<p class="font-caption text-caption text-on-surface-variant">© 2024 OD Automotive &amp; Logistics. All rights reserved.</p>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #050533; /* Level 0 Floor */
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#464651",
+                        "on-primary-container": "#7b7fd8",
+                        "surface": "#121414",
+                        "on-surface": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#3538a3",
+                        "inverse-on-surface": "#2f3131",
+                        "on-secondary": "#552000",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#333535",
+                        "on-secondary-fixed": "#341100",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#4b1b00",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "secondary": "#ffb692",
+                        "on-background": "#e2e2e2",
+                        "inverse-surface": "#e2e2e2",
+                        "on-error": "#690005",
+                        "background": "#121414",
+                        "primary-fixed": "#e1e0ff",
+                        "surface-container": "#1e2020",
+                        "outline": "#918f9d",
+                        "surface-container-low": "#1a1c1c",
+                        "surface-container-high": "#282a2b",
+                        "secondary-fixed-dim": "#ffb692",
+                        "on-primary-fixed": "#060467",
+                        "on-primary": "#21247b",
+                        "surface-tint": "#c0c1ff",
+                        "primary": "#c0c1ff",
+                        "surface-dim": "#121414",
+                        "surface-container-lowest": "#0c0f0f",
+                        "surface-bright": "#37393a",
+                        "tertiary-container": "#06007a",
+                        "secondary-container": "#ea6b1b",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#787cea",
+                        "on-secondary-fixed-variant": "#793100",
+                        "tertiary-fixed": "#e1e0ff",
+                        "secondary-fixed": "#ffdbcb",
+                        "on-tertiary-fixed": "#05006d",
+                        "on-primary-fixed-variant": "#393d92",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#c0c1ff",
+                        "inverse-primary": "#5155ab",
+                        "surface-variant": "#333535",
+                        "primary-container": "#0d0d6b",
+                        "on-surface-variant": "#c7c5d3",
+                        "on-tertiary": "#1c1c8d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "md": "24px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "base": "8px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["IBM Plex Sans"],
+                        "display-lg": ["IBM Plex Sans"],
+                        "body-md": ["Inter"],
+                        "title-md": ["IBM Plex Sans"],
+                        "caption": ["Inter"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-on-surface">
+<!-- TopNavBar: Execution of Shared Component JSON -->
+<header class="bg-surface dark:bg-surface border-b border-white/10 sticky top-0 z-50">
+<nav class="flex justify-between items-center px-gutter w-full max-w-container-max mx-auto h-20">
+<div class="flex items-center gap-md">
+<span class="text-title-md font-title-md font-bold text-secondary dark:text-secondary">OD Automotive</span>
+<div class="hidden md:flex items-center gap-md ml-lg">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Home</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Services</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Tracking</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:text-secondary transition-colors duration-200" href="#">Contact</a>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<div class="hidden md:flex items-center gap-sm mr-sm">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">account_circle</span>
+</div>
+<button class="bg-secondary-container text-on-secondary px-md py-xs font-bold rounded hover:opacity-80 active:scale-95 transition-all">
+                    Place Bid
+                </button>
+</div>
+</nav>
+</header>
+<main class="flex-grow max-w-container-max mx-auto px-gutter w-full py-xl">
+<!-- Step Indicator -->
+<div class="max-w-3xl mx-auto mb-lg">
+<div class="flex items-center justify-between relative">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-primary-container -translate-y-1/2 z-0"></div>
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-secondary-container -translate-y-1/2 z-0 scale-x-100 origin-left"></div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold">1</div>
+<span class="mt-xs font-label-md text-label-md text-on-surface-variant">Service</span>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold">2</div>
+<span class="mt-xs font-label-md text-label-md text-on-surface-variant">Vehicle</span>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold">3</div>
+<span class="mt-xs font-label-md text-label-md text-on-surface-variant">Contact</span>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary ring-4 ring-secondary-container/30 flex items-center justify-center font-bold">4</div>
+<span class="mt-xs font-label-md text-label-md text-secondary">Summary</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-md items-start">
+<!-- Left Side: Detailed Summary -->
+<div class="lg:col-span-8 space-y-md">
+<div class="bg-primary-container border border-white/10 rounded-xl overflow-hidden">
+<div class="bg-white/5 px-md py-sm border-b border-white/10 flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">description</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Quote Summary</h2>
+</div>
+<div class="p-md space-y-lg">
+<!-- Service Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Selected Service</h3>
+<p class="font-title-md text-title-md text-secondary">Enclosed Car Transport</p>
+<p class="font-caption text-caption text-on-surface-variant">Premium protection for high-value vehicles.</p>
+</div>
+</div>
+<!-- Vehicle Specs -->
+<div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Vehicle Details</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md bg-surface-container rounded p-md">
+<div>
+<p class="font-caption text-caption text-on-surface-variant">Year</p>
+<p class="font-body-md text-body-md font-bold">2023</p>
+</div>
+<div>
+<p class="font-caption text-caption text-on-surface-variant">Make</p>
+<p class="font-body-md text-body-md font-bold">Porsche</p>
+</div>
+<div>
+<p class="font-caption text-caption text-on-surface-variant">Model</p>
+<p class="font-body-md text-body-md font-bold">911 GT3</p>
+</div>
+<div>
+<p class="font-caption text-caption text-on-surface-variant">Condition</p>
+<p class="font-body-md text-body-md font-bold">Operable</p>
+</div>
+</div>
+</div>
+<!-- Logistics -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="space-y-sm">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Origin</h3>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">location_on</span>
+<p class="font-body-md text-body-md">Los Angeles, CA 90001<br/><span class="text-on-surface-variant font-caption">Residential Pick-up</span></p>
+</div>
+</div>
+<div class="space-y-sm">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Destination</h3>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">flag</span>
+<p class="font-body-md text-body-md">Miami, FL 33101<br/><span class="text-on-surface-variant font-caption">Dealership Drop-off</span></p>
+</div>
+</div>
+</div>
+<!-- Contact -->
+<div class="border-t border-white/10 pt-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Contact Information</h3>
+<div class="flex flex-wrap gap-xl">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+<p class="font-body-md text-body-md">Alexander Sterling</p>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">mail</span>
+<p class="font-body-md text-body-md">a.sterling@example.com</p>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">phone</span>
+<p class="font-body-md text-body-md">+1 (555) 098-7654</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side: Action & Trust Requirement -->
+<aside class="lg:col-span-4 space-y-md">
+<div class="bg-surface-container-high border-2 border-secondary-container rounded-xl p-md shadow-xl">
+<div class="flex items-center justify-between mb-md">
+<span class="font-label-md text-label-md text-on-surface-variant">Required Deposit</span>
+<span class="bg-secondary-container/20 text-secondary text-xs px-2 py-1 rounded font-bold">SECURE PAYMENT</span>
+</div>
+<div class="text-center mb-md">
+<span class="font-display-lg text-display-lg text-secondary">$1,000.00</span>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Trust-building deposit required to finalize request</p>
+</div>
+<div class="bg-primary-container/50 rounded p-sm mb-lg border border-white/5">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<p class="font-caption text-caption text-on-surface">The deposit is fully refundable if the quote is not accepted within 24 hours. Secured by OD Automotive Trust Protocol.</p>
+</div>
+</div>
+<form class="space-y-md">
+<div class="flex items-start gap-sm">
+<input class="mt-1 w-5 h-5 rounded border-outline-variant bg-surface-container focus:ring-secondary text-secondary-container" id="tos" type="checkbox"/>
+<label class="font-caption text-caption text-on-surface-variant leading-tight" for="tos">
+                                I agree to the <a class="text-secondary underline" href="#">Terms of Service</a>, <a class="text-secondary underline" href="#">Carrier Terms</a>, and authorize the $1,000 trust deposit.
+                            </label>
+</div>
+<button class="w-full bg-secondary-container text-on-secondary py-md rounded-lg font-headline-lg text-title-md font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-secondary-container/20" type="submit">
+                            Submit Request
+                        </button>
+</form>
+<p class="text-center font-caption text-caption text-on-surface-variant mt-md flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+                        256-bit SSL Encrypted Connection
+                    </p>
+</div>
+<div class="bg-primary-container border border-white/10 rounded-xl p-md">
+<h4 class="font-label-md text-label-md font-bold text-on-surface mb-sm">Why the deposit?</h4>
+<p class="font-caption text-caption text-on-surface-variant">To maintain our high standards of logistics precision, we require a trust deposit to verify intent. This ensures priority carrier allocation for your vehicle transport.</p>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer: Execution of Shared Component JSON -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-white/10">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md px-gutter py-lg max-w-container-max mx-auto">
+<div class="space-y-sm">
+<span class="text-title-md font-title-md font-bold text-secondary dark:text-secondary">OD Automotive</span>
+<p class="font-caption text-caption text-on-surface-variant">Defining excellence in automotive logistics and transport services across North America.</p>
+</div>
+<div class="flex flex-col gap-xs">
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Legal</h4>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Privacy Policy</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Terms of Service</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Carrier Terms</a>
+</div>
+<div class="flex flex-col gap-xs">
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Navigation</h4>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Home</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Services</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Tracking</a>
+</div>
+<div class="flex flex-col gap-xs">
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Support</h4>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Contact Us</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Help Center</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary underline transition-all" href="#">Cookie Settings</a>
+</div>
+</div>
+<div class="max-w-container-max mx-auto px-gutter py-md border-t border-white/5 text-center">
+<p class="font-caption text-caption text-on-surface-variant opacity-70">© 2024 OD Automotive &amp; Logistics. All rights reserved.</p>
+</div>
+</footer>
+</body></html>
