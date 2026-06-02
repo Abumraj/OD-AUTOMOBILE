@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { exportToCSV } from '../../utils/csvExport';
 
 function ShipmentsManager() {
     const [shipments, setShipments] = useState([]);
@@ -8,6 +9,33 @@ function ShipmentsManager() {
     const [notification, setNotification] = useState(null);
     const [filter, setFilter] = useState('all');
     const [viewMode, setViewMode] = useState('table');
+
+    const handleExportCSV = () => {
+        const exportData = filteredShipments.map(shipment => ({
+            'Reference Number': shipment.reference_number,
+            'Tracking Number': shipment.tracking_number,
+            'Customer Name': shipment.customer_name,
+            'Customer Email': shipment.customer_email,
+            'Customer Phone': shipment.customer_phone || '',
+            'Vehicle': shipment.vehicle || '',
+            'Origin': shipment.origin,
+            'Destination': shipment.destination,
+            'Status': shipment.status,
+            'Progress': shipment.progress_percentage + '%',
+            'Shipping Provider': shipment.shipping_provider || '',
+            'Vessel Name': shipment.vessel_name || '',
+            'Container Number': shipment.container_number || '',
+            'Estimated Arrival': shipment.estimated_arrival_date || '',
+            'Actual Arrival': shipment.actual_arrival_date || '',
+            'Delivery Date': shipment.delivery_date || '',
+            'Total Cost': shipment.total_cost || '',
+            'Created At': shipment.created_at
+        }));
+        
+        const filename = `shipments_${new Date().toISOString().split('T')[0]}.csv`;
+        exportToCSV(exportData, filename);
+        showNotification('Shipments exported successfully', 'success');
+    };
 
     const [formData, setFormData] = useState({
         customer_name: '',
@@ -247,6 +275,13 @@ function ShipmentsManager() {
                             Pipeline
                         </button>
                     </div>
+                    <button
+                        onClick={handleExportCSV}
+                        className="bg-surface-container-high text-on-surface px-md py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm border border-outline-variant"
+                    >
+                        <span className="material-symbols-outlined text-sm">download</span>
+                        Export CSV
+                    </button>
                     <button
                         onClick={() => {
                             resetForm();

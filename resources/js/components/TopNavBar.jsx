@@ -73,7 +73,7 @@ function TopNavBar() {
                 </div>
                 <Link 
                     to="/quote" 
-                    className="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-80 transition-opacity active:scale-95 duration-150"
+                    className="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-80 transition-opacity active:scale-95 duration-150"
                 >
                     Get a Quote
                 </Link>

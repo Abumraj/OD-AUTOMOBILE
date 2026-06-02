@@ -80,14 +80,14 @@ function TrackingPage() {
                         </h3>
                         <div className="space-y-base">
                             <input 
-                                className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-md rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                 placeholder="Enter Reference Number (e.g., OD-2024-001)" 
                                 type="text"
                                 value={referenceNumber}
                                 onChange={(e) => setReferenceNumber(e.target.value)}
                             />
                             <button 
-                                className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-md rounded-lg hover:opacity-90 active:scale-[0.98] transition-all"
+                                className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-2.5 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all"
                                 onClick={handleTrack}
                             >
                                 Track Shipment

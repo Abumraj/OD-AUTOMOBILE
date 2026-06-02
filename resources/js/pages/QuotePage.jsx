@@ -84,7 +84,7 @@ function QuotePage() {
                     </div>
                     <button 
                         onClick={() => window.location.href = '/'}
-                        className="bg-secondary-container text-on-secondary px-xl py-sm rounded-lg font-bold hover:opacity-90 transition-all"
+                        className="bg-secondary-container text-on-secondary px-6 py-2 rounded-lg font-bold hover:opacity-90 transition-all"
                     >
                         Return to Home
                     </button>

@@ -155,7 +155,7 @@ function QuoteStep4({ formData, prevStep, handleSubmit, submitting }) {
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="w-full bg-secondary-container text-on-secondary py-md rounded-lg font-headline-lg text-title-md font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-secondary-container/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-sm"
+                                className="w-full bg-secondary-container text-on-secondary py-2.5 rounded-lg font-headline-lg text-title-md font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-secondary-container/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-sm"
                             >
                                 {submitting ? (
                                     <>
@@ -181,7 +181,7 @@ function QuoteStep4({ formData, prevStep, handleSubmit, submitting }) {
                     <button
                         type="button"
                         onClick={prevStep}
-                        className="w-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-xs px-md py-sm"
+                        className="w-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-xs px-4 py-2"
                     >
                         <span className="material-symbols-outlined">arrow_back</span>
                         Back to Contact Details

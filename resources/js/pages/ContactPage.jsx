@@ -179,7 +179,7 @@ function ContactPage() {
                                             href={`https://wa.me/${whatsappSettings.phone.replace(/[^0-9+]/g, '')}?text=${encodeURIComponent(whatsappSettings.message)}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-sm bg-[#25D366] text-white px-md py-sm rounded-lg hover:opacity-90 transition-all"
+                                            className="inline-flex items-center gap-sm bg-[#25D366] text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all"
                                         >
                                             <span className="font-label-md text-label-md">Chat Now</span>
                                             <span className="material-symbols-outlined text-xl">
@@ -202,7 +202,7 @@ function ContactPage() {
                                     Full Name *
                                 </label>
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="John Doe" 
                                     type="text"
                                     name="name"
@@ -216,7 +216,7 @@ function ContactPage() {
                                     Email Address *
                                 </label>
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="john@example.com" 
                                     type="email"
                                     name="email"
@@ -230,7 +230,7 @@ function ContactPage() {
                                     Phone Number *
                                 </label>
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="+234 XXX XXX XXXX" 
                                     type="tel"
                                     name="phone"
@@ -244,7 +244,7 @@ function ContactPage() {
                                     Service Interested In *
                                 </label>
                                 <select 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors"
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors"
                                     name="service"
                                     value={formData.service}
                                     onChange={handleChange}
@@ -263,7 +263,7 @@ function ContactPage() {
                                     Message
                                 </label>
                                 <textarea 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors min-h-[120px]" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors min-h-[120px]" 
                                     placeholder="Tell us about your requirements..."
                                     name="message"
                                     value={formData.message}
@@ -273,7 +273,7 @@ function ContactPage() {
                             <button 
                                 type="submit"
                                 disabled={submitting}
-                                className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-md rounded-lg hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-2.5 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {submitting ? 'Sending...' : 'Send Message'}
                             </button>

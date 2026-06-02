@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { exportToCSV } from '../../utils/csvExport';
 
 function AuctionManager() {
     const [auctions, setAuctions] = useState([]);
@@ -9,6 +10,45 @@ function AuctionManager() {
     const [notification, setNotification] = useState(null);
     const [activeTab, setActiveTab] = useState('auctions');
     const [filter, setFilter] = useState('all');
+
+    const handleExportAuctions = () => {
+        const exportData = filteredAuctions.map(auction => ({
+            'Auction Number': auction.auction_number,
+            'Vehicle': auction.vehicle,
+            'VIN': auction.vehicle_vin || '',
+            'Platform': auction.auction_platform,
+            'Location': auction.auction_location,
+            'Current Bid': auction.current_bid || '',
+            'Reserve Price': auction.reserve_price || '',
+            'Status': auction.status,
+            'Customer': auction.customer_name || '',
+            'Customer Email': auction.customer_email || '',
+            'Start Time': auction.auction_start_time || '',
+            'End Time': auction.auction_end_time || '',
+            'Created': auction.created_at
+        }));
+        
+        const filename = `auctions_${new Date().toISOString().split('T')[0]}.csv`;
+        exportToCSV(exportData, filename);
+        showNotification('Auctions exported successfully', 'success');
+    };
+
+    const handleExportRequests = () => {
+        const exportData = requests.map(request => ({
+            'Customer Name': request.customer_name,
+            'Email': request.customer_email,
+            'Phone': request.customer_phone || '',
+            'Vehicle': `${request.vehicle_year} ${request.vehicle_make} ${request.vehicle_model}`,
+            'Max Budget': request.max_budget,
+            'Status': request.status,
+            'Additional Requirements': request.additional_requirements || '',
+            'Submitted': request.created_at
+        }));
+        
+        const filename = `auction_requests_${new Date().toISOString().split('T')[0]}.csv`;
+        exportToCSV(exportData, filename);
+        showNotification('Requests exported successfully', 'success');
+    };
 
     const [formData, setFormData] = useState({
         vehicle_make: '',
@@ -284,16 +324,25 @@ function AuctionManager() {
                         Manage vehicle auctions and customer requests
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        resetForm();
-                        setShowModal(true);
-                    }}
-                    className="bg-secondary-container text-on-secondary-container px-lg py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm"
-                >
-                    <span className="material-symbols-outlined">add</span>
-                    New Auction
-                </button>
+                <div className="flex gap-sm">
+                    <button
+                        onClick={activeTab === 'auctions' ? handleExportAuctions : handleExportRequests}
+                        className="bg-surface-container-high text-on-surface px-md py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm border border-outline-variant"
+                    >
+                        <span className="material-symbols-outlined text-sm">download</span>
+                        Export CSV
+                    </button>
+                    <button
+                        onClick={() => {
+                            resetForm();
+                            setShowModal(true);
+                        }}
+                        className="bg-secondary-container text-on-secondary-container px-lg py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm"
+                    >
+                        <span className="material-symbols-outlined">add</span>
+                        New Auction
+                    </button>
+                </div>
             </div>
 
             <div className="flex gap-sm mb-md border-b border-white/10">

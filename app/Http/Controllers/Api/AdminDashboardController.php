@@ -90,7 +90,7 @@ class AdminDashboardController extends Controller
             ->count();
         $deliveredYTD = DB::table('shipments')
             ->where('status', 'delivered')
-            ->whereYear('delivered_at', date('Y'))
+            ->whereYear('delivery_date', date('Y'))
             ->count();
 
         $lastMonthQuotes = DB::table('quotes')
@@ -106,11 +106,13 @@ class AdminDashboardController extends Controller
 
         $criticalDelays = DB::table('shipments')
             ->where('status', 'at_port')
-            ->where('is_delayed', true)
+            ->whereNotNull('estimated_arrival_date')
+            ->whereRaw('estimated_arrival_date < NOW()')
+            ->whereNull('actual_arrival_date')
             ->count();
 
         $totalDeliveries = DB::table('shipments')
-            ->whereYear('delivered_at', date('Y'))
+            ->whereYear('delivery_date', date('Y'))
             ->count();
         $successRate = $totalDeliveries > 0
             ? round(($deliveredYTD / $totalDeliveries) * 100, 1)

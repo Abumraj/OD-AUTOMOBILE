@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { exportToCSV } from '../../utils/csvExport';
 
 function ServicesManager() {
     const [services, setServices] = useState([]);
@@ -6,6 +7,25 @@ function ServicesManager() {
     const [showModal, setShowModal] = useState(false);
     const [editingService, setEditingService] = useState(null);
     const [notification, setNotification] = useState(null);
+
+    const handleExportCSV = () => {
+        const exportData = services.map(service => ({
+            'Title': service.title,
+            'Slug': service.slug,
+            'Icon': service.icon,
+            'Description': service.description,
+            'YouTube Video ID': service.youtube_video_id || '',
+            'Display Order': service.display_order,
+            'Active': service.is_active ? 'Yes' : 'No',
+            'Features Count': service.features?.length || 0,
+            'Created': service.created_at
+        }));
+        
+        const filename = `services_${new Date().toISOString().split('T')[0]}.csv`;
+        exportToCSV(exportData, filename);
+        showNotification('Services exported successfully', 'success');
+    };
+
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
@@ -184,16 +204,25 @@ function ServicesManager() {
                         Manage services displayed on the services page with YouTube videos
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        resetForm();
-                        setShowModal(true);
-                    }}
-                    className="bg-secondary-container text-on-secondary-container px-lg py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm"
-                >
-                    <span className="material-symbols-outlined">add</span>
-                    New Service
-                </button>
+                <div className="flex gap-sm">
+                    <button
+                        onClick={handleExportCSV}
+                        className="bg-surface-container-high text-on-surface px-md py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm border border-outline-variant"
+                    >
+                        <span className="material-symbols-outlined text-sm">download</span>
+                        Export CSV
+                    </button>
+                    <button
+                        onClick={() => {
+                            resetForm();
+                            setShowModal(true);
+                        }}
+                        className="bg-secondary-container text-on-secondary-container px-lg py-sm rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-sm"
+                    >
+                        <span className="material-symbols-outlined">add</span>
+                        New Service
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-md">

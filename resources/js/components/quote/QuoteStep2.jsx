@@ -131,17 +131,17 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                     <button
                         type="button"
                         onClick={prevStep}
-                        className="px-md py-sm border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container/5 transition-colors flex items-center gap-xs"
+                        className="px-4 py-2 border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container/5 transition-colors flex items-center gap-xs"
                     >
                         <span className="material-symbols-outlined">arrow_back</span>
                         Back
                     </button>
                     <div className="flex gap-md">
-                        <button type="button" className="px-md py-sm text-outline font-bold hover:text-primary-container transition-colors">Save Draft</button>
+                        <button type="button" className="px-4 py-2 text-outline font-bold hover:text-primary-container transition-colors">Save Draft</button>
                         <button
                             type="submit"
                             disabled={!isFormValid}
-                            className="px-xl py-sm bg-secondary-container text-white font-bold rounded-lg hover:opacity-90 transition-all shadow-lg flex items-center gap-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 bg-secondary-container text-white font-bold rounded-lg hover:opacity-90 transition-all shadow-lg flex items-center gap-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Next Step
                             <span className="material-symbols-outlined">arrow_forward</span>

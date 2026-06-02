@@ -116,14 +116,14 @@ function Hero() {
                         {currentImage.button_text && currentImage.button_link && (
                             <Link 
                                 to={currentImage.button_link}
-                                className="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-lg py-md rounded-xl hover:opacity-90 hover:scale-105 transition-all shadow-lg active:scale-95"
+                                className="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-6 py-2.5 rounded-xl hover:opacity-90 hover:scale-105 transition-all shadow-lg active:scale-95"
                             >
                                 {currentImage.button_text}
                             </Link>
                         )}
                         <Link 
                             to="/tracking" 
-                            className="border-2 border-white text-white font-label-md text-label-md px-lg py-md rounded-xl hover:bg-white/10 hover:scale-105 transition-all active:scale-95"
+                            className="border-2 border-white text-white font-label-md text-label-md px-6 py-2.5 rounded-xl hover:bg-white/10 hover:scale-105 transition-all active:scale-95"
                         >
                             Track Shipment
                         </Link>

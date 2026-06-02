@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { exportToCSV } from '../../utils/csvExport';
 
 function QuotesTable() {
     const [quotes, setQuotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+
+    const handleExportCSV = () => {
+        const exportData = filteredQuotes.map(quote => ({
+            'Customer Name': quote.customer_name,
+            'Email': quote.email,
+            'Phone': quote.phone,
+            'Vehicle': quote.vehicle,
+            'Origin': quote.origin,
+            'Destination': quote.destination,
+            'Service': quote.service,
+            'Status': quote.status,
+            'Additional Info': quote.additional_info || '',
+            'Submitted': quote.created_at
+        }));
+        
+        const filename = `quotes_${new Date().toISOString().split('T')[0]}.csv`;
+        exportToCSV(exportData, filename);
+    };
 
     useEffect(() => {
         fetchQuotes();
@@ -97,6 +116,13 @@ function QuotesTable() {
             <div className="flex justify-between items-center mb-md">
                 <h2 className="font-headline-lg text-headline-lg text-on-surface">Quote Requests</h2>
                 <div className="flex gap-sm">
+                    <button
+                        onClick={handleExportCSV}
+                        className="bg-surface-container-high text-on-surface px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition-colors flex items-center gap-2 border border-outline-variant"
+                    >
+                        <span className="material-symbols-outlined text-sm">download</span>
+                        Export CSV
+                    </button>
                     <button
                         onClick={() => setFilter('all')}
                         className={`px-4 py-2 rounded text-sm font-medium transition-colors ${

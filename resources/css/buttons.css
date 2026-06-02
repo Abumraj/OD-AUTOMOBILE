@@ -1,0 +1,62 @@
+/* Professional Button Styles */
+@layer components {
+    /* Primary Buttons */
+    .btn-primary {
+        @apply bg-secondary-container text-white px-5 py-2 rounded-lg text-sm font-medium;
+        @apply hover:shadow-md hover:scale-[1.02] active:scale-[0.98];
+        @apply transition-all duration-200 ease-in-out;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+
+    /* Secondary Buttons */
+    .btn-secondary {
+        @apply bg-surface-container-high text-on-surface px-5 py-2 rounded-lg text-sm font-medium;
+        @apply border border-white/20;
+        @apply hover:bg-surface-container-highest hover:scale-[1.02] active:scale-[0.98];
+        @apply transition-all duration-200 ease-in-out;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+
+    /* Outline Buttons */
+    .btn-outline {
+        @apply bg-transparent text-secondary-container px-5 py-2 rounded-lg text-sm font-medium;
+        @apply border border-secondary-container;
+        @apply hover:bg-secondary-container/10 hover:scale-[1.02] active:scale-[0.98];
+        @apply transition-all duration-200 ease-in-out;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+
+    /* Small Buttons */
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    /* Large Buttons */
+    .btn-lg {
+        @apply px-6 py-3 text-base;
+    }
+
+    /* Icon Buttons */
+    .btn-icon {
+        @apply p-2 rounded-lg;
+        @apply hover:bg-surface-container-high hover:scale-110 active:scale-95;
+        @apply transition-all duration-200 ease-in-out;
+    }
+
+    /* Danger Buttons */
+    .btn-danger {
+        @apply bg-error/20 text-error px-5 py-2 rounded-lg text-sm font-medium;
+        @apply border border-error/30;
+        @apply hover:bg-error/30 hover:scale-[1.02] active:scale-[0.98];
+        @apply transition-all duration-200 ease-in-out;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+
+    /* Success Buttons */
+    .btn-success {
+        @apply bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium;
+        @apply hover:bg-green-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98];
+        @apply transition-all duration-200 ease-in-out;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+}

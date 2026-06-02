@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { exportToCSV } from '../../utils/csvExport';
 
 function ContactMessagesManager() {
     const [messages, setMessages] = useState([]);
@@ -6,6 +7,25 @@ function ContactMessagesManager() {
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [filter, setFilter] = useState('all');
     const [notification, setNotification] = useState(null);
+
+    const handleExportCSV = () => {
+        const filteredMessages = filter === 'all' ? messages : messages.filter(m => m.status === filter);
+        const exportData = filteredMessages.map(message => ({
+            'Name': message.name,
+            'Email': message.email,
+            'Phone': message.phone || '',
+            'Service': message.service,
+            'Message': message.message,
+            'Status': message.status,
+            'Admin Notes': message.admin_notes || '',
+            'Submitted': message.created_at
+        }));
+        
+        const filename = `contact_messages_${new Date().toISOString().split('T')[0]}.csv`;
+        exportToCSV(exportData, filename);
+        setNotification({ type: 'success', message: 'Messages exported successfully!' });
+        setTimeout(() => setNotification(null), 3000);
+    };
 
     useEffect(() => {
         fetchMessages();
@@ -116,6 +136,13 @@ function ContactMessagesManager() {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={handleExportCSV}
+                        className="bg-surface-container-high text-on-surface px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-colors flex items-center gap-2 border border-outline-variant"
+                    >
+                        <span className="material-symbols-outlined text-sm">download</span>
+                        Export CSV
+                    </button>
                     {['all', 'new', 'read', 'replied', 'archived'].map(status => (
                         <button
                             key={status}

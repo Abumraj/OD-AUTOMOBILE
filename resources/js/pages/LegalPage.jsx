@@ -16,10 +16,16 @@ function LegalPage() {
 
     const fetchPage = async () => {
         try {
+            console.log('=== LEGAL PAGE DEBUG ===');
+            console.log('Fetching legal page:', slug);
             const response = await fetch(`/api/legal-pages/${slug}`);
+            console.log('Response status:', response.status);
             if (response.ok) {
                 const data = await response.json();
+                console.log('Legal page data:', data);
+                console.log('Content length:', data.content?.length);
                 setPage(data);
+                console.log('Page state set successfully');
                 document.title = `${data.title} - OD Automotive`;
             } else {
                 setError('Page not found');
@@ -32,7 +38,13 @@ function LegalPage() {
         }
     };
 
+    console.log('=== RENDER STATE ===');
+    console.log('Loading:', loading);
+    console.log('Error:', error);
+    console.log('Page:', page);
+
     if (loading) {
+        console.log('Rendering loading state...');
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center">
                 <div className="animate-pulse text-on-surface-variant">Loading...</div>
@@ -41,6 +53,7 @@ function LegalPage() {
     }
 
     if (error || !page) {
+        console.log('Rendering error/not found state');
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center">
                 <div className="text-center">
@@ -51,10 +64,11 @@ function LegalPage() {
         );
     }
 
+    console.log('Rendering legal page content');
     return (
         <div className="min-h-screen bg-surface">
             <div className="container-padding py-xl">
-                <div ref={headerRef} className="max-w-4xl mx-auto mb-xl" style={fadeInUp(headerVisible)}>
+                <div ref={headerRef} className="max-w-4xl mx-auto mb-xl">
                     <h1 className="font-display-lg text-display-lg text-white mb-md">
                         {page.title}
                     </h1>
@@ -69,7 +83,6 @@ function LegalPage() {
                 <div 
                     ref={contentRef} 
                     className="max-w-4xl mx-auto bg-surface-container rounded-xl p-lg border border-white/10"
-                    style={fadeInUp(contentVisible)}
                 >
                     <div 
                         className="legal-content"

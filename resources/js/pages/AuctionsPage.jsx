@@ -180,7 +180,7 @@ function AuctionsPage() {
                             </h3>
                             <form onSubmit={handleSubmit} className="space-y-base">
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Your Name" 
                                     type="text"
                                     required
@@ -188,7 +188,7 @@ function AuctionsPage() {
                                     onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                                 />
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Email Address" 
                                     type="email"
                                     required
@@ -196,14 +196,14 @@ function AuctionsPage() {
                                     onChange={(e) => setFormData({...formData, customer_email: e.target.value})}
                                 />
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Phone Number" 
                                     type="tel"
                                     value={formData.customer_phone}
                                     onChange={(e) => setFormData({...formData, customer_phone: e.target.value})}
                                 />
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Vehicle Make" 
                                     type="text"
                                     required
@@ -211,7 +211,7 @@ function AuctionsPage() {
                                     onChange={(e) => setFormData({...formData, vehicle_make: e.target.value})}
                                 />
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Vehicle Model" 
                                     type="text"
                                     required
@@ -219,7 +219,7 @@ function AuctionsPage() {
                                     onChange={(e) => setFormData({...formData, vehicle_model: e.target.value})}
                                 />
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Year" 
                                     type="text"
                                     required
@@ -227,7 +227,7 @@ function AuctionsPage() {
                                     onChange={(e) => setFormData({...formData, vehicle_year: e.target.value})}
                                 />
                                 <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Maximum Budget" 
                                     type="number"
                                     required
@@ -235,13 +235,13 @@ function AuctionsPage() {
                                     onChange={(e) => setFormData({...formData, max_budget: e.target.value})}
                                 />
                                 <textarea 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Additional Requirements (Optional)" 
                                     rows="3"
                                     value={formData.additional_requirements}
                                     onChange={(e) => setFormData({...formData, additional_requirements: e.target.value})}
                                 ></textarea>
-                                <button type="submit" className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-sm rounded-lg hover:opacity-90 active:scale-[0.98] transition-all">
+                                <button type="submit" className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-2.5 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all">
                                     Request Vehicle Search
                                 </button>
                             </form>

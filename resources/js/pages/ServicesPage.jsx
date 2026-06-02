@@ -17,9 +17,11 @@ function ServicesPage() {
 
     const fetchServices = async () => {
         try {
+            console.log('=== SERVICES PAGE DEBUG ===');
             console.log('Fetching services from /api/services...');
             const response = await fetch('/api/services');
             console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -34,8 +36,11 @@ function ServicesPage() {
             }
             
             const activeServices = data.filter(s => s.is_active);
+            console.log('Active services count:', activeServices.length);
             console.log('Active services:', activeServices);
+            console.log('Setting services state...');
             setServices(activeServices);
+            console.log('Services state set successfully');
         } catch (error) {
             console.error('Error fetching services:', error);
             setError(error.message);
@@ -44,7 +49,14 @@ function ServicesPage() {
         }
     };
 
+    console.log('=== RENDER STATE ===');
+    console.log('Loading:', loading);
+    console.log('Error:', error);
+    console.log('Services count:', services.length);
+    console.log('Services:', services);
+
     if (loading) {
+        console.log('Rendering loading state...');
         return (
             <div className="min-h-screen bg-primary-container py-xl flex items-center justify-center">
                 <div className="animate-pulse text-on-surface-variant">Loading services...</div>
@@ -53,6 +65,7 @@ function ServicesPage() {
     }
 
     if (error) {
+        console.log('Rendering error state:', error);
         return (
             <div className="min-h-screen bg-primary-container py-xl flex items-center justify-center">
                 <div className="text-center">
@@ -60,7 +73,7 @@ function ServicesPage() {
                     <p className="text-on-surface-variant">{error}</p>
                     <button 
                         onClick={fetchServices}
-                        className="mt-md bg-secondary-container text-on-secondary-container px-lg py-sm rounded-lg"
+                        className="mt-md bg-secondary-container text-on-secondary-container px-5 py-2 rounded-lg"
                     >
                         Retry
                     </button>
@@ -69,10 +82,11 @@ function ServicesPage() {
         );
     }
 
+    console.log('Rendering main content with', services.length, 'services');
     return (
         <div className="min-h-screen bg-primary-container py-xl">
             <div className="max-w-container-max mx-auto px-lg">
-                <div ref={headerRef} className="text-center mb-xl" style={fadeInUp(headerVisible)}>
+                <div ref={headerRef} className="text-center mb-xl">
                     <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
                         Our Services
                     </span>
@@ -87,7 +101,7 @@ function ServicesPage() {
                 <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
                     {services.length > 0 ? (
                         services.map((service, index) => (
-                            <div key={service.id} className="bg-surface-container-low p-lg rounded-xl border border-white/5 hover:border-secondary-container/50 hover:scale-105 transition-all duration-300" style={fadeInUp(gridVisible, staggerChildren(index))}>
+                            <div key={service.id} className="bg-surface-container-low p-lg rounded-xl border border-white/5 hover:border-secondary-container/50 hover:scale-105 transition-all duration-300">
                                 <div className="flex items-start gap-md mb-md">
                                     <div className="bg-secondary-container/20 p-md rounded-xl">
                                         <span className="material-symbols-outlined text-secondary-container text-5xl">
@@ -131,8 +145,8 @@ function ServicesPage() {
                     )}
                 </div>
 
-                <div ref={ctaRef} className="mt-xl text-center" style={fadeInUp(ctaVisible)}>
-                    <Link to="/quote" className="inline-block bg-secondary-container text-on-secondary-container font-label-md text-label-md px-xl py-md rounded-xl hover:opacity-90 hover:scale-105 transition-all shadow-lg active:scale-95">
+                <div ref={ctaRef} className="mt-xl text-center">
+                    <Link to="/quote" className="inline-block bg-secondary-container text-on-secondary-container font-label-md text-label-md px-6 py-2.5 rounded-xl hover:opacity-90 hover:scale-105 transition-all shadow-lg active:scale-95">
                         Request a Quote
                     </Link>
                 </div>
