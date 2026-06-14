@@ -116,13 +116,13 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                         </div>
                     </div>
 
-                    <div className="mt-lg p-md bg-secondary-container/10 border border-secondary-container/20 rounded-xl flex items-center gap-md">
-                        <div className="w-12 h-12 rounded-full bg-secondary-container text-white flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>shield</span>
+                    <div className="mt-lg p-sm md:p-md bg-secondary-container/10 border border-secondary-container/20 rounded-xl flex items-start md:items-center gap-sm md:gap-md">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary-container text-white flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-xl md:text-2xl" style={{fontVariationSettings: "'FILL' 1"}}>shield</span>
                         </div>
                         <div>
-                            <h4 className="font-title-md text-title-md text-primary-container">$1,000 Deposit Notice</h4>
-                            <p className="font-body-md text-body-md text-on-surface-variant">Trust-building Deposit Required to secure your shipping slot and begin procurement.</p>
+                            <h4 className="font-title-md text-sm md:text-title-md text-primary-container">$1,000 Deposit Notice</h4>
+                            <p className="font-body-md text-xs md:text-body-md text-on-surface-variant">Trust-building Deposit Required to secure your shipping slot and begin procurement.</p>
                         </div>
                     </div>
                 </div>

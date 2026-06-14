@@ -47,7 +47,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.fullName || ''}
                                 onChange={(e) => handleChange('fullName', e.target.value)}
                                 placeholder="John Doe"
-                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-surface p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
+                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
                                 required
                             />
                         </div>
@@ -62,7 +62,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.email || ''}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 placeholder="john@example.com"
-                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-surface p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
+                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
                                 required
                             />
                         </div>
@@ -77,7 +77,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.phone || ''}
                                 onChange={(e) => handleChange('phone', e.target.value)}
                                 placeholder="+1 (555) 000-0000"
-                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-surface p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
+                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
                                 required
                             />
                         </div>
@@ -112,22 +112,22 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                             </div>
                         </div>
 
-                        <div className="pt-md mt-lg flex items-center justify-between gap-md border-t border-outline-variant/10">
+                        <div className="pt-md mt-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-md border-t border-outline-variant/10">
                             <button
                                 type="button"
                                 onClick={prevStep}
-                                className="flex items-center gap-xs text-primary-container font-bold px-4 py-2 hover:bg-primary-container/5 transition-all rounded group"
+                                className="flex items-center justify-center gap-xs text-primary-container font-bold px-4 py-2 hover:bg-primary-container/5 transition-all rounded group"
                             >
                                 <span className="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                                Previous
+                                <span className="text-sm sm:text-base">Previous</span>
                             </button>
                             <button
                                 type="submit"
                                 disabled={!isFormValid}
-                                className="bg-secondary-container text-on-secondary px-xl py-3 font-bold hover:opacity-90 active:scale-95 transition-all rounded-lg flex items-center gap-sm shadow-lg shadow-secondary-container/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-secondary-container text-on-secondary px-6 sm:px-xl py-2.5 sm:py-3 font-bold hover:opacity-90 active:scale-95 transition-all rounded-lg flex items-center justify-center gap-sm shadow-lg shadow-secondary-container/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                             >
                                 Next Step
-                                <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>arrow_forward</span>
+                                <span className="material-symbols-outlined text-[20px]" style={{fontVariationSettings: "'FILL' 1"}}>arrow_forward</span>
                             </button>
                         </div>
                     </form>

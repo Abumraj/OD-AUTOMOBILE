@@ -57,7 +57,7 @@ function ServicesSection() {
                         >
                             <div className="flex items-start justify-between">
                                 <div className="space-y-md">
-                                    <span className="material-symbols-outlined text-secondary-container text-4xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                                    <span className="material-symbols-outlined text-secondary-container text-3xl md:text-4xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
                                         {service.icon}
                                     </span>
                                     <h3 className="font-title-md text-title-md text-white">
@@ -67,7 +67,7 @@ function ServicesSection() {
                                         {service.description}
                                     </p>
                                 </div>
-                                <span className="material-symbols-outlined text-on-surface-variant/30 group-hover:text-secondary-container group-hover:translate-x-1 transition-all">
+                                <span className="material-symbols-outlined text-on-surface-variant/30 group-hover:text-secondary-container group-hover:translate-x-1 transition-all text-xl md:text-2xl">
                                     arrow_forward
                                 </span>
                             </div>
