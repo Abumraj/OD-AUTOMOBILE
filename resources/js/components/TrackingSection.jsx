@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function TrackingSection() {
     const [referenceNumber, setReferenceNumber] = useState('');
+    const navigate = useNavigate();
 
     const handleTrack = () => {
-        console.log('Tracking:', referenceNumber);
+        if (referenceNumber.trim()) {
+            navigate(`/tracking?ref=${encodeURIComponent(referenceNumber)}`);
+        } else {
+            navigate('/tracking');
+        }
+        // Scroll to top after navigation
+        setTimeout(() => window.scrollTo(0, 0), 100);
     };
 
     return (
@@ -21,11 +29,11 @@ function TrackingSection() {
                         <div className="w-full h-2 bg-primary-container rounded-full overflow-hidden">
                             <div className="h-full bg-secondary-container w-[75%] rounded-full"></div>
                         </div>
-                        <div className="flex justify-between font-caption text-caption text-on-surface-variant uppercase tracking-tighter">
-                            <span>Auction Won</span>
-                            <span>Shipping</span>
-                            <span className="text-secondary-container font-bold">In Transit</span>
-                            <span>Delivered</span>
+                        <div className="grid grid-cols-2 md:flex md:justify-between gap-2 md:gap-0 font-caption text-[10px] md:text-caption text-on-surface-variant uppercase tracking-tighter">
+                            <span className="text-center md:text-left">Auction Won</span>
+                            <span className="text-center md:text-left">Shipping</span>
+                            <span className="text-secondary-container font-bold text-center md:text-left">In Transit</span>
+                            <span className="text-center md:text-left">Delivered</span>
                         </div>
                     </div>
                     <div className="md:w-1/2 w-full flex justify-end">
