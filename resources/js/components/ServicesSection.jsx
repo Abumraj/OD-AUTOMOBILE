@@ -40,7 +40,7 @@ function ServicesSection() {
                         <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
                             Our Expertise
                         </span>
-                        <h2 className="font-headline-lg text-headline-lg text-white">
+                        <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-white">
                             Full-Spectrum Logistics
                         </h2>
                     </div>

@@ -161,6 +161,24 @@ export const api = {
     if (!response.ok) throw new Error("Failed to toggle featured status");
     return response.json();
   },
+
+  async getSocialMediaSettings() {
+    const response = await fetch(`${API_BASE_URL}/social-media-settings`);
+    if (!response.ok) throw new Error("Failed to fetch social media settings");
+    return response.json();
+  },
+
+  async updateSocialMediaSettings(data) {
+    const response = await fetch(`${API_BASE_URL}/admin/social-media-settings`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to update social media settings");
+    return response.json();
+  },
 };
 
 export default api;

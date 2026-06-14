@@ -22,6 +22,7 @@ class TestimonialController extends Controller
                     'name' => $testimonial->customer_name,
                     'location' => $testimonial->location,
                     'company' => $testimonial->company,
+                    'social_link' => $testimonial->social_link,
                     'rating' => $testimonial->rating,
                     'is_featured' => (bool) $testimonial->is_featured
                 ];
@@ -44,6 +45,7 @@ class TestimonialController extends Controller
                     'name' => $testimonial->customer_name,
                     'location' => $testimonial->location,
                     'company' => $testimonial->company,
+                    'social_link' => $testimonial->social_link,
                     'rating' => $testimonial->rating
                 ];
             });

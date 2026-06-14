@@ -12,7 +12,7 @@ function TrackingSection() {
             <div className="max-w-container-max mx-auto px-lg">
                 <div className="bg-surface-container-low rounded-2xl p-lg flex flex-col md:flex-row items-center gap-lg border border-white/5">
                     <div className="md:w-1/2 space-y-md">
-                        <h2 className="font-headline-lg text-headline-lg text-white">
+                        <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-white">
                             Real-Time Logistics Tracking
                         </h2>
                         <p className="font-body-md text-body-md text-on-surface-variant">

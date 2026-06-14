@@ -89,15 +89,15 @@ function AuctionsPage() {
 
     return (
         <div className="min-h-screen bg-primary-container py-xl">
-            <div className="max-w-container-max mx-auto px-lg">
+            <div className="max-w-container-max mx-auto px-4 md:px-lg">
                 <div ref={headerRef} className="text-center mb-xl" style={fadeInUp(headerVisible)}>
                     <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
                         Auction Access
                     </span>
-                    <h1 className="font-display-lg text-display-lg text-white mt-sm mb-md">
+                    <h1 className="font-display-lg text-[28px] md:text-display-lg text-white mt-sm mb-md">
                         We Bid On Your Behalf
                     </h1>
-                    <p className="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto">
+                    <p className="font-body-lg text-base md:text-body-lg text-on-surface-variant max-w-3xl mx-auto">
                         Access to premium auction platforms across the United States. We handle the bidding process so you get the best deal.
                     </p>
                 </div>
@@ -121,10 +121,10 @@ function AuctionsPage() {
                     ))}
                 </div>
 
-                <div ref={depositRef} className="bg-surface-container-low p-xl rounded-2xl border border-white/5" style={scaleIn(depositVisible)}>
+                <div ref={depositRef} className="bg-surface-container-low p-6 md:p-xl rounded-2xl border border-white/5" style={scaleIn(depositVisible)}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-xl items-center">
                         <div>
-                            <h2 className="font-headline-lg text-headline-lg text-white mb-md">
+                            <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-white mb-md">
                                 How It Works
                             </h2>
                             <div className="space-y-md">
@@ -251,7 +251,7 @@ function AuctionsPage() {
 
                 {featuredAuctions.length > 0 && (
                     <div className="mt-xl">
-                        <h2 className="font-headline-lg text-headline-lg text-white mb-lg text-center">
+                        <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-white mb-lg text-center">
                             Featured Auctions
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">

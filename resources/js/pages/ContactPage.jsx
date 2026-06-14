@@ -94,15 +94,15 @@ function ContactPage() {
 
     return (
         <div className="min-h-screen bg-primary-container py-xl">
-            <div className="max-w-container-max mx-auto px-lg">
+            <div className="max-w-container-max mx-auto px-4 md:px-lg">
                 <div ref={headerRef} className="text-center mb-xl" style={fadeInUp(headerVisible)}>
                     <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
                         Get In Touch
                     </span>
-                    <h1 className="font-display-lg text-display-lg text-white mt-sm mb-md">
+                    <h1 className="font-display-lg text-[28px] md:text-display-lg text-white mt-sm mb-md">
                         {settings.contact_page_title}
                     </h1>
-                    <p className="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto">
+                    <p className="font-body-lg text-base md:text-body-lg text-on-surface-variant max-w-3xl mx-auto">
                         {settings.contact_page_subtitle}
                     </p>
                 </div>

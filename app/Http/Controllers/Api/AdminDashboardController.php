@@ -347,6 +347,7 @@ class AdminDashboardController extends Controller
                     'customer_name' => $testimonial->customer_name,
                     'location' => $testimonial->location,
                     'company' => $testimonial->company,
+                    'social_link' => $testimonial->social_link,
                     'rating' => $testimonial->rating,
                     'is_featured' => (bool) $testimonial->is_featured,
                     'is_approved' => (bool) $testimonial->is_approved,
@@ -366,6 +367,7 @@ class AdminDashboardController extends Controller
             'customer_name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'company' => 'nullable|string|max:255',
+            'social_link' => 'nullable|string|max:255',
             'rating' => 'required|integer|min:1|max:5',
             'is_featured' => 'boolean',
             'shipment_id' => 'nullable|exists:shipments,id'
@@ -376,6 +378,7 @@ class AdminDashboardController extends Controller
             'customer_name' => $validated['customer_name'],
             'location' => $validated['location'],
             'company' => $validated['company'] ?? null,
+            'social_link' => $validated['social_link'] ?? null,
             'rating' => $validated['rating'],
             'is_featured' => $validated['is_featured'] ?? false,
             'is_approved' => true,
@@ -413,6 +416,7 @@ class AdminDashboardController extends Controller
             'customer_name' => 'sometimes|string|max:255',
             'location' => 'sometimes|string|max:255',
             'company' => 'nullable|string|max:255',
+            'social_link' => 'nullable|string|max:255',
             'rating' => 'sometimes|integer|min:1|max:5',
             'is_featured' => 'sometimes|boolean',
             'is_approved' => 'sometimes|boolean'
@@ -1651,6 +1655,65 @@ class AdminDashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Carousel image deleted successfully'
+        ]);
+    }
+
+    // Social Media Settings
+    public function getSocialMediaSettings()
+    {
+        $keys = ['social_facebook', 'social_instagram', 'social_twitter', 'social_linkedin', 'social_tiktok'];
+        $settings = DB::table('settings')
+            ->whereIn('key', $keys)
+            ->pluck('value', 'key');
+
+        return response()->json([
+            'facebook' => $settings['social_facebook'] ?? '',
+            'instagram' => $settings['social_instagram'] ?? '',
+            'twitter' => $settings['social_twitter'] ?? '',
+            'linkedin' => $settings['social_linkedin'] ?? '',
+            'tiktok' => $settings['social_tiktok'] ?? ''
+        ]);
+    }
+
+    public function updateSocialMediaSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'facebook' => 'nullable|string|max:255',
+            'instagram' => 'nullable|string|max:255',
+            'twitter' => 'nullable|string|max:255',
+            'linkedin' => 'nullable|string|max:255',
+            'tiktok' => 'nullable|string|max:255'
+        ]);
+
+        $keyMap = [
+            'facebook' => 'social_facebook',
+            'instagram' => 'social_instagram',
+            'twitter' => 'social_twitter',
+            'linkedin' => 'social_linkedin',
+            'tiktok' => 'social_tiktok'
+        ];
+
+        foreach ($validated as $frontendKey => $value) {
+            $dbKey = $keyMap[$frontendKey];
+            DB::table('settings')
+                ->updateOrInsert(
+                    ['key' => $dbKey],
+                    ['value' => $value ?? '', 'updated_at' => now()]
+                );
+        }
+
+        DB::table('activity_logs')->insert([
+            'icon' => 'settings',
+            'user_name' => 'Admin',
+            'action' => 'updated social media links',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Social media settings updated successfully'
         ]);
     }
 

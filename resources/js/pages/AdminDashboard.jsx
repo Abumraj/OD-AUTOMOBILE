@@ -17,6 +17,7 @@ import AdminLoginPage from './admin/AdminLoginPage';
 function AdminDashboard() {
     const [authenticated, setAuthenticated] = useState(null);
     const [admin, setAdmin] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -67,12 +68,12 @@ function AdminDashboard() {
 
     return (
         <div className="overflow-hidden bg-surface min-h-screen">
-            <AdminSidebar />
-            
-            <main className="ml-64 flex flex-col h-screen bg-surface">
-                <AdminTopBar admin={admin} onLogout={handleLogout} />
-                
-                <div className="flex-grow overflow-y-auto p-gutter">
+            <AdminSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+            <main className="lg:ml-64 flex flex-col min-h-screen bg-surface">
+                <AdminTopBar admin={admin} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(true)} />
+
+                <div className="flex-grow overflow-y-auto p-4 lg:p-gutter">
                     <Routes>
                         <Route path="/" element={<AdminOverview />} />
                         <Route path="/shipments" element={<AdminShipmentsPage />} />

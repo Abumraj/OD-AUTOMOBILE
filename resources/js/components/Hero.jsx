@@ -83,8 +83,8 @@ function Hero() {
             </div>
             <div className="relative z-10 max-w-container-max mx-auto px-lg w-full">
                 <div className="max-w-2xl space-y-md">
-                    <h1 
-                        className="font-display-lg text-display-lg text-white leading-tight"
+                    <h1
+                        className="font-display-lg text-[28px] md:text-display-lg text-white leading-tight"
                         style={{
                             opacity: isLoaded ? 1 : 0,
                             transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
@@ -94,8 +94,8 @@ function Hero() {
                         {currentImage.title}
                     </h1>
                     {currentImage.description && (
-                        <p 
-                            className="font-body-lg text-body-lg text-on-surface-variant max-w-lg"
+                        <p
+                            className="font-body-lg text-base md:text-body-lg text-on-surface-variant max-w-lg"
                             style={{
                                 opacity: isLoaded ? 1 : 0,
                                 transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',

@@ -60,20 +60,20 @@ function TrackingPage() {
 
     return (
         <div className="min-h-screen bg-primary-container py-xl">
-            <div className="max-w-container-max mx-auto px-lg">
+            <div className="max-w-container-max mx-auto px-4 md:px-lg">
                 <div ref={headerRef} className="text-center mb-xl" style={fadeInUp(headerVisible)}>
                     <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
                         Shipment Tracking
                     </span>
-                    <h1 className="font-display-lg text-display-lg text-white mt-sm mb-md">
+                    <h1 className="font-display-lg text-[28px] md:text-display-lg text-white mt-sm mb-md">
                         Track Your Vehicle
                     </h1>
-                    <p className="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto">
+                    <p className="font-body-lg text-base md:text-body-lg text-on-surface-variant max-w-3xl mx-auto">
                         Enter your reference number to view real-time updates on your vehicle's journey.
                     </p>
                 </div>
 
-                <div ref={searchRef} className="max-w-2xl mx-auto mb-xl" style={scaleIn(searchVisible)}>
+                <div ref={searchRef} className="max-w-2xl mx-auto mb-xl px-4 md:px-0" style={scaleIn(searchVisible)}>
                     <div className="bg-surface-container-low p-lg rounded-xl border border-white/5">
                         <h3 className="font-title-md text-title-md text-white mb-md">
                             Enter Tracking Details
@@ -160,7 +160,7 @@ function TrackingPage() {
                                 <div className="h-full bg-secondary-container rounded-full transition-all duration-500" style={{width: `${trackingData.progress}%`}}></div>
                             </div>
 
-                            <div className="grid grid-cols-4 gap-base">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-base">
                                 {trackingData.stages.map((stage, index) => (
                                     <div key={index} className="text-center">
                                         <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full mb-sm ${stage.completed ? 'bg-secondary-container' : 'bg-surface-container'}`}>

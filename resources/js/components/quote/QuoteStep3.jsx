@@ -13,11 +13,11 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
     const isFormValid = formData.fullName && formData.email && formData.phone && formData.contactMethod;
 
     return (
-        <div className="min-h-screen bg-[#050533] flex flex-col items-center py-xl px-gutter relative overflow-hidden">
+        <div className="min-h-screen bg-[#050533] flex flex-col items-center py-xl px-4 md:px-gutter relative overflow-hidden">
             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary/10 blur-[100px] rounded-full"></div>
             <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-secondary/10 blur-[100px] rounded-full"></div>
-            
-            <div className="w-full max-w-[640px] z-10">
+
+            <div className="w-full max-w-[640px] z-10 px-4 sm:px-0">
                 <div className="mb-xl">
                     <div className="flex items-center justify-between mb-sm">
                         <span className="font-label-md text-label-md text-secondary">Step 3 of 4: Contact Details</span>
@@ -29,7 +29,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                 </div>
 
                 <div className="mb-lg">
-                    <h1 className="font-headline-lg text-headline-lg text-on-surface mb-xs">Almost there.</h1>
+                    <h1 className="font-headline-lg text-[22px] md:text-headline-lg text-on-surface mb-xs">Almost there.</h1>
                     <p className="font-body-md text-body-md text-on-surface-variant">
                         Please provide your contact information so our logistics experts can reach out with your custom quote.
                     </p>

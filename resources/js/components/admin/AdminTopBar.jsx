@@ -1,10 +1,17 @@
 import React from 'react';
 
-function AdminTopBar() {
+function AdminTopBar({ admin, onLogout, onMenuToggle }) {
     return (
-        <header className="h-16 flex justify-between items-center px-gutter border-b border-outline-variant bg-surface sticky top-0 z-40">
-            <div className="flex items-center flex-1">
-                <div className="relative w-96 group">
+        <header className="h-16 flex justify-between items-center px-4 lg:px-gutter border-b border-outline-variant bg-surface sticky top-0 z-40">
+            <div className="flex items-center flex-1 gap-3">
+                <button
+                    onClick={onMenuToggle}
+                    className="lg:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+                    aria-label="Open menu"
+                >
+                    <span className="material-symbols-outlined">menu</span>
+                </button>
+                <div className="relative w-full max-w-md group hidden sm:block">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
                     <input
                         className="w-full bg-surface-container-low border-outline-variant border rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-secondary focus:outline-none text-on-surface transition-all"

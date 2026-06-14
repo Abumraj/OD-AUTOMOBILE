@@ -18,27 +18,27 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                 <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 rounded-full bg-secondary blur-3xl"></div>
                 <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 rounded-full bg-tertiary blur-3xl"></div>
             </div>
-            <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden relative z-10 flex flex-col min-h-[700px]">
+            <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden relative z-10 flex flex-col min-h-[500px] md:min-h-[700px] mx-4 md:mx-0">
             <div className="bg-surface-container-lowest p-md border-b border-outline-variant/10">
-                <div className="flex justify-between items-center max-w-2xl mx-auto">
+                <div className="flex justify-between items-center max-w-2xl mx-auto px-2">
                     <div className="flex flex-col items-center gap-xs">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-white flex items-center justify-center font-bold">1</div>
-                        <span className="text-caption font-label-md text-secondary-container">Services</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-white flex items-center justify-center font-bold text-sm md:text-base">1</div>
+                        <span className="text-caption font-label-md text-secondary-container hidden sm:block">Services</span>
                     </div>
-                    <div className="flex-grow h-1 bg-secondary-container mx-4 rounded"></div>
+                    <div className="flex-grow h-1 bg-secondary-container mx-2 md:mx-4 rounded"></div>
                     <div className="flex flex-col items-center gap-xs">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-white flex items-center justify-center font-bold">2</div>
-                        <span className="text-caption font-label-md text-secondary-container">Vehicle</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-white flex items-center justify-center font-bold text-sm md:text-base">2</div>
+                        <span className="text-caption font-label-md text-secondary-container hidden sm:block">Vehicle</span>
                     </div>
-                    <div className="flex-grow h-1 bg-surface-container-highest mx-4 rounded"></div>
+                    <div className="flex-grow h-1 bg-surface-container-highest mx-2 md:mx-4 rounded"></div>
                     <div className="flex flex-col items-center gap-xs">
-                        <div className="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold">3</div>
-                        <span className="text-caption font-label-md text-on-surface-variant">Contact</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold text-sm md:text-base">3</div>
+                        <span className="text-caption font-label-md text-on-surface-variant hidden sm:block">Contact</span>
                     </div>
-                    <div className="flex-grow h-1 bg-surface-container-highest mx-4 rounded"></div>
+                    <div className="flex-grow h-1 bg-surface-container-highest mx-2 md:mx-4 rounded"></div>
                     <div className="flex flex-col items-center gap-xs">
-                        <div className="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold">4</div>
-                        <span className="text-caption font-label-md text-on-surface-variant">Summary</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold text-sm md:text-base">4</div>
+                        <span className="text-caption font-label-md text-on-surface-variant hidden sm:block">Summary</span>
                     </div>
                 </div>
             </div>
@@ -46,7 +46,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
             <form onSubmit={handleSubmit} className="flex-grow flex flex-col">
                 <div className="bg-white rounded-xl p-lg mb-lg">
                     <div className="mb-lg">
-                        <h1 className="font-headline-lg text-headline-lg text-primary-container mb-xs">Vehicle Details</h1>
+                        <h1 className="font-headline-lg text-[22px] md:text-headline-lg text-primary-container mb-xs">Vehicle Details</h1>
                         <p className="font-body-md text-body-md text-outline">Provide the specifications of the vehicle you wish to transport.</p>
                     </div>
                     
@@ -58,7 +58,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.make || ''}
                                 onChange={(e) => handleChange('make', e.target.value)}
                                 placeholder="e.g. Mercedes-Benz"
-                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors"
+                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors text-gray-900"
                                 required
                             />
                         </div>
@@ -69,7 +69,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.model || ''}
                                 onChange={(e) => handleChange('model', e.target.value)}
                                 placeholder="e.g. G-Class"
-                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors"
+                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors text-gray-900"
                                 required
                             />
                         </div>
@@ -78,7 +78,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                             <select
                                 value={formData.year || ''}
                                 onChange={(e) => handleChange('year', e.target.value)}
-                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors appearance-none bg-white"
+                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors appearance-none bg-white text-gray-900"
                                 required
                             >
                                 <option value="">Select Year</option>
@@ -96,7 +96,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.origin || ''}
                                 onChange={(e) => handleChange('origin', e.target.value)}
                                 placeholder="Port of Origin"
-                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors"
+                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors text-gray-900"
                                 required
                             />
                         </div>
@@ -108,7 +108,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                                     value={formData.destination || ''}
                                     onChange={(e) => handleChange('destination', e.target.value)}
                                     placeholder="Final Delivery Destination"
-                                    className="w-full p-sm pl-10 border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors"
+                                    className="w-full p-sm pl-10 border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors text-gray-900"
                                     required
                                 />
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">location_on</span>
@@ -127,7 +127,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                     </div>
                 </div>
 
-                <div className="p-md bg-surface-container-lowest border-t border-outline-variant/10 flex justify-between items-center">
+                <div className="p-md bg-surface-container-lowest border-t border-outline-variant/10 flex flex-col sm:flex-row justify-between items-center gap-3">
                     <button
                         type="button"
                         onClick={prevStep}

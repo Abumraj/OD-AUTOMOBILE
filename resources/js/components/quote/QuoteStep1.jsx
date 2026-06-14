@@ -31,34 +31,34 @@ function QuoteStep1({ formData, updateFormData, nextStep }) {
     };
 
     return (
-        <div className="w-full max-w-container-max mx-auto px-gutter py-xl">
+        <div className="w-full max-w-container-max mx-auto px-4 md:px-gutter py-xl">
             <div className="max-w-3xl mx-auto mb-xl">
                 <div className="flex justify-between items-center relative">
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-primary-container -translate-y-1/2 z-0"></div>
                     <div className="absolute top-1/2 left-0 w-1/4 h-1 bg-secondary-container -translate-y-1/2 z-0"></div>
-                    
+
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold border-4 border-primary-container">1</div>
-                        <span className="font-label-md text-label-md text-secondary mt-base">Services</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold border-4 border-primary-container text-sm md:text-base">1</div>
+                        <span className="font-label-md text-label-md text-secondary mt-base hidden sm:block">Services</span>
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold border-4 border-primary-container">2</div>
-                        <span className="font-label-md text-label-md text-on-surface-variant mt-base">Vehicle</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold border-4 border-primary-container text-sm md:text-base">2</div>
+                        <span className="font-label-md text-label-md text-on-surface-variant mt-base hidden sm:block">Vehicle</span>
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold border-4 border-primary-container">3</div>
-                        <span className="font-label-md text-label-md text-on-surface-variant mt-base">Contact</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold border-4 border-primary-container text-sm md:text-base">3</div>
+                        <span className="font-label-md text-label-md text-on-surface-variant mt-base hidden sm:block">Contact</span>
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold border-4 border-primary-container">4</div>
-                        <span className="font-label-md text-label-md text-on-surface-variant mt-base">Summary</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold border-4 border-primary-container text-sm md:text-base">4</div>
+                        <span className="font-label-md text-label-md text-on-surface-variant mt-base hidden sm:block">Summary</span>
                     </div>
                 </div>
             </div>
 
-            <div className="text-center mb-lg">
-                <h1 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Select Your Service</h1>
-                <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+            <div className="text-center mb-lg px-2">
+                <h1 className="font-headline-lg text-[22px] md:text-headline-lg text-on-surface mb-sm">Select Your Service</h1>
+                <p className="font-body-lg text-base md:text-body-lg text-on-surface-variant max-w-2xl mx-auto">
                     Choose the logistics solution that fits your automotive acquisition or transport needs.
                 </p>
             </div>
@@ -104,7 +104,7 @@ function QuoteStep1({ formData, updateFormData, nextStep }) {
                 ))}
             </div>
 
-            <div className="flex justify-between items-center max-w-3xl mx-auto">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center max-w-3xl mx-auto gap-4 px-4 sm:px-0">
                 <a href="/" className="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-xs px-md py-sm">
                     <span className="material-symbols-outlined">arrow_back</span>
                     Back to Home
@@ -112,7 +112,7 @@ function QuoteStep1({ formData, updateFormData, nextStep }) {
                 <button
                     onClick={nextStep}
                     disabled={!formData.service}
-                    className="bg-secondary-container text-on-secondary font-bold px-xl py-sm rounded-lg flex items-center gap-sm hover:opacity-80 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-secondary-container text-on-secondary font-bold px-xl py-sm rounded-lg flex items-center gap-sm hover:opacity-80 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                 >
                     Continue to Vehicle Details
                     <span className="material-symbols-outlined">arrow_forward</span>

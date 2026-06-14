@@ -486,16 +486,17 @@ function AuctionManager() {
                                         <select
                                             value={request.status}
                                             onChange={(e) => handleRequestStatusChange(request.id, e.target.value)}
-                                            className={`px-sm py-xs rounded-full font-caption border-0 cursor-pointer ${getStatusColor(request.status)}`}
+                                            className={`px-sm py-xs rounded-full font-caption cursor-pointer border border-white/20 ${getStatusColor(request.status)}`}
+                                            style={{ appearance: 'auto' }}
                                         >
-                                            <option value="pending">Pending</option>
-                                            <option value="searching">Searching</option>
-                                            <option value="found">Found</option>
-                                            <option value="bidding">Bidding</option>
-                                            <option value="won">Won</option>
-                                            <option value="lost">Lost</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
+                                            <option value="pending" className="bg-surface-container text-white">Pending</option>
+                                            <option value="searching" className="bg-surface-container text-white">Searching</option>
+                                            <option value="found" className="bg-surface-container text-white">Found</option>
+                                            <option value="bidding" className="bg-surface-container text-white">Bidding</option>
+                                            <option value="won" className="bg-surface-container text-white">Won</option>
+                                            <option value="lost" className="bg-surface-container text-white">Lost</option>
+                                            <option value="completed" className="bg-surface-container text-white">Completed</option>
+                                            <option value="cancelled" className="bg-surface-container text-white">Cancelled</option>
                                         </select>
                                     </td>
                                     <td className="py-md px-md font-caption text-on-surface-variant">
@@ -607,6 +608,7 @@ function AuctionManager() {
                                         >
                                             <option value="upcoming">Upcoming</option>
                                             <option value="live">Live</option>
+                                            <option value="bidding">Bidding</option>
                                             <option value="won">Won</option>
                                             <option value="lost">Lost</option>
                                             <option value="pending_payment">Pending Payment</option>

@@ -9,7 +9,7 @@ function DepositSection() {
                         verified_user
                     </span>
                 </div>
-                <h2 className="font-headline-lg text-headline-lg text-white mb-sm">
+                <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-white mb-sm">
                     Why We Request a <span className="text-secondary-container">$1000</span> Deposit
                 </h2>
                 <div className="inline-block bg-secondary-container px-md py-xs rounded-full mb-md">

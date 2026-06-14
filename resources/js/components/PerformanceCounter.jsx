@@ -23,8 +23,8 @@ function PerformanceCounter() {
         <section className="py-xl bg-primary-container border-t border-white/5">
             <div className="max-w-container-max mx-auto px-lg text-center">
                 <div ref={ref} className="space-y-sm" style={scaleIn(isVisible)}>
-                    <h2 className="font-display-lg text-display-lg text-white">
-                        <span className="text-[#f07020] block sm:inline">{deliveredCount}+</span> 
+                    <h2 className="font-display-lg text-[28px] md:text-display-lg text-white">
+                        <span className="text-[#f07020] block sm:inline">{deliveredCount}+</span>
                         {' '}Cars Successfully Delivered Across Africa
                     </h2>
                     <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">

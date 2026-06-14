@@ -11,6 +11,7 @@ function TestimonialsManager() {
         customer_name: '',
         location: '',
         company: '',
+        social_link: '',
         rating: 5,
         is_featured: false
     });
@@ -54,6 +55,7 @@ function TestimonialsManager() {
             customer_name: testimonial.customer_name,
             location: testimonial.location,
             company: testimonial.company || '',
+            social_link: testimonial.social_link || '',
             rating: testimonial.rating,
             is_featured: testimonial.is_featured
         });
@@ -91,6 +93,7 @@ function TestimonialsManager() {
             customer_name: '',
             location: '',
             company: '',
+            social_link: '',
             rating: 5,
             is_featured: false
         });
@@ -154,6 +157,16 @@ function TestimonialsManager() {
                             type="text"
                             value={formData.company}
                             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                            className="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-on-surface"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-on-surface-variant mb-1">Social Media Link (Optional)</label>
+                        <input
+                            type="url"
+                            value={formData.social_link}
+                            onChange={(e) => setFormData({ ...formData, social_link: e.target.value })}
+                            placeholder="https://instagram.com/username"
                             className="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-on-surface"
                         />
                     </div>

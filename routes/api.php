@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\TestimonialController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AuctionController;
 use App\Http\Controllers\Api\LegalPageController;
+use App\Http\Controllers\Api\DeploymentController;
 
 Route::middleware('api')->group(function () {
     Route::post('/quotes', [QuoteController::class, 'store']);
@@ -30,6 +31,7 @@ Route::middleware('api')->group(function () {
 
     Route::get('/carousel/active', [AdminDashboardController::class, 'getCarouselImages']);
     Route::get('/performance-settings', [AdminDashboardController::class, 'getPerformanceSettings']);
+    Route::get('/social-media-settings', [AdminDashboardController::class, 'getSocialMediaSettings']);
     Route::get('/services', [AdminDashboardController::class, 'getServices']);
 
     // Admin authentication routes (no middleware)
@@ -97,6 +99,9 @@ Route::middleware('api')->group(function () {
         Route::get('/performance-settings', [AdminDashboardController::class, 'getPerformanceSettings']);
         Route::post('/performance-settings', [AdminDashboardController::class, 'updatePerformanceSettings']);
 
+        Route::get('/social-media-settings', [AdminDashboardController::class, 'getSocialMediaSettings']);
+        Route::put('/social-media-settings', [AdminDashboardController::class, 'updateSocialMediaSettings']);
+
         Route::get('/services', [AdminDashboardController::class, 'getServices']);
         Route::get('/services/{id}', [AdminDashboardController::class, 'getService']);
         Route::post('/services', [AdminDashboardController::class, 'createService']);
@@ -107,4 +112,9 @@ Route::middleware('api')->group(function () {
     Route::get('/health', function () {
         return response()->json(['status' => 'ok']);
     });
+
+    // Deployment endpoints (protected by token)
+    Route::post('/deploy/migrate', [DeploymentController::class, 'runMigrations']);
+    Route::post('/deploy/cache-clear', [DeploymentController::class, 'clearCache']);
+    Route::get('/deploy/status', [DeploymentController::class, 'status']);
 });

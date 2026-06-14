@@ -23,27 +23,27 @@ function QuoteStep4({ formData, prevStep, handleSubmit, submitting }) {
     };
 
     return (
-        <div className="w-full max-w-container-max mx-auto px-gutter py-xl">
-            <div className="max-w-3xl mx-auto mb-lg">
+        <div className="w-full max-w-container-max mx-auto px-4 md:px-gutter py-xl">
+            <div className="max-w-3xl mx-auto mb-lg px-2">
                 <div className="flex items-center justify-between relative">
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-primary-container -translate-y-1/2 z-0"></div>
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-secondary-container -translate-y-1/2 z-0 scale-x-100 origin-left"></div>
-                    
+
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold">1</div>
-                        <span className="mt-xs font-label-md text-label-md text-on-surface-variant">Service</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold text-sm md:text-base">1</div>
+                        <span className="mt-xs font-label-md text-label-md text-on-surface-variant hidden sm:block">Service</span>
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold">2</div>
-                        <span className="mt-xs font-label-md text-label-md text-on-surface-variant">Vehicle</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold text-sm md:text-base">2</div>
+                        <span className="mt-xs font-label-md text-label-md text-on-surface-variant hidden sm:block">Vehicle</span>
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold">3</div>
-                        <span className="mt-xs font-label-md text-label-md text-on-surface-variant">Contact</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary flex items-center justify-center font-bold text-sm md:text-base">3</div>
+                        <span className="mt-xs font-label-md text-label-md text-on-surface-variant hidden sm:block">Contact</span>
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary ring-4 ring-secondary-container/30 flex items-center justify-center font-bold">4</div>
-                        <span className="mt-xs font-label-md text-label-md text-secondary">Summary</span>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary ring-4 ring-secondary-container/30 flex items-center justify-center font-bold text-sm md:text-base">4</div>
+                        <span className="mt-xs font-label-md text-label-md text-secondary hidden sm:block">Summary</span>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,7 @@ function QuoteStep4({ formData, prevStep, handleSubmit, submitting }) {
                     <div className="bg-primary-container border border-white/10 rounded-xl overflow-hidden">
                         <div className="bg-white/5 px-md py-sm border-b border-white/10 flex items-center gap-sm">
                             <span className="material-symbols-outlined text-secondary">description</span>
-                            <h2 className="font-headline-lg text-headline-lg text-on-surface">Quote Summary</h2>
+                            <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-on-surface">Quote Summary</h2>
                         </div>
                         <div className="p-md space-y-lg">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
@@ -127,7 +127,7 @@ function QuoteStep4({ formData, prevStep, handleSubmit, submitting }) {
                             <span className="bg-secondary-container/20 text-secondary text-xs px-2 py-1 rounded font-bold">SECURE PAYMENT</span>
                         </div>
                         <div className="text-center mb-md">
-                            <span className="font-display-lg text-display-lg text-secondary">$1,000.00</span>
+                            <span className="font-display-lg text-[28px] md:text-display-lg text-secondary">$1,000.00</span>
                             <p className="font-caption text-caption text-on-surface-variant mt-xs">Trust-building deposit required to finalize request</p>
                         </div>
                         <div className="bg-primary-container/50 rounded p-sm mb-lg border border-white/5">

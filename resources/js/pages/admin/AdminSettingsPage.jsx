@@ -3,6 +3,7 @@ import WhatsAppSettingsManager from '../../components/admin/WhatsAppSettingsMana
 import ContactSettingsManager from '../../components/admin/ContactSettingsManager';
 import TrackingProvidersManager from '../../components/admin/TrackingProvidersManager';
 import PerformanceSettingsManager from '../../components/admin/PerformanceSettingsManager';
+import SocialMediaSettingsManager from '../../components/admin/SocialMediaSettingsManager';
 
 function AdminSettingsPage() {
     return (
@@ -18,6 +19,8 @@ function AdminSettingsPage() {
                 <WhatsAppSettingsManager />
                 <ContactSettingsManager />
             </div>
+
+            <SocialMediaSettingsManager />
 
             <PerformanceSettingsManager />
 

@@ -85,15 +85,15 @@ function ServicesPage() {
     console.log('Rendering main content with', services.length, 'services');
     return (
         <div className="min-h-screen bg-primary-container py-xl">
-            <div className="max-w-container-max mx-auto px-lg">
+            <div className="max-w-container-max mx-auto px-4 md:px-lg">
                 <div ref={headerRef} className="text-center mb-xl">
                     <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
                         Our Services
                     </span>
-                    <h1 className="font-display-lg text-display-lg text-white mt-sm mb-md">
+                    <h1 className="font-display-lg text-[28px] md:text-display-lg text-white mt-sm mb-md">
                         Complete Automotive Logistics Solutions
                     </h1>
-                    <p className="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto">
+                    <p className="font-body-lg text-base md:text-body-lg text-on-surface-variant max-w-3xl mx-auto">
                         From auction floor to your doorstep, we handle every aspect of the automotive import process with precision and professionalism.
                     </p>
                 </div>

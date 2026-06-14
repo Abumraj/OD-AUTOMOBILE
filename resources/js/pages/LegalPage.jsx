@@ -67,22 +67,22 @@ function LegalPage() {
     console.log('Rendering legal page content');
     return (
         <div className="min-h-screen bg-surface">
-            <div className="container-padding py-xl">
+            <div className="px-4 md:px-lg py-xl">
                 <div ref={headerRef} className="max-w-4xl mx-auto mb-xl">
-                    <h1 className="font-display-lg text-display-lg text-white mb-md">
+                    <h1 className="font-display-lg text-[28px] md:text-display-lg text-white mb-md">
                         {page.title}
                     </h1>
                     {page.meta_description && (
-                        <p className="font-body-lg text-on-surface-variant">
+                        <p className="font-body-lg text-base md:text-body-lg text-on-surface-variant">
                             {page.meta_description}
                         </p>
                     )}
                     <div className="h-1 w-20 bg-secondary-container mt-md"></div>
                 </div>
 
-                <div 
-                    ref={contentRef} 
-                    className="max-w-4xl mx-auto bg-surface-container rounded-xl p-lg border border-white/10"
+                <div
+                    ref={contentRef}
+                    className="max-w-4xl mx-auto bg-surface-container rounded-xl p-4 md:p-lg border border-white/10"
                 >
                     <div 
                         className="legal-content"
