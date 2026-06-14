@@ -47,7 +47,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.fullName || ''}
                                 onChange={(e) => handleChange('fullName', e.target.value)}
                                 placeholder="John Doe"
-                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
+                                className="w-full bg-white border border-gray-300 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
                                 required
                             />
                         </div>
@@ -62,7 +62,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.email || ''}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 placeholder="john@example.com"
-                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
+                                className="w-full bg-white border border-gray-300 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
                                 required
                             />
                         </div>
@@ -77,7 +77,7 @@ function QuoteStep3({ formData, updateFormData, nextStep, prevStep }) {
                                 value={formData.phone || ''}
                                 onChange={(e) => handleChange('phone', e.target.value)}
                                 placeholder="+1 (555) 000-0000"
-                                className="w-full bg-surface-container-lowest border border-outline-variant/30 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
+                                className="w-full bg-white border border-gray-300 text-gray-900 p-sm focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none transition-all rounded"
                                 required
                             />
                         </div>
