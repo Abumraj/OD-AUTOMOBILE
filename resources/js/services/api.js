@@ -79,6 +79,7 @@ export const api = {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
     });
     if (!response.ok) throw new Error("Failed to approve quote");
     return response.json();
@@ -90,6 +91,7 @@ export const api = {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
     });
     if (!response.ok) throw new Error("Failed to reject quote");
     return response.json();

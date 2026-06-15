@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TopNavBar from './TopNavBar';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
+import SocialMediaButtons from './SocialMediaButtons';
 import HomePage from '../pages/HomePage';
 import ServicesPage from '../pages/ServicesPage';
 import TrackingPage from '../pages/TrackingPage';
@@ -33,6 +34,7 @@ function App() {
                                 <Route path="/legal/:slug" element={<LegalPage />} />
                             </Routes>
                             <Footer />
+                            <SocialMediaButtons />
                             <WhatsAppButton />
                         </div>
                     } />

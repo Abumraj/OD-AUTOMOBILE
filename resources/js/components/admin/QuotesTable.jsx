@@ -47,7 +47,7 @@ function QuotesTable() {
 
         try {
             const result = await api.approveQuote(id);
-            alert(`Quote approved! Shipment created with tracking ID: ${result.tracking_id}`);
+            alert(`Quote approved! Shipment created with tracking number: ${result.tracking_number}`);
             fetchQuotes();
         } catch (error) {
             console.error('Error approving quote:', error);

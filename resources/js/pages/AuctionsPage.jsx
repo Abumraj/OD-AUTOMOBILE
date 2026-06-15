@@ -14,6 +14,7 @@ function AuctionsPage() {
         vehicle_model: '',
         vehicle_year: '',
         max_budget: '',
+        currency: 'USD',
         additional_requirements: ''
     });
 
@@ -226,14 +227,28 @@ function AuctionsPage() {
                                     value={formData.vehicle_year}
                                     onChange={(e) => setFormData({...formData, vehicle_year: e.target.value})}
                                 />
-                                <input 
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
-                                    placeholder="Maximum Budget" 
-                                    type="number"
-                                    required
-                                    value={formData.max_budget}
-                                    onChange={(e) => setFormData({...formData, max_budget: e.target.value})}
-                                />
+                                <div className="flex gap-2">
+                                    <select
+                                        className="bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors w-28"
+                                        value={formData.currency}
+                                        onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                                    >
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="CAD">CAD</option>
+                                        <option value="AUD">AUD</option>
+                                        <option value="JPY">JPY</option>
+                                    </select>
+                                    <input 
+                                        className="flex-1 bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
+                                        placeholder="Maximum Budget" 
+                                        type="number"
+                                        required
+                                        value={formData.max_budget}
+                                        onChange={(e) => setFormData({...formData, max_budget: e.target.value})}
+                                    />
+                                </div>
                                 <textarea 
                                     className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
                                     placeholder="Additional Requirements (Optional)" 

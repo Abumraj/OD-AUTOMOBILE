@@ -269,22 +269,26 @@ class AdminDashboardController extends Controller
                 'updated_at' => now()
             ]);
 
-        $trackingId = 'OD-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT) . '-AUTO';
+        $trackingNumber = 'OD-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT) . '-AUTO';
+        $referenceNumber = 'REF-' . str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
 
         $shipmentId = DB::table('shipments')->insertGetId([
-            'tracking_id' => $trackingId,
+            'tracking_number' => $trackingNumber,
+            'reference_number' => $referenceNumber,
+            'quote_id' => $quote->id,
             'customer_name' => $quote->customer_name,
             'customer_email' => $quote->email,
-            'customer_phone' => $quote->phone,
-            'vehicle_year' => $quote->vehicle_year,
-            'vehicle_make' => $quote->vehicle_make,
-            'vehicle_model' => $quote->vehicle_model,
-            'origin' => $quote->origin,
-            'destination' => $quote->destination,
-            'status' => 'procurement',
-            'is_starred' => false,
-            'is_delayed' => false,
-            'clearance_progress' => 0,
+            'customer_phone' => $quote->phone ?? '',
+            'vehicle_year' => $quote->vehicle_year ?? '',
+            'vehicle_make' => $quote->vehicle_make ?? '',
+            'vehicle_model' => $quote->vehicle_model ?? '',
+            'origin_port' => $quote->origin ?? '',
+            'origin_country' => $quote->origin ?? '',
+            'destination_port' => $quote->destination ?? '',
+            'destination_country' => $quote->destination ?? '',
+            'status' => 'pending',
+            'progress_percentage' => 0,
+            'is_active' => true,
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -296,7 +300,7 @@ class AdminDashboardController extends Controller
         DB::table('activity_logs')->insert([
             'icon' => 'check_circle',
             'user_name' => 'Admin',
-            'action' => 'approved quote and created shipment ' . $trackingId . ' for ' . $quote->customer_name,
+            'action' => 'approved quote and created shipment ' . $trackingNumber . ' for ' . $quote->customer_name,
             'location' => 'Admin Dashboard',
             'created_at' => now(),
             'updated_at' => now()
@@ -305,7 +309,8 @@ class AdminDashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Quote approved and shipment created',
-            'tracking_id' => $trackingId,
+            'tracking_number' => $trackingNumber,
+            'reference_number' => $referenceNumber,
             'shipment_id' => $shipmentId
         ]);
     }
