@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function LegalPagesManager() {
     const [pages, setPages] = useState([]);
@@ -120,6 +122,28 @@ function LegalPagesManager() {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), 3000);
     };
+
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'indent': '-1'}, { 'indent': '+1' }],
+            [{ 'align': [] }],
+            ['link'],
+            [{ 'color': [] }, { 'background': [] }],
+            ['clean']
+        ],
+    };
+
+    const formats = [
+        'header',
+        'bold', 'italic', 'underline', 'strike',
+        'list', 'bullet', 'indent',
+        'link',
+        'align',
+        'color', 'background'
+    ];
 
     if (loading) {
         return (
@@ -267,14 +291,17 @@ function LegalPagesManager() {
                             </div>
 
                             <div>
-                                <label className="block font-label-md text-on-surface-variant mb-xs">Content * (HTML supported)</label>
-                                <textarea
-                                    required
-                                    value={formData.content}
-                                    onChange={(e) => setFormData({...formData, content: e.target.value})}
-                                    rows="15"
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container font-mono text-sm"
-                                ></textarea>
+                                <label className="block font-label-md text-on-surface-variant mb-xs">Content *</label>
+                                <div className="bg-white rounded-lg">
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={formData.content}
+                                        onChange={(content) => setFormData({...formData, content})}
+                                        modules={modules}
+                                        formats={formats}
+                                        className="h-64"
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-md">

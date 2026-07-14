@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AuctionController;
 use App\Http\Controllers\Api\LegalPageController;
 use App\Http\Controllers\Api\DeploymentController;
+use App\Http\Controllers\Api\ShippingConfigController;
+use App\Http\Controllers\Api\ShipmentImportExportController;
+use App\Http\Controllers\Api\DockReceiptController;
 
 Route::middleware('api')->group(function () {
     Route::post('/quotes', [QuoteController::class, 'store']);
@@ -29,9 +32,13 @@ Route::middleware('api')->group(function () {
     Route::get('/legal-pages/published', [LegalPageController::class, 'getPublishedPages']);
     Route::get('/legal-pages/{slug}', [LegalPageController::class, 'getPageBySlug']);
 
+    Route::get('/about-us/published', [AdminDashboardController::class, 'getAboutUsSections']);
+
     Route::get('/carousel/active', [AdminDashboardController::class, 'getCarouselImages']);
     Route::get('/performance-settings', [AdminDashboardController::class, 'getPerformanceSettings']);
     Route::get('/social-media-settings', [AdminDashboardController::class, 'getSocialMediaSettings']);
+    Route::get('/general-settings', [AdminDashboardController::class, 'getGeneralSettings']);
+    Route::get('/homepage-services', [AdminDashboardController::class, 'getHomepageServices']);
     Route::get('/services', [AdminDashboardController::class, 'getServices']);
 
     // Admin authentication routes (no middleware)
@@ -90,6 +97,10 @@ Route::middleware('api')->group(function () {
         Route::put('/legal-pages/{id}', [AdminDashboardController::class, 'updateLegalPage']);
         Route::delete('/legal-pages/{id}', [AdminDashboardController::class, 'deleteLegalPage']);
 
+        Route::get('/about-us', [AdminDashboardController::class, 'getAboutUsSections']);
+        Route::get('/about-us/{id}', [AdminDashboardController::class, 'getAboutUsSection']);
+        Route::put('/about-us/{id}', [AdminDashboardController::class, 'updateAboutUsSection']);
+
         Route::get('/carousel', [AdminDashboardController::class, 'getCarouselImages']);
         Route::get('/carousel/{id}', [AdminDashboardController::class, 'getCarouselImage']);
         Route::post('/carousel', [AdminDashboardController::class, 'createCarouselImage']);
@@ -102,11 +113,57 @@ Route::middleware('api')->group(function () {
         Route::get('/social-media-settings', [AdminDashboardController::class, 'getSocialMediaSettings']);
         Route::put('/social-media-settings', [AdminDashboardController::class, 'updateSocialMediaSettings']);
 
+        Route::get('/general-settings', [AdminDashboardController::class, 'getGeneralSettings']);
+        Route::put('/general-settings', [AdminDashboardController::class, 'updateGeneralSettings']);
+
+        Route::get('/homepage-services', [AdminDashboardController::class, 'getHomepageServices']);
+        Route::put('/homepage-services/{id}', [AdminDashboardController::class, 'updateHomepageService']);
+        Route::put('/homepage-services-settings', [AdminDashboardController::class, 'updateHomepageServicesSettings']);
+
+        Route::get('/email-templates', [AdminDashboardController::class, 'getEmailTemplates']);
+        Route::get('/email-templates/{id}', [AdminDashboardController::class, 'getEmailTemplate']);
+        Route::put('/email-templates/{id}', [AdminDashboardController::class, 'updateEmailTemplate']);
+        Route::post('/email-templates/{id}/test', [AdminDashboardController::class, 'testEmailTemplate']);
+
+        Route::get('/sms-templates', [AdminDashboardController::class, 'getSMSTemplates']);
+        Route::get('/sms-templates/{id}', [AdminDashboardController::class, 'getSMSTemplate']);
+        Route::put('/sms-templates/{id}', [AdminDashboardController::class, 'updateSMSTemplate']);
+        Route::post('/sms-templates/{id}/test', [AdminDashboardController::class, 'testSMSTemplate']);
+
+        Route::get('/termii-settings', [AdminDashboardController::class, 'getTermiiSettings']);
+        Route::put('/termii-settings', [AdminDashboardController::class, 'updateTermiiSettings']);
+        Route::get('/termii-balance', [AdminDashboardController::class, 'getTermiiBalance']);
+        Route::get('/sms-log', [AdminDashboardController::class, 'getSMSLog']);
+
         Route::get('/services', [AdminDashboardController::class, 'getServices']);
         Route::get('/services/{id}', [AdminDashboardController::class, 'getService']);
         Route::post('/services', [AdminDashboardController::class, 'createService']);
         Route::put('/services/{id}', [AdminDashboardController::class, 'updateService']);
         Route::delete('/services/{id}', [AdminDashboardController::class, 'deleteService']);
+
+        // Shipping configuration
+        Route::get('/shipping-types', [ShippingConfigController::class, 'getShippingTypes']);
+        Route::post('/shipping-types', [ShippingConfigController::class, 'createShippingType']);
+        Route::put('/shipping-types/{id}', [ShippingConfigController::class, 'updateShippingType']);
+        Route::delete('/shipping-types/{id}', [ShippingConfigController::class, 'deleteShippingType']);
+
+        Route::get('/shipping-lines', [ShippingConfigController::class, 'getShippingLines']);
+        Route::post('/shipping-lines', [ShippingConfigController::class, 'createShippingLine']);
+        Route::put('/shipping-lines/{id}', [ShippingConfigController::class, 'updateShippingLine']);
+        Route::delete('/shipping-lines/{id}', [ShippingConfigController::class, 'deleteShippingLine']);
+
+        // Import/Export
+        Route::post('/shipments/import', [ShipmentImportExportController::class, 'importExcel']);
+        Route::get('/shipments/export', [ShipmentImportExportController::class, 'exportExcel']);
+
+        // Dock Receipts
+        Route::post('/shipments/{shipmentId}/dock-receipt/preview', [DockReceiptController::class, 'previewReceipt']);
+        Route::post('/shipments/{shipmentId}/dock-receipt', [DockReceiptController::class, 'generateReceipt']);
+        Route::get('/dock-receipts/{receiptId}/download', [DockReceiptController::class, 'downloadReceipt']);
+        Route::get('/shipments/{shipmentId}/dock-receipts', [DockReceiptController::class, 'getShipmentReceipts']);
+
+        // Analytics
+        Route::get('/analytics', [AdminDashboardController::class, 'getAnalytics']);
     });
 
     Route::get('/health', function () {

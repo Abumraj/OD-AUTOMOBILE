@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300">
+  <!-- OD Logo with ship - White on transparent for dark backgrounds -->
+  
+  <!-- O Letter with circular design -->
+  <g transform="translate(50, 50)">
+    <!-- Outer circle -->
+    <path d="M 100 150 A 100 100 0 0 1 0 150 A 100 100 0 0 1 100 150 Z" fill="white" opacity="0.95"/>
+    <!-- Inner circle cutout -->
+    <circle cx="50" cy="75" r="60" fill="none" stroke="white" stroke-width="15"/>
+    <!-- Wave design -->
+    <path d="M 0 100 Q 25 90 50 100 T 100 100" stroke="white" stroke-width="8" fill="none"/>
+  </g>
+  
+  <!-- D Letter with ship -->
+  <g transform="translate(200, 50)">
+    <!-- D shape -->
+    <rect x="0" y="0" width="150" height="200" fill="white"/>
+    <path d="M 150 0 Q 250 50 250 100 Q 250 150 150 200 Z" fill="white"/>
+    
+    <!-- Ship illustration -->
+    <g transform="translate(60, 60)">
+      <path d="M 40 20 L 50 10 L 60 20 L 60 40 L 40 40 Z" fill="#001f3f"/>
+      <rect x="35" y="40" width="30" height="15" fill="#001f3f"/>
+      <path d="M 30 55 L 70 55 L 75 65 L 25 65 Z" fill="#001f3f"/>
+      <!-- Waves -->
+      <path d="M 20 70 Q 30 65 40 70 T 60 70 T 80 70" stroke="#001f3f" stroke-width="3" fill="none"/>
+      <path d="M 15 78 Q 25 73 35 78 T 55 78 T 75 78" stroke="#001f3f" stroke-width="3" fill="none"/>
+    </g>
+  </g>
+  
+  <!-- AUTOMOTIVE text -->
+  <text x="50" y="270" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">
+    AUTOM
+    <tspan fill="#ea6b1b">O</tspan>
+    TIVE
+  </text>
+  
+  <!-- & LOGISTICS text -->
+  <text x="50" y="295" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white">
+    &amp; 
+    <tspan fill="#ea6b1b">LOGISTICS</tspan>
+  </text>
+</svg>

@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 function Footer() {
     const [legalPages, setLegalPages] = useState([]);
     const [socialLinks, setSocialLinks] = useState({});
+    const [officeInfo, setOfficeInfo] = useState({
+        address: '',
+        city: '',
+        country: '',
+        phone: '',
+        email: ''
+    });
+    const { isDark } = useTheme();
 
     useEffect(() => {
         fetchLegalPages();
         fetchSocialLinks();
+        fetchOfficeInfo();
     }, []);
 
     const fetchLegalPages = async () => {
@@ -30,6 +40,22 @@ function Footer() {
         }
     };
 
+    const fetchOfficeInfo = async () => {
+        try {
+            const response = await fetch('/api/general-settings');
+            const data = await response.json();
+            setOfficeInfo({
+                address: data.office_address || '',
+                city: data.office_city || '',
+                country: data.office_country || '',
+                phone: data.office_phone || '',
+                email: data.office_email || ''
+            });
+        } catch (error) {
+            console.error('Error fetching office info:', error);
+        }
+    };
+
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -43,7 +69,7 @@ function Footer() {
                             <img 
                                 alt="OD Automotive" 
                                 className="h-8 w-auto" 
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB63869ZYy-o1-kIIlrJBnXNXGR2DG8GzND5S4mScSkdcOz7n2qi3mXrzIEgY-ZGubGMuBQNqKeo3tKKr4PlJivEW94_NYJjpOUwEIjedxF62tNvk3FyPWX_GCcky5NaAjc6KRTebrkdBZXqtkZ90HS4yd8P_3H-hmlMjYZ2VMVXCQpebeeUeXzzyJskmxBgRik1KfQbKODWTyaCNUG_DTB-qLzvntnduIb4bW9FuTiXznxPIBJQ3lOK02nvIHrRoaMCBvVhuzfTKRd"
+                                src={isDark ? '/logo-dark.png' : '/logo-light.png'}
                             />
                             <span className="font-title-md text-title-md font-bold text-on-surface">
                                 OD Automotive
@@ -84,6 +110,41 @@ function Footer() {
                         </ul>
                     </div>
                 </div>
+
+                {/* Office Address Section */}
+                {(officeInfo.address || officeInfo.phone || officeInfo.email) && (
+                    <div className="mt-lg pt-lg border-t border-white/5">
+                        <h4 className="text-white font-title-md text-title-md mb-md">Office Address</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-md font-caption text-caption text-on-surface-variant">
+                            {officeInfo.address && (
+                                <div className="flex items-start gap-sm">
+                                    <span className="material-symbols-outlined text-secondary-container text-lg">location_on</span>
+                                    <div>
+                                        <p>{officeInfo.address}</p>
+                                        {officeInfo.city && <p>{officeInfo.city}{officeInfo.country && `, ${officeInfo.country}`}</p>}
+                                    </div>
+                                </div>
+                            )}
+                            {officeInfo.phone && (
+                                <div className="flex items-start gap-sm">
+                                    <span className="material-symbols-outlined text-secondary-container text-lg">phone</span>
+                                    <a href={`tel:${officeInfo.phone}`} className="hover:text-secondary transition-colors">
+                                        {officeInfo.phone}
+                                    </a>
+                                </div>
+                            )}
+                            {officeInfo.email && (
+                                <div className="flex items-start gap-sm">
+                                    <span className="material-symbols-outlined text-secondary-container text-lg">mail</span>
+                                    <a href={`mailto:${officeInfo.email}`} className="hover:text-secondary transition-colors">
+                                        {officeInfo.email}
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 <div className="pt-lg border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-md">
                     <span className="font-caption text-caption text-on-surface-variant">
                         © 2024 OD Automotive &amp; Logistics. Reliable industrial transport solutions.

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AdminDashboardController extends Controller
 {
@@ -83,10 +86,10 @@ class AdminDashboardController extends Controller
     {
         $totalQuotes = DB::table('quotes')->count();
         $activeShipments = DB::table('shipments')
-            ->whereIn('status', ['shipping', 'at_port', 'clearing'])
+            ->whereIn('status', ['shipping', 'in_transit', 'customs'])
             ->count();
         $pendingClearance = DB::table('shipments')
-            ->where('status', 'clearing')
+            ->where('status', 'customs')
             ->count();
         $deliveredYTD = DB::table('shipments')
             ->where('status', 'delivered')
@@ -105,7 +108,7 @@ class AdminDashboardController extends Controller
             : 0;
 
         $criticalDelays = DB::table('shipments')
-            ->where('status', 'at_port')
+            ->where('status', 'in_transit')
             ->whereNotNull('estimated_arrival_date')
             ->whereRaw('estimated_arrival_date < NOW()')
             ->whereNull('actual_arrival_date')
@@ -131,7 +134,7 @@ class AdminDashboardController extends Controller
 
     public function getKanbanData()
     {
-        $stages = ['procurement', 'shipping', 'at_port', 'clearing', 'delivery'];
+        $stages = ['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered'];
         $kanbanData = [];
 
         foreach ($stages as $stage) {
@@ -161,6 +164,70 @@ class AdminDashboardController extends Controller
         }
 
         return response()->json($kanbanData);
+    }
+
+    public function getAnalytics()
+    {
+        // Shipments over time (last 6 months)
+        $shipmentsOverTime = DB::table('shipments')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        // Status distribution
+        $statusDistribution = DB::table('shipments')
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->get();
+
+        // Monthly revenue (using total_cost)
+        $monthlyRevenue = DB::table('shipments')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(CAST(total_cost AS DECIMAL(10,2))) as revenue')
+            )
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->whereNotNull('total_cost')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        // Top destinations
+        $topDestinations = DB::table('shipments')
+            ->select('destination_country', DB::raw('COUNT(*) as count'))
+            ->groupBy('destination_country')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get();
+
+        // Quotes vs Shipments comparison
+        $quotesVsShipments = DB::table(DB::raw('(
+            SELECT DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count, "quotes" as type
+            FROM quotes
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+            GROUP BY month
+            UNION ALL
+            SELECT DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count, "shipments" as type
+            FROM shipments
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+            GROUP BY month
+        ) as combined'))
+            ->select('month', 'type', 'count')
+            ->orderBy('month')
+            ->get();
+
+        return response()->json([
+            'shipments_over_time' => $shipmentsOverTime,
+            'status_distribution' => $statusDistribution,
+            'monthly_revenue' => $monthlyRevenue,
+            'top_destinations' => $topDestinations,
+            'quotes_vs_shipments' => $quotesVsShipments
+        ]);
     }
 
     public function getActivityStream()
@@ -204,15 +271,58 @@ class AdminDashboardController extends Controller
     public function updateShipmentStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:procurement,shipping,at_port,clearing,delivery'
+            'status' => 'required|in:pending,auction_won,documentation,shipping,in_transit,customs,delivered,cancelled'
         ]);
+
+        $shipment = DB::table('shipments')->where('id', $id)->first();
+
+        if (!$shipment) {
+            return response()->json(['error' => 'Shipment not found'], 404);
+        }
+
+        $progressMap = [
+            'pending' => 0,
+            'auction_won' => 15,
+            'documentation' => 30,
+            'shipping' => 45,
+            'in_transit' => 70,
+            'customs' => 85,
+            'delivered' => 100,
+            'cancelled' => 0
+        ];
 
         DB::table('shipments')
             ->where('id', $id)
             ->update([
                 'status' => $validated['status'],
+                'progress_percentage' => $progressMap[$validated['status']] ?? 0,
                 'updated_at' => now()
             ]);
+
+        // Add status update log
+        if ($shipment->status !== $validated['status']) {
+            DB::table('shipment_updates')->insert([
+                'shipment_id' => $id,
+                'status' => $validated['status'],
+                'description' => 'Status updated to ' . $validated['status'],
+                'update_date' => now(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        // Notify customer about status change (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendShipmentUpdate((object) array_merge((array) $shipment, [
+                'status' => $validated['status']
+            ]));
+        } catch (\Exception $e) {
+            Log::error('Failed to notify customer about shipment status update', [
+                'shipment_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         DB::table('activity_logs')->insert([
             'icon' => 'sync',
@@ -296,6 +406,35 @@ class AdminDashboardController extends Controller
         DB::table('quotes')
             ->where('id', $id)
             ->update(['status' => 'converted']);
+
+        // Notify customer about new shipment (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendShipmentUpdate((object) [
+                'id' => $shipmentId,
+                'tracking_number' => $trackingNumber,
+                'reference_number' => $referenceNumber,
+                'customer_name' => $quote->customer_name,
+                'customer_email' => $quote->email,
+                'customer_phone' => $quote->phone ?? '',
+                'status' => 'pending',
+                'vehicle_year' => $quote->vehicle_year,
+                'vehicle_make' => $quote->vehicle_make,
+                'vehicle_model' => $quote->vehicle_model,
+                'origin_port' => $quote->origin,
+                'origin_country' => $quote->origin,
+                'destination_port' => $quote->destination,
+                'destination_country' => $quote->destination,
+                'estimated_arrival_date' => 'TBD',
+                'delivery_date' => null
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to notify customer about shipment created from quote', [
+                'shipment_id' => $shipmentId,
+                'quote_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         DB::table('activity_logs')->insert([
             'icon' => 'check_circle',
@@ -771,7 +910,10 @@ class AdminDashboardController extends Controller
     public function getShipments()
     {
         $shipments = DB::table('shipments')
-            ->orderBy('created_at', 'desc')
+            ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
+            ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
+            ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
+            ->orderBy('shipments.created_at', 'desc')
             ->get()
             ->map(function ($shipment) {
                 return [
@@ -787,6 +929,17 @@ class AdminDashboardController extends Controller
                     'vehicle_year' => $shipment->vehicle_year,
                     'vehicle_vin' => $shipment->vehicle_vin,
                     'vehicle_description' => $shipment->vehicle_description,
+                    'car_model' => $shipment->car_model,
+                    'year' => $shipment->year,
+                    'car_color' => $shipment->car_color,
+                    'image_link' => $shipment->image_link,
+                    'vin' => $shipment->vin,
+                    'shipping_type_id' => $shipment->shipping_type_id,
+                    'shipping_type_name' => $shipment->shipping_type_name,
+                    'shipping_line_id' => $shipment->shipping_line_id,
+                    'shipping_line_name' => $shipment->shipping_line_name,
+                    'eta' => $shipment->eta,
+                    'client_name' => $shipment->client_name,
                     'origin' => $shipment->origin_port . ', ' . $shipment->origin_country,
                     'origin_port' => $shipment->origin_port,
                     'origin_country' => $shipment->origin_country,
@@ -861,7 +1014,16 @@ class AdminDashboardController extends Controller
             'estimated_arrival_date' => 'nullable|date',
             'total_cost' => 'nullable|numeric',
             'notes' => 'nullable|string',
-            'admin_notes' => 'nullable|string'
+            'admin_notes' => 'nullable|string',
+            'car_model' => 'nullable|string|max:255',
+            'year' => 'nullable|string|max:4',
+            'car_color' => 'nullable|string|max:100',
+            'image_link' => 'nullable|string',
+            'vin' => 'nullable|string|max:17',
+            'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
+            'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
+            'eta' => 'nullable|date',
+            'client_name' => 'nullable|string|max:255'
         ]);
 
         // Generate tracking and reference numbers
@@ -908,6 +1070,15 @@ class AdminDashboardController extends Controller
             'total_cost' => $validated['total_cost'] ?? null,
             'notes' => $validated['notes'] ?? null,
             'admin_notes' => $validated['admin_notes'] ?? null,
+            'car_model' => $validated['car_model'] ?? null,
+            'year' => $validated['year'] ?? null,
+            'car_color' => $validated['car_color'] ?? null,
+            'image_link' => $validated['image_link'] ?? null,
+            'vin' => $validated['vin'] ?? null,
+            'shipping_type_id' => $validated['shipping_type_id'] ?? null,
+            'shipping_line_id' => $validated['shipping_line_id'] ?? null,
+            'eta' => $validated['eta'] ?? null,
+            'client_name' => $validated['client_name'] ?? null,
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now()
@@ -922,6 +1093,34 @@ class AdminDashboardController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        // Notify customer about new shipment (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendShipmentUpdate((object) [
+                'id' => $shipmentId,
+                'tracking_number' => $trackingNumber,
+                'reference_number' => $referenceNumber,
+                'customer_name' => $validated['customer_name'],
+                'customer_email' => $validated['customer_email'],
+                'customer_phone' => $validated['customer_phone'] ?? null,
+                'status' => $validated['status'],
+                'vehicle_year' => $validated['vehicle_year'],
+                'vehicle_make' => $validated['vehicle_make'],
+                'vehicle_model' => $validated['vehicle_model'],
+                'origin_port' => $validated['origin_port'],
+                'origin_country' => $validated['origin_country'],
+                'destination_port' => $validated['destination_port'],
+                'destination_country' => $validated['destination_country'],
+                'estimated_arrival_date' => $validated['estimated_arrival_date'] ?? null,
+                'delivery_date' => $validated['delivery_date'] ?? null
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to notify customer about new shipment', [
+                'shipment_id' => $shipmentId,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         DB::table('activity_stream')->insert([
             'action' => 'Shipment Created',
@@ -1032,6 +1231,19 @@ class AdminDashboardController extends Controller
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
+
+            // Notify customer about status change (silently fail if not possible)
+            try {
+                $notificationService = new NotificationService();
+                $notificationService->sendShipmentUpdate((object) array_merge((array) $shipment, [
+                    'status' => $validated['status']
+                ]));
+            } catch (\Exception $e) {
+                Log::error('Failed to notify customer about shipment status change', [
+                    'shipment_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
 
         DB::table('activity_stream')->insert([
@@ -1081,6 +1293,12 @@ class AdminDashboardController extends Controller
             'description' => 'required|string'
         ]);
 
+        $shipment = DB::table('shipments')->where('id', $id)->first();
+
+        if (!$shipment) {
+            return response()->json(['error' => 'Shipment not found'], 404);
+        }
+
         DB::table('shipment_updates')->insert([
             'shipment_id' => $id,
             'status' => $validated['status'],
@@ -1090,6 +1308,19 @@ class AdminDashboardController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        // Notify customer about new update (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendShipmentUpdate((object) array_merge((array) $shipment, [
+                'status' => $validated['status']
+            ]), $validated['location'] ?? $validated['description']);
+        } catch (\Exception $e) {
+            Log::error('Failed to notify customer about shipment update', [
+                'shipment_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -1536,6 +1767,64 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    // About Us Management
+    public function getAboutUsSections()
+    {
+        $sections = DB::table('about_us')
+            ->orderBy('display_order', 'asc')
+            ->get();
+
+        return response()->json($sections);
+    }
+
+    public function getAboutUsSection($id)
+    {
+        $section = DB::table('about_us')->where('id', $id)->first();
+
+        if (!$section) {
+            return response()->json(['error' => 'Section not found'], 404);
+        }
+
+        return response()->json($section);
+    }
+
+    public function updateAboutUsSection(Request $request, $id)
+    {
+        $section = DB::table('about_us')->where('id', $id)->first();
+
+        if (!$section) {
+            return response()->json(['error' => 'Section not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'is_published' => 'boolean',
+            'display_order' => 'integer'
+        ]);
+
+        DB::table('about_us')->where('id', $id)->update([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'is_published' => $validated['is_published'] ?? true,
+            'display_order' => $validated['display_order'] ?? 0,
+            'updated_at' => now()
+        ]);
+
+        DB::table('activity_stream')->insert([
+            'action' => 'About Us Section Updated',
+            'description' => "About Us section '{$validated['title']}' updated",
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'About Us section updated successfully'
+        ]);
+    }
+
     // Carousel Management
     public function getCarouselImages()
     {
@@ -1660,6 +1949,454 @@ class AdminDashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Carousel image deleted successfully'
+        ]);
+    }
+
+    // General Settings
+    public function getGeneralSettings()
+    {
+        $keys = ['minimum_deposit', 'office_address', 'office_city', 'office_country', 'office_phone', 'office_email'];
+        $settings = DB::table('settings')
+            ->whereIn('key', $keys)
+            ->pluck('value', 'key');
+
+        return response()->json([
+            'minimum_deposit' => $settings['minimum_deposit'] ?? '1000',
+            'office_address' => $settings['office_address'] ?? '',
+            'office_city' => $settings['office_city'] ?? '',
+            'office_country' => $settings['office_country'] ?? '',
+            'office_phone' => $settings['office_phone'] ?? '',
+            'office_email' => $settings['office_email'] ?? ''
+        ]);
+    }
+
+    public function updateGeneralSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'minimum_deposit' => 'required|numeric|min:0',
+            'office_address' => 'nullable|string|max:500',
+            'office_city' => 'nullable|string|max:255',
+            'office_country' => 'nullable|string|max:255',
+            'office_phone' => 'nullable|string|max:50',
+            'office_email' => 'nullable|email|max:255'
+        ]);
+
+        foreach ($validated as $key => $value) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $key],
+                ['value' => $value, 'updated_at' => now()]
+            );
+        }
+
+        DB::table('activity_stream')->insert([
+            'action' => 'General Settings Updated',
+            'description' => 'General settings were modified',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'General settings updated successfully'
+        ]);
+    }
+
+    // Homepage Services Management
+    public function getHomepageServices()
+    {
+        $services = DB::table('homepage_services')
+            ->orderBy('display_order', 'asc')
+            ->get();
+
+        $settings = DB::table('settings')
+            ->whereIn('key', ['homepage_services_title', 'homepage_services_subtitle', 'homepage_services_description'])
+            ->pluck('value', 'key');
+
+        return response()->json([
+            'services' => $services,
+            'title' => $settings['homepage_services_title'] ?? 'Full-Spectrum Logistics',
+            'subtitle' => $settings['homepage_services_subtitle'] ?? 'Our Expertise',
+            'description' => $settings['homepage_services_description'] ?? ''
+        ]);
+    }
+
+    public function updateHomepageService(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'icon' => 'required|string|max:100',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'display_order' => 'required|integer',
+            'is_active' => 'required|boolean'
+        ]);
+
+        DB::table('homepage_services')->where('id', $id)->update([
+            'icon' => $validated['icon'],
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'display_order' => $validated['display_order'],
+            'is_active' => $validated['is_active'],
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service updated successfully'
+        ]);
+    }
+
+    public function updateHomepageServicesSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'subtitle' => 'required|string|max:255',
+            'description' => 'required|string|max:500'
+        ]);
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'homepage_services_title'],
+            ['value' => $validated['title'], 'updated_at' => now()]
+        );
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'homepage_services_subtitle'],
+            ['value' => $validated['subtitle'], 'updated_at' => now()]
+        );
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'homepage_services_description'],
+            ['value' => $validated['description'], 'updated_at' => now()]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Services section settings updated successfully'
+        ]);
+    }
+
+    // Email Templates Management
+    public function getEmailTemplates()
+    {
+        $templates = DB::table('email_templates')
+            ->orderBy('type', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return response()->json($templates);
+    }
+
+    public function getEmailTemplate($id)
+    {
+        $template = DB::table('email_templates')->where('id', $id)->first();
+
+        if (!$template) {
+            return response()->json(['error' => 'Template not found'], 404);
+        }
+
+        return response()->json($template);
+    }
+
+    public function updateEmailTemplate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'subject' => 'required|string|max:500',
+            'content' => 'required|string',
+            'is_active' => 'required|boolean'
+        ]);
+
+        $template = DB::table('email_templates')->where('id', $id)->first();
+
+        if (!$template) {
+            return response()->json(['error' => 'Template not found'], 404);
+        }
+
+        DB::table('email_templates')->where('id', $id)->update([
+            'name' => $validated['name'],
+            'subject' => $validated['subject'],
+            'content' => $validated['content'],
+            'is_active' => $validated['is_active'],
+            'updated_at' => now()
+        ]);
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Email Template Updated',
+            'description' => "Email template '{$validated['name']}' was updated",
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email template updated successfully'
+        ]);
+    }
+
+    public function testEmailTemplate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'test_email' => 'required|email'
+        ]);
+
+        $template = DB::table('email_templates')->where('id', $id)->first();
+
+        if (!$template) {
+            return response()->json(['error' => 'Template not found'], 404);
+        }
+
+        // Get settings for email footer
+        $settings = DB::table('settings')
+            ->whereIn('key', ['office_address', 'office_city', 'office_country', 'office_phone', 'office_email', 'social_facebook', 'social_instagram'])
+            ->pluck('value', 'key');
+
+        // Sample data for testing
+        $sampleData = [
+            'customer_name' => 'John Doe',
+            'tracking_number' => 'OD-' . rand(10000, 99999) . '-AUTO',
+            'status' => 'In Transit',
+            'current_location' => 'Port of Los Angeles',
+            'vehicle_details' => '2024 Tesla Model S',
+            'estimated_delivery' => date('M d, Y', strtotime('+7 days')),
+            'reference_number' => 'REF-' . rand(1000, 9999),
+            'total_cost' => '$2,500.00',
+            'transit_time' => '7-10 business days',
+            'auction_reference' => 'AUC-' . rand(1000, 9999),
+            'winning_bid' => '$45,000',
+            'tracking_url' => url('/tracking'),
+            'quote_url' => url('/quote'),
+            'progress_percentage' => 65,
+            'hero_title' => $template->name,
+            'hero_subtitle' => strtoupper($template->type),
+            'office_address' => $settings['office_address'] ?? '',
+            'office_city' => $settings['office_city'] ?? '',
+            'office_country' => $settings['office_country'] ?? '',
+            'office_phone' => $settings['office_phone'] ?? '',
+            'office_email' => $settings['office_email'] ?? '',
+            'social_facebook' => $settings['social_facebook'] ?? '',
+            'social_instagram' => $settings['social_instagram'] ?? ''
+        ];
+
+        try {
+            Mail::send('emails.' . $template->slug, $sampleData, function ($message) use ($validated, $template) {
+                $message->to($validated['test_email'])
+                    ->subject('[TEST] ' . $template->subject);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test email sent successfully to ' . $validated['test_email']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send test email: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // SMS Templates Management
+    public function getSMSTemplates()
+    {
+        $templates = DB::table('sms_templates')
+            ->orderBy('type', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return response()->json($templates);
+    }
+
+    public function getSMSTemplate($id)
+    {
+        $template = DB::table('sms_templates')->where('id', $id)->first();
+
+        if (!$template) {
+            return response()->json(['error' => 'Template not found'], 404);
+        }
+
+        return response()->json($template);
+    }
+
+    public function updateSMSTemplate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'message' => 'required|string|max:500',
+            'is_active' => 'required|boolean'
+        ]);
+
+        $template = DB::table('sms_templates')->where('id', $id)->first();
+
+        if (!$template) {
+            return response()->json(['error' => 'Template not found'], 404);
+        }
+
+        DB::table('sms_templates')->where('id', $id)->update([
+            'name' => $validated['name'],
+            'message' => $validated['message'],
+            'is_active' => $validated['is_active'],
+            'updated_at' => now()
+        ]);
+
+        DB::table('activity_stream')->insert([
+            'action' => 'SMS Template Updated',
+            'description' => "SMS template '{$validated['name']}' was updated",
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'SMS template updated successfully'
+        ]);
+    }
+
+    public function testSMSTemplate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'test_phone' => 'required|string'
+        ]);
+
+        $template = DB::table('sms_templates')->where('id', $id)->first();
+
+        if (!$template) {
+            return response()->json(['error' => 'Template not found'], 404);
+        }
+
+        // Sample data for testing
+        $sampleData = [
+            'customer_name' => 'John Doe',
+            'tracking_number' => 'OD-' . rand(10000, 99999) . '-AUTO',
+            'status' => 'In Transit',
+            'current_location' => 'Port of Los Angeles',
+            'vehicle_details' => '2024 Tesla Model S',
+            'estimated_delivery' => date('M d, Y', strtotime('+7 days')),
+            'reference_number' => 'REF-' . rand(1000, 9999),
+            'total_cost' => '$2,500.00',
+            'transit_time' => '7-10 days',
+            'auction_reference' => 'AUC-' . rand(1000, 9999),
+            'winning_bid' => '$45,000',
+            'bid_amount' => '$42,000',
+            'tracking_url' => url('/tracking'),
+            'quote_url' => url('/quote'),
+            'amount' => '$1,500.00',
+            'transaction_id' => 'TXN-' . rand(10000, 99999),
+            'pickup_date' => date('M d, Y', strtotime('+2 days')),
+            'pickup_location' => 'Los Angeles, CA',
+            'delivery_date' => date('M d, Y', strtotime('+7 days')),
+            'delivery_location' => 'New York, NY'
+        ];
+
+        try {
+            $termiiService = new \App\Services\TermiiService();
+            $result = $termiiService->sendTemplatedSMS($template->slug, $validated['test_phone'], $sampleData);
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send test SMS: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Termii Settings
+    public function getTermiiSettings()
+    {
+        $keys = ['termii_api_key', 'termii_sender_id', 'termii_channel', 'termii_enabled'];
+        $settings = DB::table('settings')
+            ->whereIn('key', $keys)
+            ->pluck('value', 'key');
+
+        return response()->json([
+            'api_key' => $settings['termii_api_key'] ?? '',
+            'sender_id' => $settings['termii_sender_id'] ?? 'OD Auto',
+            'channel' => $settings['termii_channel'] ?? 'generic',
+            'enabled' => ($settings['termii_enabled'] ?? 'false') === 'true'
+        ]);
+    }
+
+    public function updateTermiiSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'api_key' => 'required|string',
+            'sender_id' => 'required|string|max:11',
+            'channel' => 'required|string|in:generic,dnd,whatsapp',
+            'enabled' => 'required|boolean'
+        ]);
+
+        $settings = [
+            'termii_api_key' => $validated['api_key'],
+            'termii_sender_id' => $validated['sender_id'],
+            'termii_channel' => $validated['channel'],
+            'termii_enabled' => $validated['enabled'] ? 'true' : 'false'
+        ];
+
+        foreach ($settings as $key => $value) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $key],
+                ['value' => $value, 'updated_at' => now()]
+            );
+        }
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Termii Settings Updated',
+            'description' => 'Termii SMS settings were updated',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Termii settings updated successfully'
+        ]);
+    }
+
+    public function getTermiiBalance()
+    {
+        try {
+            $termiiService = new \App\Services\TermiiService();
+            $result = $termiiService->getBalance();
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch balance: ' . $e->getMessage(),
+                'balance' => 0
+            ], 500);
+        }
+    }
+
+    public function getSMSLog(Request $request)
+    {
+        $perPage = $request->input('per_page', 50);
+        $page = $request->input('page', 1);
+
+        $query = DB::table('sms_log')
+            ->orderBy('created_at', 'desc');
+
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->has('phone_number')) {
+            $query->where('phone_number', 'like', '%' . $request->input('phone_number') . '%');
+        }
+
+        $total = $query->count();
+        $logs = $query->skip(($page - 1) * $perPage)
+            ->take($perPage)
+            ->get();
+
+        return response()->json([
+            'logs' => $logs,
+            'total' => $total,
+            'per_page' => $perPage,
+            'current_page' => $page,
+            'last_page' => ceil($total / $perPage)
         ]);
     }
 

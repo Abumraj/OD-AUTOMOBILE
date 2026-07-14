@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 function AdminSidebar({ mobileOpen, onClose }) {
     const location = useLocation();
+    const [settingsOpen, setSettingsOpen] = useState(location.pathname.startsWith('/admin/settings'));
 
     const navItems = [
         { path: '/admin', icon: 'dashboard', label: 'Dashboard' },
+        { path: '/admin/analytics', icon: 'analytics', label: 'Analytics' },
         { path: '/admin/shipments', icon: 'local_shipping', label: 'Shipments' },
         { path: '/admin/quotes', icon: 'request_quote', label: 'Quotes' },
         { path: '/admin/auctions', icon: 'gavel', label: 'Auctions' },
@@ -14,7 +16,19 @@ function AdminSidebar({ mobileOpen, onClose }) {
         { path: '/admin/services', icon: 'build', label: 'Services' },
         { path: '/admin/carousel', icon: 'view_carousel', label: 'Carousel' },
         { path: '/admin/legal-pages', icon: 'policy', label: 'Legal Pages' },
-        { path: '/admin/settings', icon: 'settings', label: 'Settings' },
+        { path: '/admin/about-us', icon: 'info', label: 'About Us' },
+    ];
+
+    const settingsItems = [
+        { path: '/admin/settings/general', icon: 'tune', label: 'General' },
+        { path: '/admin/settings/email-templates', icon: 'email', label: 'Email Templates' },
+        { path: '/admin/settings/sms', icon: 'sms', label: 'SMS' },
+        { path: '/admin/settings/homepage', icon: 'home', label: 'Homepage' },
+        { path: '/admin/settings/contact', icon: 'contact_page', label: 'Contact' },
+        { path: '/admin/settings/social-media', icon: 'share', label: 'Social Media' },
+        { path: '/admin/settings/performance', icon: 'speed', label: 'Performance' },
+        { path: '/admin/settings/tracking', icon: 'location_on', label: 'Tracking' },
+        { path: '/admin/settings/shipping', icon: 'inventory_2', label: 'Shipping Config' },
     ];
 
     const isActive = (path) => {
@@ -60,6 +74,46 @@ function AdminSidebar({ mobileOpen, onClose }) {
                             <span className="font-label-md text-label-md">{item.label}</span>
                         </Link>
                     ))}
+
+                    {/* Settings Menu with Submenu */}
+                    <div>
+                        <button
+                            onClick={() => setSettingsOpen(!settingsOpen)}
+                            className={`flex items-center justify-between w-full px-4 py-3 transition-colors ${
+                                location.pathname.startsWith('/admin/settings')
+                                    ? 'text-secondary font-bold bg-surface-container-highest'
+                                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest'
+                            }`}
+                        >
+                            <div className="flex items-center space-x-3">
+                                <span className="material-symbols-outlined">settings</span>
+                                <span className="font-label-md text-label-md">Settings</span>
+                            </div>
+                            <span className={`material-symbols-outlined transition-transform ${
+                                settingsOpen ? 'rotate-180' : ''
+                            }`}>expand_more</span>
+                        </button>
+                        
+                        {settingsOpen && (
+                            <div className="ml-4 border-l-2 border-outline-variant">
+                                {settingsItems.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={onClose}
+                                        className={`flex items-center space-x-3 px-4 py-2 transition-transform active:scale-95 ${
+                                            isActive(item.path)
+                                                ? 'text-secondary font-bold border-r-4 border-secondary bg-surface-container-highest'
+                                                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200'
+                                        }`}
+                                    >
+                                        <span className="material-symbols-outlined text-sm">{item.icon}</span>
+                                        <span className="font-label-sm text-label-sm">{item.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </nav>
 
                 <div className="px-md mt-auto space-y-4">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,26 @@ class QuoteController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        // Notify customer about quote submission (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendQuoteReceived((object) [
+                'id' => $quoteId,
+                'customer_name' => $request->fullName,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'service' => $request->service,
+                'origin' => $request->origin,
+                'destination' => $request->destination,
+                'vehicle_year' => $request->year,
+                'vehicle_make' => $request->make,
+                'vehicle_model' => $request->model,
+                'reference_number' => 'REF-' . $quoteId
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail
+        }
 
         DB::table('activity_logs')->insert([
             'icon' => 'request_quote',

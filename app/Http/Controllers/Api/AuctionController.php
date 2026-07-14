@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -77,6 +78,24 @@ class AuctionController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        // Notify customer about auction request (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendAuctionBidPlaced((object) [
+                'id' => $requestId,
+                'customer_name' => $request->customer_name,
+                'customer_email' => $request->customer_email,
+                'customer_phone' => $request->customer_phone,
+                'vehicle_make' => $request->vehicle_make,
+                'vehicle_model' => $request->vehicle_model,
+                'vehicle_year' => $request->vehicle_year,
+                'max_budget' => $request->max_budget,
+                'auction_location' => $request->additional_requirements
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail
+        }
 
         DB::table('activity_stream')->insert([
             'action' => 'Auction Request Received',

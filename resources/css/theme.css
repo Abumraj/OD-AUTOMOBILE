@@ -1,0 +1,218 @@
+/* Light Theme Color Overrides */
+.light {
+    /* Surface colors */
+    --surface: #ffffff;
+    --surface-dim: #f5f5f5;
+    --surface-bright: #ffffff;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #ffffff;
+    --surface-container: #f8f8f8;
+    --surface-container-high: #f0f0f0;
+    --surface-container-highest: #e8e8e8;
+    --surface-variant: #e7e0ec;
+    
+    /* Primary colors */
+    --primary: #5155ab;
+    --on-primary: #ffffff;
+    --primary-container: #e1e0ff;
+    --on-primary-container: #060467;
+    
+    /* Secondary colors */
+    --secondary: #ea6b1b;
+    --on-secondary: #ffffff;
+    --secondary-container: #ffdbcb;
+    --on-secondary-container: #2d1600;
+    
+    /* Background and text */
+    --background: #fef7ff;
+    --on-background: #1c1b1f;
+    --on-surface: #1c1b1f;
+    --on-surface-variant: #49454f;
+    
+    /* Outline */
+    --outline: #79747e;
+    --outline-variant: #cac4d0;
+    
+    /* Error colors */
+    --error: #ba1a1a;
+    --on-error: #ffffff;
+    --error-container: #ffdad6;
+    --on-error-container: #410002;
+    
+    /* Inverse colors */
+    --inverse-surface: #313033;
+    --inverse-on-surface: #f4eff4;
+    --inverse-primary: #c0c1ff;
+}
+
+/* Apply light theme colors */
+.light {
+    background-color: #ffffff;
+    color: #1c1b1f;
+}
+
+.light .bg-primary-container {
+    background-color: #ffffff !important;
+}
+
+.light .bg-surface {
+    background-color: #ffffff !important;
+}
+
+.light .bg-surface-container {
+    background-color: #f8f8f8 !important;
+}
+
+.light .bg-surface-container-low {
+    background-color: #ffffff !important;
+}
+
+.light .bg-surface-container-lowest {
+    background-color: #ffffff !important;
+}
+
+.light .bg-surface-container-high {
+    background-color: #ede6ee !important;
+}
+
+.light .bg-surface-container-highest {
+    background-color: #e7e1e9 !important;
+}
+
+.light .text-on-surface {
+    color: #1c1b1f !important;
+}
+
+.light .text-on-background {
+    color: #1c1b1f !important;
+}
+
+.light .text-on-surface-variant {
+    color: #49454f !important;
+}
+
+.light .text-white {
+    color: #1c1b1f !important;
+}
+
+.light .border-white\/10,
+.light .border-white\/5 {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.light .border-outline-variant\/10 {
+    border-color: rgba(202, 196, 208, 0.3) !important;
+}
+
+/* Secondary container stays orange in both themes */
+.light .bg-secondary-container {
+    background-color: #ea6b1b !important;
+}
+
+.light .text-secondary-container {
+    color: #ea6b1b !important;
+}
+
+/* Card and component styling */
+.light .bg-gradient-to-b {
+    background: linear-gradient(to bottom, #f8f2fa, #fef7ff) !important;
+}
+
+.light .bg-gradient-to-r {
+    background: linear-gradient(to right, #ea6b1b, #ff8c42) !important;
+}
+
+/* Hover states */
+.light .hover\:bg-surface-container:hover {
+    background-color: #f2ecf4 !important;
+}
+
+.light .hover\:bg-surface-container-high:hover {
+    background-color: #ede6ee !important;
+}
+
+.light .hover\:bg-primary-container\/50:hover {
+    background-color: rgba(225, 224, 255, 0.5) !important;
+}
+
+/* Shadows for light theme */
+.light .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.light .shadow {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.light .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Input fields */
+.light input,
+.light textarea,
+.light select {
+    background-color: #ffffff !important;
+    color: #1c1b1f !important;
+    border-color: #cac4d0 !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+    color: #79747e !important;
+}
+
+/* Buttons */
+.light button:not(.bg-secondary-container) {
+    color: #1c1b1f !important;
+}
+
+/* Links */
+.light a:not(.bg-secondary-container) {
+    color: #5155ab;
+}
+
+.light a:not(.bg-secondary-container):hover {
+    color: #393d92;
+}
+
+/* Prose styling for light theme */
+.light .prose-invert {
+    color: #1c1b1f !important;
+}
+
+.light .prose-invert h1,
+.light .prose-invert h2,
+.light .prose-invert h3,
+.light .prose-invert h4,
+.light .prose-invert h5,
+.light .prose-invert h6 {
+    color: #1c1b1f !important;
+}
+
+.light .prose-invert p,
+.light .prose-invert li {
+    color: #49454f !important;
+}
+
+.light .prose-invert strong {
+    color: #1c1b1f !important;
+}
+
+.light .prose-invert a {
+    color: #ea6b1b !important;
+}
+
+/* Dark theme header background to match logo */
+.dark .bg-surface-container-low {
+    background-color: #000000 !important;
+}
+
+/* Ensure navbar in dark mode has black background */
+nav.bg-surface-container-low {
+    background-color: #000000 !important;
+}
+
+.light nav.bg-surface-container-low {
+    background-color: #ffffff !important;
+}

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 function TopNavBar() {
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
+    const { theme, toggleTheme, isDark } = useTheme();
 
     const isActive = (path) => location.pathname === path;
 
@@ -12,6 +14,7 @@ function TopNavBar() {
         { path: '/services', label: 'Services' },
         { path: '/tracking', label: 'Tracking' },
         { path: '/auctions', label: 'Auctions' },
+        { path: '/about', label: 'About' },
         { path: '/contact', label: 'Contact' }
     ];
 
@@ -22,11 +25,8 @@ function TopNavBar() {
                     <img
                         alt="OD Automotive"
                         className="h-8 md:h-10 w-auto"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuB63869ZYy-o1-kIIlrJBnXNXGR2DG8GzND5S4mScSkdcOz7n2qi3mXrzIEgY-ZGubGMuBQNqKeo3tKKr4PlJivEW94_NYJjpOUwEIjedxF62tNvk3FyPWX_GCcky5NaAjc6KRTebrkdBZXqtkZ90HS4yd8P_3H-hmlMjYZ2VMVXCQpebeeUeXzzyJskmxBgRik1KfQbKODWTyaCNUG_DTB-qLzvntnduIb4bW9FuTiXznxPIBJQ3lOK02nvIHrRoaMCBvVhuzfTKRd"
+                        src={isDark ? '/logo-dark.png' : '/logo-light.png'}
                     />
-                    <span className="font-headline-lg text-headline-lg font-bold text-on-surface dark:text-on-surface hidden md:block">
-                        OD Automotive
-                    </span>
                 </Link>
 
                 {/* Desktop Nav */}
@@ -47,6 +47,18 @@ function TopNavBar() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* Theme Toggle Button */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg hover:bg-surface-container"
+                        aria-label="Toggle theme"
+                        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                    >
+                        <span className="material-symbols-outlined text-2xl">
+                            {isDark ? 'light_mode' : 'dark_mode'}
+                        </span>
+                    </button>
+
                     <Link
                         to="/quote"
                         className="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-3 md:px-4 py-2 rounded-lg hover:opacity-80 transition-opacity active:scale-95 duration-150 text-sm md:text-base"

@@ -26,9 +26,14 @@ class TrackingController extends Controller
 
         // Search by tracking number or reference number
         $shipment = DB::table('shipments')
-            ->where('tracking_number', $trackingId)
-            ->orWhere('reference_number', $trackingId)
-            ->where('is_active', true)
+            ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
+            ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
+            ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
+            ->where(function ($query) use ($trackingId) {
+                $query->where('shipments.tracking_number', $trackingId)
+                    ->orWhere('shipments.reference_number', $trackingId);
+            })
+            ->where('shipments.is_active', true)
             ->first();
 
         if (!$shipment) {
@@ -100,12 +105,18 @@ class TrackingController extends Controller
                 'progress' => $shipment->progress_percentage,
                 'stages' => $stages,
                 'details' => [
-                    'vehicle' => trim(($shipment->vehicle_year ?? '') . ' ' . ($shipment->vehicle_make ?? '') . ' ' . ($shipment->vehicle_model ?? '')),
-                    'origin' => $shipment->origin_port . ', ' . $shipment->origin_country,
-                    'destination' => $shipment->destination_port . ', ' . $shipment->destination_country,
+                    'car_model' => $shipment->car_model ?? $shipment->vehicle_type ?? 'N/A',
+                    'year' => $shipment->year ?? 'N/A',
+                    'car_color' => $shipment->car_color ?? 'N/A',
+                    'vin' => $shipment->vin ?? 'N/A',
+                    'image_link' => $shipment->image_link,
+                    'shipping_type' => $shipment->shipping_type_name ?? 'N/A',
+                    'shipping_line' => $shipment->shipping_line_name ?? 'N/A',
+                    'eta' => $shipment->eta ? date('d/m/Y', strtotime($shipment->eta)) : ($shipment->estimated_arrival_date ?? 'TBD'),
+                    'client_name' => $shipment->client_name ?? $shipment->customer_name ?? 'N/A',
+                    'origin' => $shipment->origin ?? 'N/A',
+                    'destination' => $shipment->destination ?? 'N/A',
                     'vessel' => $shipment->vessel_name ?? 'TBD',
-                    'eta' => $shipment->estimated_arrival_date ?? 'TBD',
-                    'shipping_provider' => $shipment->shipping_provider ?? 'N/A',
                     'container_number' => $shipment->container_number ?? 'N/A',
                     'booking_number' => $shipment->booking_number ?? 'N/A'
                 ],

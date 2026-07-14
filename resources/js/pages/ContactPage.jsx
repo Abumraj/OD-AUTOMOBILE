@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useScrollAnimation, fadeInUp, slideInLeft, slideInRight } from '../hooks/useScrollAnimation';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 function ContactPage() {
     const [formData, setFormData] = useState({
@@ -21,6 +23,7 @@ function ContactPage() {
     });
     const [whatsappSettings, setWhatsappSettings] = useState({ phone: '', message: '' });
     const [submitting, setSubmitting] = useState(false);
+    const { toast, showToast, hideToast } = useToast();
     const [headerRef, headerVisible] = useScrollAnimation();
     const [leftRef, leftVisible] = useScrollAnimation();
     const [rightRef, rightVisible] = useScrollAnimation();
@@ -66,7 +69,7 @@ function ContactPage() {
             const data = await response.json();
 
             if (data.success) {
-                alert('Thank you! We will contact you soon.');
+                showToast('Thank you! We will contact you soon.', 'success');
                 setFormData({
                     name: '',
                     email: '',
@@ -75,11 +78,11 @@ function ContactPage() {
                     message: ''
                 });
             } else {
-                alert('Failed to send message. Please try again.');
+                showToast('Failed to send message. Please try again.', 'error');
             }
         } catch (error) {
             console.error('Error submitting contact form:', error);
-            alert('Failed to send message. Please try again.');
+            showToast('Failed to send message. Please try again.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -281,6 +284,15 @@ function ContactPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    type={toast.type} 
+                    onClose={hideToast} 
+                />
+            )}
         </div>
     );
 }

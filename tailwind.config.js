@@ -9,6 +9,7 @@ export default {
     theme: {
         extend: {
             colors: {
+                // Dark theme colors (default)
                 'primary-fixed-dim': '#c0c1ff',
                 'on-tertiary-container': '#787cea',
                 'on-surface-variant': '#c7c5d3',

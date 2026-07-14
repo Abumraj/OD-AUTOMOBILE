@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -28,6 +29,21 @@ class ContactController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        // Notify customer about contact submission (silently fail if not possible)
+        try {
+            $notificationService = new NotificationService();
+            $notificationService->sendContactReceived((object) [
+                'id' => $messageId,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'service' => $validated['service'],
+                'message' => $validated['message'] ?? null
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail
+        }
 
         DB::table('activity_logs')->insert([
             'icon' => 'mail',

@@ -1,32 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useScrollAnimation, fadeInUp, slideInLeft, staggerChildren } from '../hooks/useScrollAnimation';
 
 function ServicesSection() {
     const [headerRef, headerVisible] = useScrollAnimation();
     const [gridRef, gridVisible] = useScrollAnimation();
+    const [services, setServices] = useState([]);
+    const [sectionData, setSectionData] = useState({
+        title: 'Full-Spectrum Logistics',
+        subtitle: 'Our Expertise',
+        description: 'Systematic approach to information density and modern efficiency for every stage of the automotive lifecycle.'
+    });
 
-    const services = [
-        {
-            icon: 'shopping_cart_checkout',
-            title: 'Procurement',
-            description: 'Expert sourcing and acquisition of vehicles across international auction markets with verified reporting.'
-        },
-        {
-            icon: 'directions_boat',
-            title: 'Shipping',
-            description: 'Global multi-modal transport solutions focusing on security, speed, and cost-effective routing.'
-        },
-        {
-            icon: 'assignment_turned_in',
-            title: 'Port Clearance',
-            description: 'Navigating complex customs documentation and regulatory requirements with precision and authority.'
-        },
-        {
-            icon: 'local_shipping',
-            title: 'Delivery',
-            description: 'Last-mile carrier solutions ensuring your asset arrives safely at your doorstep or specified terminal.'
+    useEffect(() => {
+        fetchHomepageServices();
+    }, []);
+
+    const fetchHomepageServices = async () => {
+        try {
+            const response = await fetch('/api/homepage-services');
+            const data = await response.json();
+            
+            // Filter only active services
+            const activeServices = data.services.filter(service => service.is_active);
+            setServices(activeServices);
+            
+            setSectionData({
+                title: data.title || 'Full-Spectrum Logistics',
+                subtitle: data.subtitle || 'Our Expertise',
+                description: data.description || 'Systematic approach to information density and modern efficiency for every stage of the automotive lifecycle.'
+            });
+        } catch (error) {
+            console.error('Error fetching homepage services:', error);
         }
-    ];
+    };
 
     return (
         <section className="py-xl bg-surface-container-lowest">
@@ -38,14 +44,14 @@ function ServicesSection() {
                 >
                     <div className="space-y-xs">
                         <span className="text-secondary-container font-label-md text-label-md tracking-widest uppercase">
-                            Our Expertise
+                            {sectionData.subtitle}
                         </span>
                         <h2 className="font-headline-lg text-[22px] md:text-headline-lg text-white">
-                            Full-Spectrum Logistics
+                            {sectionData.title}
                         </h2>
                     </div>
                     <p className="font-body-md text-body-md text-on-surface-variant max-w-md">
-                        Systematic approach to information density and modern efficiency for every stage of the automotive lifecycle.
+                        {sectionData.description}
                     </p>
                 </div>
                 <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-gutter">

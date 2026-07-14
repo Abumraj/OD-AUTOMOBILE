@@ -2,6 +2,7 @@ import React from 'react';
 import DashboardStats from '../../components/admin/DashboardStats';
 import ActivityStream from '../../components/admin/ActivityStream';
 import FleetHealth from '../../components/admin/FleetHealth';
+import DashboardAnalytics from '../../components/admin/DashboardAnalytics';
 import { Link } from 'react-router-dom';
 
 function AdminOverview() {
@@ -13,6 +14,8 @@ function AdminOverview() {
             </div>
 
             <DashboardStats />
+
+            <DashboardAnalytics />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-md">
                 <Link to="/admin/shipments" className="bg-surface-container rounded-xl p-lg border border-white/10 hover:border-secondary-container transition-all group">

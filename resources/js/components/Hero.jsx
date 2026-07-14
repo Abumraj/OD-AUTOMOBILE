@@ -57,14 +57,14 @@ function Hero() {
 
     if (loading) {
         return (
-            <header className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-primary-container">
+            <header className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-gray-900">
                 <div className="animate-pulse text-on-surface-variant">Loading...</div>
             </header>
         );
     }
 
     return (
-        <header className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-primary-container">
+        <header className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-gray-900">
             <div className="absolute inset-0 z-0">
                 {carouselImages.map((image, index) => (
                     <img 
@@ -79,7 +79,7 @@ function Hero() {
                         }}
                     />
                 ))}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-container/90 via-primary-container/60 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent dark:from-primary-container/90 dark:via-primary-container/60"></div>
             </div>
             <div className="relative z-10 max-w-container-max mx-auto px-lg w-full">
                 <div className="max-w-2xl space-y-md">
