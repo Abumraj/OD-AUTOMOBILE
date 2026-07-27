@@ -1174,7 +1174,16 @@ class AdminDashboardController extends Controller
             'total_cost' => 'nullable|numeric',
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'car_model' => 'nullable|string|max:255',
+            'year' => 'nullable|string|max:4',
+            'car_color' => 'nullable|string|max:100',
+            'image_link' => 'nullable|string',
+            'vin' => 'nullable|string|max:17',
+            'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
+            'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
+            'eta' => 'nullable|date',
+            'client_name' => 'nullable|string|max:255'
         ]);
 
         // Calculate progress based on status
@@ -1218,6 +1227,15 @@ class AdminDashboardController extends Controller
             'notes' => $validated['notes'] ?? null,
             'admin_notes' => $validated['admin_notes'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
+            'car_model' => $validated['car_model'] ?? null,
+            'year' => $validated['year'] ?? null,
+            'car_color' => $validated['car_color'] ?? null,
+            'image_link' => $validated['image_link'] ?? null,
+            'vin' => $validated['vin'] ?? null,
+            'shipping_type_id' => $validated['shipping_type_id'] ?? null,
+            'shipping_line_id' => $validated['shipping_line_id'] ?? null,
+            'eta' => $validated['eta'] ?? null,
+            'client_name' => $validated['client_name'] ?? null,
             'updated_at' => now()
         ]);
 

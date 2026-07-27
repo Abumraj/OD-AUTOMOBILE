@@ -246,7 +246,7 @@
                 <p>Professional automotive transport and logistics solutions</p>
                 
                 @if(isset($office_address) && $office_address)
-                <p>{{ $office_address }}@if(isset($office_city) && $office_city), {{ $office_city }}@endif@if(isset($office_country) && $office_country), {{ $office_country }}@endif</p>
+                <p>{{ $office_address }}@if(isset($office_city) && $office_city), {{ $office_city }}@endif @if(isset($office_country) && $office_country), {{ $office_country }}@endif</p>
                 @endif
                 
                 @if(isset($office_phone) && $office_phone)
