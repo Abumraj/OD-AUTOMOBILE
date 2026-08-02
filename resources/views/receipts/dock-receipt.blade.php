@@ -13,8 +13,8 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.5;
+            font-size: 11px;
+            line-height: 1.4;
             color: #0f172a;
             background: #f7f9fb;
         }
@@ -29,13 +29,13 @@
         
         .header-banner {
             background: linear-gradient(135deg, #413481 0%, #5a4ba3 100%);
-            height: 120px;
+            height: 80px;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
         
         .header-illustration {
@@ -54,7 +54,7 @@
         }
         
         .logo {
-            max-width: 100px;
+            max-width: 70px;
             height: auto;
             display: block;
             margin: 0 auto;
@@ -62,36 +62,36 @@
         }
         
         .content-wrapper {
-            padding: 25px 30px;
+            padding: 18px 25px;
         }
         
         .title-section {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
         
         .document-title {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: 800;
             color: #0f172a;
             letter-spacing: -0.5px;
             line-height: 1;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         
         .document-number {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 700;
             color: #0f172a;
         }
         
         .company-info {
             text-align: right;
-            font-size: 9px;
+            font-size: 8px;
             color: #45464d;
-            line-height: 1.5;
+            line-height: 1.4;
             font-weight: 500;
         }
         
@@ -104,11 +104,11 @@
         
         .info-table {
             width: 100%;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
         
         .info-table td {
-            padding: 8px 0;
+            padding: 5px 0;
             border-bottom: 1px solid #f3f4f6;
         }
         
@@ -128,21 +128,21 @@
         }
         
         .section-title {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
             color: #0f172a;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-top: 16px;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
+            letter-spacing: 1.2px;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            padding-bottom: 5px;
             border-bottom: 2px solid #0f172a;
         }
         
         table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
         }
         
         table.data-table thead {
@@ -151,12 +151,12 @@
         
         table.data-table th {
             text-align: left;
-            padding: 8px 8px;
-            font-size: 9px;
+            padding: 5px 6px;
+            font-size: 8px;
             font-weight: 800;
             color: #0f172a;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             border-bottom: 2px solid #0f172a;
         }
         
@@ -165,8 +165,8 @@
         }
         
         table.data-table td {
-            padding: 10px 8px;
-            font-size: 11px;
+            padding: 5px 6px;
+            font-size: 9px;
             color: #0f172a;
             border-bottom: 1px solid #f3f4f6;
             vertical-align: top;
@@ -186,14 +186,14 @@
         
         .item-title {
             font-weight: 700;
-            font-size: 12px;
+            font-size: 10px;
             color: #0f172a;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
         
         .item-description {
-            font-size: 9px;
+            font-size: 8px;
             color: #45464d;
             max-width: 400px;
             line-height: 1.3;
@@ -201,8 +201,8 @@
         }
         
         .totals-section {
-            margin-top: 16px;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -243,23 +243,23 @@
         .stamp-section {
             background: #f0fff4;
             border: 2px solid #48bb78;
-            border-radius: 8px;
-            padding: 15px;
+            border-radius: 6px;
+            padding: 10px;
             text-align: center;
-            margin: 16px 0;
+            margin: 10px 0;
         }
         
         .stamp-text {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 700;
             color: #22543d;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
         }
         
         .stamp-date {
-            font-size: 10px;
+            font-size: 9px;
             color: #2f855a;
             font-weight: 500;
         }
@@ -268,8 +268,8 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 20px;
-            margin-bottom: 16px;
+            margin-top: 12px;
+            margin-bottom: 10px;
         }
         
         .signature-box {
@@ -279,16 +279,16 @@
         
         .signature-line {
             width: 100px;
-            height: 30px;
-            margin-bottom: 8px;
+            height: 20px;
+            margin-bottom: 5px;
             border-bottom: 2px solid #0f172a;
         }
         
         .signature-name {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 800;
             color: #0f172a;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
         
         .signature-title {
@@ -310,11 +310,11 @@
         
         .footer {
             background: #f7f9fb;
-            padding: 15px 30px;
+            padding: 10px 25px;
             text-align: center;
-            font-size: 8px;
+            font-size: 7px;
             color: #45464d;
-            line-height: 1.5;
+            line-height: 1.4;
         }
         
         .footer-copyright {
@@ -411,88 +411,101 @@
             <!-- Shipment Details -->
             <div class="section-title">Shipment Details</div>
             <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Information</th>
-                    </tr>
-                </thead>
                 <tbody>
                     <tr>
-                        <td>
+                        <td style="width: 50%;">
                             <span class="item-code">#VEHICLE</span>
                             <div class="item-title">{{ $receipt->vehicle_description }}</div>
                             <div class="item-description">
-                                @if($shipment->vin)
-                                    VIN: {{ $shipment->vin }}
-                                    @if($shipment->year || $shipment->car_color) | @endif
-                                @endif
-                                @if($shipment->year)
-                                    Year: {{ $shipment->year }}
-                                    @if($shipment->car_color) | @endif
-                                @endif
-                                @if($shipment->car_color)
-                                    Color: {{ $shipment->car_color }}
-                                @endif
+                                @if($shipment->vin)VIN: {{ $shipment->vin }}@endif
+                                @if($shipment->year) | Year: {{ $shipment->year }}@endif
+                                @if($shipment->car_color) | Color: {{ $shipment->car_color }}@endif
                             </div>
                         </td>
-                        <td>
-                            {{ $stage_name }}
+                        <td style="width: 50%;">
+                            <span class="item-code">#STATUS</span>
+                            <div class="item-title">{{ $stage_name }}</div>
+                            <div class="item-description">Current shipment stage</div>
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            <span class="item-code">#ROUTE</span>
-                            <div class="item-title">Shipping Route</div>
-                            <div class="item-description">Origin to destination shipping path</div>
+                            <span class="item-code">#ORIGIN</span>
+                            <div class="item-title">{{ $shipment->origin_port }}</div>
+                            <div class="item-description">{{ $shipment->origin_country }}</div>
                         </td>
                         <td>
-                            {{ $shipment->origin_port }}, {{ $shipment->origin_country }}<br>
-                            → {{ $shipment->destination_port }}, {{ $shipment->destination_country }}
+                            <span class="item-code">#DESTINATION</span>
+                            <div class="item-title">{{ $shipment->destination_port }}</div>
+                            <div class="item-description">{{ $shipment->destination_country }}</div>
                         </td>
                     </tr>
-                    @if($shipment->shipping_type_name || $shipment->shipping_line_name)
+                    @if($shipment->vessel_name || $shipment->container_number || $shipment->booking_number)
                     <tr>
-                        <td>
+                        <td colspan="2">
                             <span class="item-code">#SHIPPING</span>
-                            <div class="item-title">Shipping Method</div>
-                            <div class="item-description">Transportation type and carrier information</div>
+                            @if($shipment->vessel_name)<strong>Vessel:</strong> {{ $shipment->vessel_name }}@endif
+                            @if($shipment->container_number) | <strong>Container:</strong> {{ $shipment->container_number }}@endif
+                            @if($shipment->booking_number) | <strong>Booking:</strong> {{ $shipment->booking_number }}@endif
                         </td>
-                        <td>
-                            @if($shipment->shipping_type_name)
-                                {{ $shipment->shipping_type_name }}
-                                @if($shipment->shipping_line_name)<br>@endif
-                            @endif
-                            @if($shipment->shipping_line_name)
-                                {{ $shipment->shipping_line_name }}
-                            @endif
+                    </tr>
+                    @endif
+                    @if($shipment->auction_date || $shipment->shipping_date || $shipment->departure_date)
+                    <tr>
+                        <td colspan="2">
+                            <span class="item-code">#DATES</span>
+                            @if($shipment->auction_date)<strong>Auction:</strong> {{ date('M d, Y', strtotime($shipment->auction_date)) }}@endif
+                            @if($shipment->shipping_date) | <strong>Shipping:</strong> {{ date('M d, Y', strtotime($shipment->shipping_date)) }}@endif
+                            @if($shipment->departure_date) | <strong>Departure:</strong> {{ date('M d, Y', strtotime($shipment->departure_date)) }}@endif
+                        </td>
+                    </tr>
+                    @endif
+                    @if($shipment->estimated_arrival_date || $shipment->actual_arrival_date || $shipment->delivery_date)
+                    <tr>
+                        <td colspan="2">
+                            <span class="item-code">#ARRIVAL</span>
+                            @if($shipment->estimated_arrival_date)<strong>ETA:</strong> {{ date('M d, Y', strtotime($shipment->estimated_arrival_date)) }}@endif
+                            @if($shipment->actual_arrival_date) | <strong>Arrived:</strong> {{ date('M d, Y', strtotime($shipment->actual_arrival_date)) }}@endif
+                            @if($shipment->delivery_date) | <strong>Delivered:</strong> {{ date('M d, Y', strtotime($shipment->delivery_date)) }}@endif
+                        </td>
+                    </tr>
+                    @endif
+                    @if($shipment->total_cost)
+                    <tr>
+                        <td colspan="2">
+                            <span class="item-code">#COST</span>
+                            <strong>Total Cost:</strong> ${{ number_format($shipment->total_cost, 2) }}
+                        </td>
+                    </tr>
+                    @endif
+                    @if($shipment->tracking_number)
+                    <tr>
+                        <td colspan="2">
+                            <span class="item-code">#TRACKING</span>
+                            <strong>Tracking Number:</strong> {{ $shipment->tracking_number }}
                         </td>
                     </tr>
                     @endif
                 </tbody>
             </table>
             
-            <!-- Receipt Location Totals -->
+            <!-- Receipt Summary -->
             <div class="totals-section">
                 <div class="totals-wrapper">
                     <div class="total-row">
-                        <span class="total-label">Location</span>
+                        <span class="total-label">Received At</span>
                         <span class="total-value">{{ $receipt->location_received }}</span>
                     </div>
-                    <div class="total-row">
-                        <span class="total-label">Date</span>
-                        <span class="total-value">{{ date('M d, Y', strtotime($receipt->date_received)) }}</span>
-                    </div>
                     <div class="total-row grand-total">
-                        <span class="total-label">Stage</span>
-                        <span class="total-value">{{ $stage_name }}</span>
+                        <span class="total-label">Receipt Date</span>
+                        <span class="total-value">{{ date('M d, Y', strtotime($receipt->date_received)) }}</span>
                     </div>
                 </div>
             </div>
             
             @if($receipt->notes)
             <div class="section-title">Additional Notes</div>
-            <p style="color: #45464d; line-height: 1.6; margin-bottom: 30px; font-size: 12px;">{{ $receipt->notes }}</p>
+            <p style="color: #45464d; line-height: 1.5; margin-bottom: 10px; font-size: 10px;">{{ $receipt->notes }}</p>
             @endif
             
             <!-- Stamp Section -->

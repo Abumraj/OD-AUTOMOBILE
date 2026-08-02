@@ -151,12 +151,15 @@ class ShipmentImportExportController extends Controller
                     $shipmentId = DB::table('shipments')->insertGetId([
                         'tracking_number' => $trackingNumber,
                         'reference_number' => $referenceNumber,
-                        'customer_name' => $clientName,
-                        'customer_email' => null,
+                        'customer_name' => $clientName ?? 'N/A',
+                        'customer_email' => 'noreply@odlogistic.com',
                         'customer_phone' => null,
-                        'origin' => null,
-                        'destination' => null,
-                        'vehicle_type' => $carModel,
+                        'origin_port' => 'N/A',
+                        'origin_country' => 'N/A',
+                        'destination_port' => 'N/A',
+                        'destination_country' => 'N/A',
+                        'vehicle_make' => $carModel,
+                        'vehicle_model' => $carModel,
                         'car_model' => $carModel,
                         'year' => $year,
                         'car_color' => $carColor,
@@ -183,7 +186,6 @@ class ShipmentImportExportController extends Controller
                     ]);
 
                     $imported++;
-
                 } catch (\Exception $e) {
                     $errors[] = "Row {$rowNumber}: " . $e->getMessage();
                 }
@@ -194,7 +196,6 @@ class ShipmentImportExportController extends Controller
                 'imported' => $imported,
                 'errors' => $errors,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error processing file: ' . $e->getMessage()
@@ -230,11 +231,11 @@ class ShipmentImportExportController extends Controller
 
             if ($request->has('search') && !empty($request->search)) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('shipments.tracking_number', 'like', "%{$search}%")
-                      ->orWhere('shipments.reference_number', 'like', "%{$search}%")
-                      ->orWhere('shipments.vin', 'like', "%{$search}%")
-                      ->orWhere('shipments.car_model', 'like', "%{$search}%");
+                        ->orWhere('shipments.reference_number', 'like', "%{$search}%")
+                        ->orWhere('shipments.vin', 'like', "%{$search}%")
+                        ->orWhere('shipments.car_model', 'like', "%{$search}%");
                 });
             }
 
@@ -299,7 +300,6 @@ class ShipmentImportExportController extends Controller
             $writer->save($tempFile);
 
             return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error exporting file: ' . $e->getMessage()

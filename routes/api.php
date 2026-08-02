@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DeploymentController;
 use App\Http\Controllers\Api\ShippingConfigController;
 use App\Http\Controllers\Api\ShipmentImportExportController;
 use App\Http\Controllers\Api\DockReceiptController;
+use App\Http\Controllers\Api\ImageUploadController;
 
 Route::middleware('api')->group(function () {
     Route::post('/quotes', [QuoteController::class, 'store']);
@@ -98,8 +99,10 @@ Route::middleware('api')->group(function () {
         Route::delete('/legal-pages/{id}', [AdminDashboardController::class, 'deleteLegalPage']);
 
         Route::get('/about-us', [AdminDashboardController::class, 'getAboutUsSections']);
+        Route::post('/about-us', [AdminDashboardController::class, 'createAboutUsSection']);
         Route::get('/about-us/{id}', [AdminDashboardController::class, 'getAboutUsSection']);
         Route::put('/about-us/{id}', [AdminDashboardController::class, 'updateAboutUsSection']);
+        Route::delete('/about-us/{id}', [AdminDashboardController::class, 'deleteAboutUsSection']);
 
         Route::get('/carousel', [AdminDashboardController::class, 'getCarouselImages']);
         Route::get('/carousel/{id}', [AdminDashboardController::class, 'getCarouselImage']);
@@ -155,6 +158,10 @@ Route::middleware('api')->group(function () {
         // Import/Export
         Route::post('/shipments/import', [ShipmentImportExportController::class, 'importExcel']);
         Route::get('/shipments/export', [ShipmentImportExportController::class, 'exportExcel']);
+
+        // Image Upload
+        Route::post('/upload/vehicle-image', [ImageUploadController::class, 'uploadVehicleImage']);
+        Route::delete('/upload/vehicle-image', [ImageUploadController::class, 'deleteVehicleImage']);
 
         // Dock Receipts
         Route::post('/shipments/{shipmentId}/dock-receipt/preview', [DockReceiptController::class, 'previewReceipt']);

@@ -1816,14 +1816,18 @@ class AdminDashboardController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
             'content' => 'required|string',
+            'image_url' => 'nullable|string',
             'is_published' => 'boolean',
             'display_order' => 'integer'
         ]);
 
         DB::table('about_us')->where('id', $id)->update([
             'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
             'content' => $validated['content'],
+            'image_url' => $validated['image_url'] ?? null,
             'is_published' => $validated['is_published'] ?? true,
             'display_order' => $validated['display_order'] ?? 0,
             'updated_at' => now()
@@ -1840,6 +1844,70 @@ class AdminDashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'About Us section updated successfully'
+        ]);
+    }
+
+    public function createAboutUsSection(Request $request)
+    {
+        $validated = $request->validate([
+            'section_key' => 'required|string|max:255|unique:about_us,section_key',
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'content' => 'required|string',
+            'image_url' => 'nullable|string',
+            'is_published' => 'boolean',
+            'display_order' => 'integer'
+        ]);
+
+        $id = DB::table('about_us')->insertGetId([
+            'section_key' => $validated['section_key'],
+            'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
+            'content' => $validated['content'],
+            'image_url' => $validated['image_url'] ?? null,
+            'is_published' => $validated['is_published'] ?? true,
+            'display_order' => $validated['display_order'] ?? 0,
+            'metadata' => json_encode(['type' => 'leader']),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        DB::table('activity_stream')->insert([
+            'action' => 'About Us Section Created',
+            'description' => "New About Us section '{$validated['title']}' created",
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'About Us section created successfully',
+            'data' => ['id' => $id]
+        ]);
+    }
+
+    public function deleteAboutUsSection($id)
+    {
+        $section = DB::table('about_us')->where('id', $id)->first();
+
+        if (!$section) {
+            return response()->json(['error' => 'Section not found'], 404);
+        }
+
+        DB::table('about_us')->where('id', $id)->delete();
+
+        DB::table('activity_stream')->insert([
+            'action' => 'About Us Section Deleted',
+            'description' => "About Us section '{$section->title}' deleted",
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'About Us section deleted successfully'
         ]);
     }
 

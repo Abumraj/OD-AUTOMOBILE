@@ -62,6 +62,7 @@ function ShipmentsManager() {
         { key: 'color', label: 'Color', default: false },
         { key: 'year', label: 'Year', default: false },
         { key: 'client_name', label: 'Client Name', default: false },
+        { key: 'image_link', label: 'Vehicle Image', default: false },
         { key: 'vessel', label: 'Vessel', default: false },
         { key: 'container', label: 'Container #', default: false }
     ];
@@ -458,6 +459,7 @@ function ShipmentsManager() {
                             {visibleColumns.year && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Year</th>}
                             {visibleColumns.color && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Color</th>}
                             {visibleColumns.client_name && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Client</th>}
+                            {visibleColumns.image_link && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Vehicle Image</th>}
                             {visibleColumns.route && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Route</th>}
                             {visibleColumns.shipping_type && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Shipping Type</th>}
                             {visibleColumns.shipping_line && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Shipping Line</th>}
@@ -507,6 +509,25 @@ function ShipmentsManager() {
                                 {visibleColumns.client_name && (
                                     <td className="py-md px-md font-caption text-on-surface-variant">
                                         {shipment.client_name || shipment.customer_name || 'N/A'}
+                                    </td>
+                                )}
+                                {visibleColumns.image_link && (
+                                    <td className="py-md px-md">
+                                        {shipment.image_link ? (
+                                            <a href={shipment.image_link} target="_blank" rel="noopener noreferrer" className="inline-block">
+                                                <img 
+                                                    src={shipment.image_link} 
+                                                    alt="Vehicle" 
+                                                    className="w-16 h-16 object-cover rounded-lg border border-white/10 hover:border-secondary-container transition-colors"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.parentElement.innerHTML = '<span class="text-on-surface-variant text-xs">No image</span>';
+                                                    }}
+                                                />
+                                            </a>
+                                        ) : (
+                                            <span className="text-on-surface-variant text-xs">No image</span>
+                                        )}
                                     </td>
                                 )}
                                 {visibleColumns.route && (
@@ -813,18 +834,70 @@ function ShipmentsManager() {
                                 <div className="mt-md">
                                     <label className="block font-label-md text-on-surface-variant mb-xs flex items-center gap-xs">
                                         <span className="material-symbols-outlined text-sm">image</span>
-                                        Vehicle Image Link (Google Drive or Direct URL)
+                                        Vehicle Image
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.image_link}
-                                        onChange={(e) => setFormData({...formData, image_link: e.target.value})}
-                                        className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
-                                        placeholder="https://drive.google.com/uc?export=view&id=YOUR_FILE_ID"
-                                    />
-                                    <p className="text-xs text-on-surface-variant mt-xs">
-                                        💡 For Google Drive: Share the image → Get link → Convert to direct URL format
-                                    </p>
+                                    <div className="space-y-sm">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+
+                                                const formDataUpload = new FormData();
+                                                formDataUpload.append('image', file);
+
+                                                try {
+                                                    const response = await fetch('/api/admin/upload/vehicle-image', {
+                                                        method: 'POST',
+                                                        body: formDataUpload
+                                                    });
+
+                                                    const result = await response.json();
+                                                    
+                                                    if (result.success) {
+                                                        setFormData({...formData, image_link: result.data.url});
+                                                        showNotification('Image uploaded successfully', 'success');
+                                                    } else {
+                                                        showNotification('Failed to upload image', 'error');
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Upload error:', error);
+                                                    showNotification('Failed to upload image', 'error');
+                                                }
+                                            }}
+                                            className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-secondary-container file:text-on-secondary-container hover:file:opacity-90"
+                                        />
+                                        <p className="text-xs text-on-surface-variant">
+                                            📸 Upload vehicle image (JPG, PNG, GIF, WebP - Max 5MB)
+                                        </p>
+                                        {formData.image_link && (
+                                            <div className="mt-sm p-sm bg-surface-container rounded-lg">
+                                                <div className="flex items-start justify-between mb-xs">
+                                                    <p className="text-xs text-on-surface-variant">Preview:</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({...formData, image_link: ''})}
+                                                        className="text-xs text-red-400 hover:text-red-300"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                                <img 
+                                                    src={formData.image_link} 
+                                                    alt="Vehicle preview" 
+                                                    className="w-full max-w-xs h-auto object-cover rounded border border-white/10"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextElementSibling.style.display = 'block';
+                                                    }}
+                                                />
+                                                <div style={{display: 'none'}} className="text-xs text-red-400 p-sm">
+                                                    ⚠️ Image failed to load
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

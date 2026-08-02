@@ -20,7 +20,7 @@ import ShippingConfigPage from './admin/settings/ShippingConfigPage';
 import AdminMessagesPage from './admin/AdminMessagesPage';
 import AdminAuctionsPage from './admin/AdminAuctionsPage';
 import AdminLegalPagesPage from './admin/AdminLegalPagesPage';
-import AdminAboutUsPage from './admin/AdminAboutUsPage';
+import AdminAboutUsPage from './admin/content/AboutUsPage';
 import AdminCarouselPage from './admin/AdminCarouselPage';
 import AdminServicesPage from './admin/AdminServicesPage';
 import AdminLoginPage from './admin/AdminLoginPage';

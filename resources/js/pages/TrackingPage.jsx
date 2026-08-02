@@ -83,7 +83,7 @@ function TrackingPage() {
                         <div className="space-y-base">
                             <input 
                                 className="w-full bg-surface-container-lowest border border-white/20 text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-secondary-container transition-colors" 
-                                placeholder="Enter Reference Number (e.g., OD-2024-001)" 
+                                placeholder="Enter Reference Number, VIN, or Tracking Number" 
                                 type="text"
                                 value={referenceNumber}
                                 onChange={(e) => setReferenceNumber(e.target.value)}
@@ -144,7 +144,7 @@ function TrackingPage() {
                             </div>
                         </div>
 
-                        {trackingData.details.image_link && (
+                        {trackingData.details && trackingData.details.image_link && trackingData.details.image_link !== 'N/A' && trackingData.details.image_link.trim() !== '' && (
                             <div className="bg-surface-container-low p-lg rounded-xl border border-white/5">
                                 <h4 className="font-title-md text-title-md text-white mb-md flex items-center gap-sm">
                                     <span className="material-symbols-outlined text-secondary-container">
@@ -156,8 +156,10 @@ function TrackingPage() {
                                     <img 
                                         src={trackingData.details.image_link} 
                                         alt={`${trackingData.details.car_model} ${trackingData.details.year}`}
-                                        className="w-full h-auto object-cover"
+                                        className="w-full h-auto object-cover max-h-96"
+                                        onLoad={() => console.log('Image loaded successfully:', trackingData.details.image_link)}
                                         onError={(e) => {
+                                            console.error('Image failed to load:', trackingData.details.image_link);
                                             e.target.style.display = 'none';
                                             e.target.parentElement.innerHTML = '<div class="p-xl text-center text-on-surface-variant"><span class="material-symbols-outlined text-4xl mb-sm">broken_image</span><p>Image not available</p></div>';
                                         }}

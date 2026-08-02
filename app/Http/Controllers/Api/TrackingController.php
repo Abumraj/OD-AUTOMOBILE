@@ -24,14 +24,16 @@ class TrackingController extends Controller
 
         $trackingId = $request->input('tracking_id');
 
-        // Search by tracking number or reference number
+        // Search by tracking number, reference number, or VIN
         $shipment = DB::table('shipments')
             ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
             ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
             ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
             ->where(function ($query) use ($trackingId) {
                 $query->where('shipments.tracking_number', $trackingId)
-                    ->orWhere('shipments.reference_number', $trackingId);
+                    ->orWhere('shipments.reference_number', $trackingId)
+                    ->orWhere('shipments.vin', $trackingId)
+                    ->orWhere('shipments.vehicle_vin', $trackingId);
             })
             ->where('shipments.is_active', true)
             ->first();
