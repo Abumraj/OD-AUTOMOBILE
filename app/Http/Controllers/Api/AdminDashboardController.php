@@ -1911,6 +1911,50 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    public function searchShipments(Request $request)
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $results = DB::table('shipments')
+            ->select(
+                'id',
+                'tracking_number',
+                'reference_number',
+                'vin',
+                'vehicle_vin',
+                'car_model',
+                'vehicle_make',
+                'vehicle_model',
+                'year',
+                'customer_name',
+                'status',
+                DB::raw("CONCAT(COALESCE(vehicle_make, ''), ' ', COALESCE(vehicle_model, ''), ' ', COALESCE(car_model, '')) as vehicle_description")
+            )
+            ->where(function ($q) use ($query) {
+                $q->where('tracking_number', 'LIKE', "%{$query}%")
+                    ->orWhere('reference_number', 'LIKE', "%{$query}%")
+                    ->orWhere('vin', 'LIKE', "%{$query}%")
+                    ->orWhere('vehicle_vin', 'LIKE', "%{$query}%")
+                    ->orWhere('car_model', 'LIKE', "%{$query}%")
+                    ->orWhere('vehicle_make', 'LIKE', "%{$query}%")
+                    ->orWhere('vehicle_model', 'LIKE', "%{$query}%")
+                    ->orWhere('customer_name', 'LIKE', "%{$query}%")
+                    ->orWhere('customer_email', 'LIKE', "%{$query}%")
+                    ->orWhere('container_number', 'LIKE', "%{$query}%")
+                    ->orWhere('booking_number', 'LIKE', "%{$query}%");
+            })
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['results' => $results]);
+    }
+
     // Carousel Management
     public function getCarouselImages()
     {

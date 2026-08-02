@@ -98,6 +98,8 @@ Route::middleware('api')->group(function () {
         Route::put('/legal-pages/{id}', [AdminDashboardController::class, 'updateLegalPage']);
         Route::delete('/legal-pages/{id}', [AdminDashboardController::class, 'deleteLegalPage']);
 
+        Route::get('/search-shipments', [AdminDashboardController::class, 'searchShipments']);
+
         Route::get('/about-us', [AdminDashboardController::class, 'getAboutUsSections']);
         Route::post('/about-us', [AdminDashboardController::class, 'createAboutUsSection']);
         Route::get('/about-us/{id}', [AdminDashboardController::class, 'getAboutUsSection']);

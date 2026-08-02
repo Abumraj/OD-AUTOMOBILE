@@ -47,3 +47,19 @@
 .animate-slideInRight {
   animation: slideInRight 0.4s ease-out;
 }
+
+@keyframes highlightPulse {
+  0%,
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 rgba(234, 107, 27, 0);
+  }
+  50% {
+    background-color: rgba(234, 107, 27, 0.1);
+    box-shadow: 0 0 0 4px rgba(234, 107, 27, 0.2);
+  }
+}
+
+.highlight-shipment {
+  animation: highlightPulse 1s ease-in-out 2;
+}
