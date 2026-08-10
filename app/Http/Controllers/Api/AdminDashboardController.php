@@ -960,7 +960,8 @@ class AdminDashboardController extends Controller
             'vin',
             'eta',
             'shipping_fee',
-            'shipping_fee_status'
+            'shipping_fee_status',
+            'c_number'
         ];
 
         if (!in_array($sortBy, $allowedSortFields)) {
@@ -1013,6 +1014,7 @@ class AdminDashboardController extends Controller
                     'shipping_provider' => $shipment->shipping_provider,
                     'vessel_name' => $shipment->vessel_name,
                     'container_number' => $shipment->container_number,
+                    'c_number' => $shipment->c_number,
                     'booking_number' => $shipment->booking_number,
                     'auction_date' => $shipment->auction_date,
                     'shipping_date' => $shipment->shipping_date,
@@ -1087,7 +1089,10 @@ class AdminDashboardController extends Controller
             'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
             'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
             'eta' => 'nullable|date',
-            'client_name' => 'nullable|string|max:255'
+            'client_name' => 'nullable|string|max:255',
+            'shipping_fee' => 'nullable|numeric',
+            'shipping_fee_status' => 'nullable|string|in:PAID,UNPAID',
+            'c_number' => 'nullable|string|max:100'
         ]);
 
         // Generate tracking and reference numbers
@@ -1145,6 +1150,7 @@ class AdminDashboardController extends Controller
             'client_name' => $validated['client_name'] ?? null,
             'shipping_fee' => $validated['shipping_fee'] ?? null,
             'shipping_fee_status' => $validated['shipping_fee_status'] ?? 'UNPAID',
+            'c_number' => $validated['c_number'] ?? null,
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now()
@@ -1251,7 +1257,8 @@ class AdminDashboardController extends Controller
             'eta' => 'nullable|date',
             'client_name' => 'nullable|string|max:255',
             'shipping_fee' => 'nullable|numeric',
-            'shipping_fee_status' => 'nullable|string|in:PAID,UNPAID'
+            'shipping_fee_status' => 'nullable|string|in:PAID,UNPAID',
+            'c_number' => 'nullable|string|max:100'
         ]);
 
         // Calculate progress based on status
@@ -1306,6 +1313,7 @@ class AdminDashboardController extends Controller
             'client_name' => $validated['client_name'] ?? null,
             'shipping_fee' => $validated['shipping_fee'] ?? null,
             'shipping_fee_status' => $validated['shipping_fee_status'] ?? 'UNPAID',
+            'c_number' => $validated['c_number'] ?? null,
             'updated_at' => now()
         ]);
 

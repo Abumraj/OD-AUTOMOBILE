@@ -35,6 +35,7 @@ function ShipmentsManager() {
             client_name: false,
             vessel: false,
             container: true,
+            c_number: true,
             shipping_fee: true
         };
     });
@@ -68,6 +69,7 @@ function ShipmentsManager() {
         { key: 'image_link', label: 'Vehicle Image', default: false },
         { key: 'vessel', label: 'Vessel', default: false },
         { key: 'container', label: 'Container #', default: true },
+        { key: 'c_number', label: 'C Number', default: true },
         { key: 'shipping_fee', label: 'S/Fee (Status)', default: true }
     ];
 
@@ -134,6 +136,7 @@ function ShipmentsManager() {
         total_cost: '',
         shipping_fee: '',
         shipping_fee_status: 'UNPAID',
+        c_number: '',
         notes: '',
         admin_notes: ''
     });
@@ -252,6 +255,7 @@ function ShipmentsManager() {
             total_cost: shipment.total_cost || '',
             shipping_fee: shipment.shipping_fee || '',
             shipping_fee_status: shipment.shipping_fee_status || 'UNPAID',
+            c_number: shipment.c_number || '',
             notes: shipment.notes || '',
             admin_notes: shipment.admin_notes || ''
         });
@@ -296,6 +300,7 @@ function ShipmentsManager() {
             total_cost: '',
             shipping_fee: '',
             shipping_fee_status: 'UNPAID',
+            c_number: '',
             notes: '',
             admin_notes: ''
         });
@@ -575,6 +580,17 @@ function ShipmentsManager() {
                                     </button>
                                 </th>
                             )}
+                            {visibleColumns.c_number && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('c_number')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        C Number
+                                        <SortIcon column="c_number" />
+                                    </button>
+                                </th>
+                            )}
                             {visibleColumns.status && (
                                 <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
                                     <button 
@@ -705,6 +721,11 @@ function ShipmentsManager() {
                                 {visibleColumns.container && (
                                     <td className="py-md px-md font-caption text-on-surface-variant font-mono">
                                         {shipment.container_number || 'N/A'}
+                                    </td>
+                                )}
+                                {visibleColumns.c_number && (
+                                    <td className="py-md px-md font-caption text-on-surface-variant font-mono">
+                                        {shipment.c_number || 'N/A'}
                                     </td>
                                 )}
                                 {visibleColumns.status && (
@@ -1143,6 +1164,16 @@ function ShipmentsManager() {
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         />
                                     </div>
+                                </div>
+                                <div className="mt-md">
+                                    <label className="block font-label-md text-on-surface-variant mb-xs">C Number</label>
+                                    <input
+                                        type="text"
+                                        value={formData.c_number}
+                                        onChange={(e) => setFormData({...formData, c_number: e.target.value})}
+                                        className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
+                                        placeholder="Enter C number"
+                                    />
                                 </div>
                             </div>
 
