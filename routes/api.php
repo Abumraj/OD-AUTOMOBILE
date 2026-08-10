@@ -173,6 +173,12 @@ Route::middleware('api')->group(function () {
 
         // Analytics
         Route::get('/analytics', [AdminDashboardController::class, 'getAnalytics']);
+
+        // Admin User Management (Superadmin only)
+        Route::get('/admin-users', [AdminDashboardController::class, 'getAdminUsers']);
+        Route::post('/admin-users', [AdminDashboardController::class, 'createAdminUser']);
+        Route::put('/admin-users/{id}', [AdminDashboardController::class, 'updateAdminUser']);
+        Route::delete('/admin-users/{id}', [AdminDashboardController::class, 'deleteAdminUser']);
     });
 
     Route::get('/health', function () {

@@ -13,6 +13,8 @@ function ShipmentsManager() {
     const [showColumnSelector, setShowColumnSelector] = useState(false);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [selectedShipmentForReceipt, setSelectedShipmentForReceipt] = useState(null);
+    const [sortBy, setSortBy] = useState('created_at');
+    const [sortOrder, setSortOrder] = useState('desc');
     
     // Column visibility state with localStorage persistence
     const [visibleColumns, setVisibleColumns] = useState(() => {
@@ -32,7 +34,8 @@ function ShipmentsManager() {
             year: false,
             client_name: false,
             vessel: false,
-            container: false
+            container: true,
+            shipping_fee: true
         };
     });
 
@@ -64,7 +67,8 @@ function ShipmentsManager() {
         { key: 'client_name', label: 'Client Name', default: false },
         { key: 'image_link', label: 'Vehicle Image', default: false },
         { key: 'vessel', label: 'Vessel', default: false },
-        { key: 'container', label: 'Container #', default: false }
+        { key: 'container', label: 'Container #', default: true },
+        { key: 'shipping_fee', label: 'S/Fee (Status)', default: true }
     ];
 
     const handleExportCSV = () => {
@@ -128,17 +132,19 @@ function ShipmentsManager() {
         actual_arrival_date: '',
         delivery_date: '',
         total_cost: '',
+        shipping_fee: '',
+        shipping_fee_status: 'UNPAID',
         notes: '',
         admin_notes: ''
     });
 
     useEffect(() => {
         fetchShipments();
-    }, []);
+    }, [sortBy, sortOrder]);
 
     const fetchShipments = async () => {
         try {
-            const response = await fetch('/api/admin/shipments');
+            const response = await fetch(`/api/admin/shipments?sort_by=${sortBy}&sort_order=${sortOrder}`);
             const data = await response.json();
             setShipments(data);
         } catch (error) {
@@ -244,6 +250,8 @@ function ShipmentsManager() {
             actual_arrival_date: shipment.actual_arrival_date || '',
             delivery_date: shipment.delivery_date || '',
             total_cost: shipment.total_cost || '',
+            shipping_fee: shipment.shipping_fee || '',
+            shipping_fee_status: shipment.shipping_fee_status || 'UNPAID',
             notes: shipment.notes || '',
             admin_notes: shipment.admin_notes || ''
         });
@@ -286,6 +294,8 @@ function ShipmentsManager() {
             actual_arrival_date: '',
             delivery_date: '',
             total_cost: '',
+            shipping_fee: '',
+            shipping_fee_status: 'UNPAID',
             notes: '',
             admin_notes: ''
         });
@@ -294,6 +304,26 @@ function ShipmentsManager() {
     const showNotification = (message, type) => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleSort = (column) => {
+        if (sortBy === column) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(column);
+            setSortOrder('asc');
+        }
+    };
+
+    const SortIcon = ({ column }) => {
+        if (sortBy !== column) {
+            return <span className="material-symbols-outlined text-xs opacity-30">unfold_more</span>;
+        }
+        return (
+            <span className="material-symbols-outlined text-xs text-secondary">
+                {sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+            </span>
+        );
     };
 
     const getStatusColor = (status) => {
@@ -452,22 +482,143 @@ function ShipmentsManager() {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-white/10">
-                            {visibleColumns.reference && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Reference</th>}
-                            {visibleColumns.customer && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Customer</th>}
-                            {visibleColumns.vehicle && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Vehicle</th>}
-                            {visibleColumns.vin && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">VIN</th>}
-                            {visibleColumns.year && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Year</th>}
+                            {visibleColumns.reference && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('reference_number')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Reference
+                                        <SortIcon column="reference_number" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.customer && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('customer_name')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Customer
+                                        <SortIcon column="customer_name" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.vehicle && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('car_model')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Vehicle
+                                        <SortIcon column="car_model" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.vin && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('vin')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        VIN
+                                        <SortIcon column="vin" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.year && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('year')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Year
+                                        <SortIcon column="year" />
+                                    </button>
+                                </th>
+                            )}
                             {visibleColumns.color && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Color</th>}
                             {visibleColumns.client_name && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Client</th>}
                             {visibleColumns.image_link && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Vehicle Image</th>}
-                            {visibleColumns.route && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Route</th>}
+                            {visibleColumns.route && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('origin_port')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Route
+                                        <SortIcon column="origin_port" />
+                                    </button>
+                                </th>
+                            )}
                             {visibleColumns.shipping_type && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Shipping Type</th>}
                             {visibleColumns.shipping_line && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Shipping Line</th>}
-                            {visibleColumns.vessel && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Vessel</th>}
-                            {visibleColumns.container && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Container</th>}
-                            {visibleColumns.status && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Status</th>}
-                            {visibleColumns.progress && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">Progress</th>}
-                            {visibleColumns.eta && <th className="text-left py-sm px-md font-label-md text-on-surface-variant">ETA</th>}
+                            {visibleColumns.vessel && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('vessel_name')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Vessel
+                                        <SortIcon column="vessel_name" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.container && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('container_number')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Container
+                                        <SortIcon column="container_number" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.status && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('status')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Status
+                                        <SortIcon column="status" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.progress && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('progress_percentage')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        Progress
+                                        <SortIcon column="progress_percentage" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.eta && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('eta')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        ETA
+                                        <SortIcon column="eta" />
+                                    </button>
+                                </th>
+                            )}
+                            {visibleColumns.shipping_fee && (
+                                <th className="text-left py-sm px-md font-label-md text-on-surface-variant">
+                                    <button 
+                                        onClick={() => handleSort('shipping_fee')}
+                                        className="flex items-center gap-xs hover:text-secondary transition-colors"
+                                    >
+                                        S/Fee (Status)
+                                        <SortIcon column="shipping_fee" />
+                                    </button>
+                                </th>
+                            )}
                             <th className="text-right py-sm px-md font-label-md text-on-surface-variant">Actions</th>
                         </tr>
                     </thead>
@@ -579,6 +730,20 @@ function ShipmentsManager() {
                                 {visibleColumns.eta && (
                                     <td className="py-md px-md font-caption text-on-surface-variant">
                                         {shipment.eta || shipment.estimated_arrival_date || 'TBD'}
+                                    </td>
+                                )}
+                                {visibleColumns.shipping_fee && (
+                                    <td className="py-md px-md">
+                                        <div className="font-body-md text-white">
+                                            {shipment.shipping_fee ? `$${parseFloat(shipment.shipping_fee).toFixed(2)}` : 'N/A'}
+                                        </div>
+                                        <span className={`inline-block px-sm py-xs rounded-full font-caption text-xs ${
+                                            shipment.shipping_fee_status === 'PAID' 
+                                                ? 'bg-green-500/20 text-green-400' 
+                                                : 'bg-orange-500/20 text-orange-400'
+                                        }`}>
+                                            {shipment.shipping_fee_status || 'UNPAID'}
+                                        </span>
                                     </td>
                                 )}
                                 <td className="py-md px-md text-right">
@@ -1010,6 +1175,34 @@ function ShipmentsManager() {
                                             onChange={(e) => setFormData({...formData, estimated_arrival_date: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-white/10 pt-md">
+                                <h4 className="font-title-md text-white mb-md">Financial Information</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                                    <div>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Shipping Fee</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={formData.shipping_fee}
+                                            onChange={(e) => setFormData({...formData, shipping_fee: e.target.value})}
+                                            className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Payment Status</label>
+                                        <select
+                                            value={formData.shipping_fee_status}
+                                            onChange={(e) => setFormData({...formData, shipping_fee_status: e.target.value})}
+                                            className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
+                                        >
+                                            <option value="UNPAID">UNPAID</option>
+                                            <option value="PAID">PAID</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

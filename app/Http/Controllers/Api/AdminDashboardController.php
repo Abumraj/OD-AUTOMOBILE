@@ -41,6 +41,7 @@ class AdminDashboardController extends Controller
         $request->session()->put('admin_id', $admin->id);
         $request->session()->put('admin_name', $admin->name);
         $request->session()->put('admin_email', $admin->email);
+        $request->session()->put('admin_role', $admin->role ?? 'admin');
 
         return response()->json([
             'success' => true,
@@ -48,14 +49,15 @@ class AdminDashboardController extends Controller
             'admin' => [
                 'id' => $admin->id,
                 'name' => $admin->name,
-                'email' => $admin->email
+                'email' => $admin->email,
+                'role' => $admin->role ?? 'admin'
             ]
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request->session()->forget(['admin_id', 'admin_name', 'admin_email']);
+        $request->session()->forget(['admin_id', 'admin_name', 'admin_email', 'admin_role']);
         $request->session()->flush();
 
         return response()->json([
@@ -72,7 +74,8 @@ class AdminDashboardController extends Controller
                 'admin' => [
                     'id' => $request->session()->get('admin_id'),
                     'name' => $request->session()->get('admin_name'),
-                    'email' => $request->session()->get('admin_email')
+                    'email' => $request->session()->get('admin_email'),
+                    'role' => $request->session()->get('admin_role', 'admin')
                 ]
             ]);
         }
@@ -84,42 +87,63 @@ class AdminDashboardController extends Controller
 
     public function getStats()
     {
+        // Total quotes count
         $totalQuotes = DB::table('quotes')->count();
+
+        // Active shipments - currently in progress (not pending, delivered, or cancelled)
         $activeShipments = DB::table('shipments')
-            ->whereIn('status', ['shipping', 'in_transit', 'customs'])
-            ->count();
-        $pendingClearance = DB::table('shipments')
-            ->where('status', 'customs')
-            ->count();
-        $deliveredYTD = DB::table('shipments')
-            ->where('status', 'delivered')
-            ->whereYear('delivery_date', date('Y'))
+            ->whereIn('status', ['auction_won', 'documentation', 'shipping', 'in_transit', 'customs'])
+            ->where('is_active', true)
             ->count();
 
+        // Pending clearance - shipments in customs
+        $pendingClearance = DB::table('shipments')
+            ->where('status', 'customs')
+            ->where('is_active', true)
+            ->count();
+
+        // Delivered this year
+        $deliveredYTD = DB::table('shipments')
+            ->where('status', 'delivered')
+            ->whereYear('created_at', date('Y'))
+            ->count();
+
+        // Quote growth calculation - last 30 days vs previous 30 days
         $lastMonthQuotes = DB::table('quotes')
-            ->where('created_at', '>=', now()->subMonth())
+            ->where('created_at', '>=', now()->subDays(30))
             ->count();
         $previousMonthQuotes = DB::table('quotes')
-            ->whereBetween('created_at', [now()->subMonths(2), now()->subMonth()])
+            ->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])
             ->count();
 
         $quotesGrowth = $previousMonthQuotes > 0
             ? round((($lastMonthQuotes - $previousMonthQuotes) / $previousMonthQuotes) * 100, 1)
-            : 0;
+            : ($lastMonthQuotes > 0 ? 100 : 0);
 
+        // Critical delays - shipments past ETA and still in transit
         $criticalDelays = DB::table('shipments')
-            ->where('status', 'in_transit')
-            ->whereNotNull('estimated_arrival_date')
-            ->whereRaw('estimated_arrival_date < NOW()')
-            ->whereNull('actual_arrival_date')
+            ->whereIn('status', ['in_transit', 'customs'])
+            ->where(function ($query) {
+                $query->whereNotNull('estimated_arrival_date')
+                    ->whereRaw('estimated_arrival_date < CURDATE()')
+                    ->whereNull('actual_arrival_date');
+            })
+            ->orWhere(function ($query) {
+                $query->whereNotNull('eta')
+                    ->whereRaw('eta < CURDATE()')
+                    ->whereNull('actual_arrival_date');
+            })
+            ->where('is_active', true)
             ->count();
 
-        $totalDeliveries = DB::table('shipments')
-            ->whereYear('delivery_date', date('Y'))
+        // Success rate - delivered vs total shipments this year
+        $totalShipmentsYTD = DB::table('shipments')
+            ->whereYear('created_at', date('Y'))
             ->count();
-        $successRate = $totalDeliveries > 0
-            ? round(($deliveredYTD / $totalDeliveries) * 100, 1)
-            : 99.2;
+
+        $successRate = $totalShipmentsYTD > 0
+            ? round(($deliveredYTD / $totalShipmentsYTD) * 100, 1)
+            : 0;
 
         return response()->json([
             'total_quotes' => $totalQuotes,
@@ -907,13 +931,51 @@ class AdminDashboardController extends Controller
     }
 
     // Shipment Management
-    public function getShipments()
+    public function getShipments(Request $request)
     {
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        // Validate sort parameters
+        $allowedSortFields = [
+            'created_at',
+            'tracking_number',
+            'reference_number',
+            'customer_name',
+            'status',
+            'progress_percentage',
+            'estimated_arrival_date',
+            'delivery_date',
+            'vehicle_make',
+            'vehicle_model',
+            'vehicle_year',
+            'origin_port',
+            'destination_port',
+            'total_cost',
+            'shipping_provider',
+            'vessel_name',
+            'container_number',
+            'car_model',
+            'year',
+            'vin',
+            'eta',
+            'shipping_fee',
+            'shipping_fee_status'
+        ];
+
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'created_at';
+        }
+
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
         $shipments = DB::table('shipments')
             ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
             ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
             ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
-            ->orderBy('shipments.created_at', 'desc')
+            ->orderBy('shipments.' . $sortBy, $sortOrder)
             ->get()
             ->map(function ($shipment) {
                 return [
@@ -959,6 +1021,8 @@ class AdminDashboardController extends Controller
                     'actual_arrival_date' => $shipment->actual_arrival_date,
                     'delivery_date' => $shipment->delivery_date,
                     'total_cost' => $shipment->total_cost,
+                    'shipping_fee' => $shipment->shipping_fee,
+                    'shipping_fee_status' => $shipment->shipping_fee_status,
                     'notes' => $shipment->notes,
                     'admin_notes' => $shipment->admin_notes,
                     'is_active' => $shipment->is_active,
@@ -1079,6 +1143,8 @@ class AdminDashboardController extends Controller
             'shipping_line_id' => $validated['shipping_line_id'] ?? null,
             'eta' => $validated['eta'] ?? null,
             'client_name' => $validated['client_name'] ?? null,
+            'shipping_fee' => $validated['shipping_fee'] ?? null,
+            'shipping_fee_status' => $validated['shipping_fee_status'] ?? 'UNPAID',
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now()
@@ -1183,7 +1249,9 @@ class AdminDashboardController extends Controller
             'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
             'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
             'eta' => 'nullable|date',
-            'client_name' => 'nullable|string|max:255'
+            'client_name' => 'nullable|string|max:255',
+            'shipping_fee' => 'nullable|numeric',
+            'shipping_fee_status' => 'nullable|string|in:PAID,UNPAID'
         ]);
 
         // Calculate progress based on status
@@ -1236,6 +1304,8 @@ class AdminDashboardController extends Controller
             'shipping_line_id' => $validated['shipping_line_id'] ?? null,
             'eta' => $validated['eta'] ?? null,
             'client_name' => $validated['client_name'] ?? null,
+            'shipping_fee' => $validated['shipping_fee'] ?? null,
+            'shipping_fee_status' => $validated['shipping_fee_status'] ?? 'UNPAID',
             'updated_at' => now()
         ]);
 
@@ -2814,6 +2884,162 @@ class AdminDashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Service deleted successfully'
+        ]);
+    }
+
+    // Admin User Management (Superadmin only)
+    public function getAdminUsers(Request $request)
+    {
+        $adminRole = $request->session()->get('admin_role', 'admin');
+
+        if ($adminRole !== 'superadmin') {
+            return response()->json(['error' => 'Unauthorized. Superadmin access required.'], 403);
+        }
+
+        $adminUsers = DB::table('admin_users')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role ?? 'admin',
+                    'is_active' => (bool) $user->is_active,
+                    'last_login_at' => $user->last_login_at,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ];
+            });
+
+        return response()->json($adminUsers);
+    }
+
+    public function createAdminUser(Request $request)
+    {
+        $adminRole = $request->session()->get('admin_role', 'admin');
+
+        if ($adminRole !== 'superadmin') {
+            return response()->json(['error' => 'Unauthorized. Superadmin access required.'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:admin_users,email',
+            'password' => 'required|string|min:6',
+            'role' => 'required|in:admin,superadmin',
+            'is_active' => 'boolean'
+        ]);
+
+        $userId = DB::table('admin_users')->insertGetId([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'is_active' => $validated['is_active'] ?? true,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        DB::table('activity_logs')->insert([
+            'icon' => 'person_add',
+            'user_name' => $request->session()->get('admin_name'),
+            'action' => 'created new admin user: ' . $validated['name'],
+            'location' => 'Admin Management',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin user created successfully',
+            'user_id' => $userId
+        ]);
+    }
+
+    public function updateAdminUser(Request $request, $id)
+    {
+        $adminRole = $request->session()->get('admin_role', 'admin');
+
+        if ($adminRole !== 'superadmin') {
+            return response()->json(['error' => 'Unauthorized. Superadmin access required.'], 403);
+        }
+
+        $user = DB::table('admin_users')->where('id', $id)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'Admin user not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:admin_users,email,' . $id,
+            'password' => 'sometimes|string|min:6',
+            'role' => 'sometimes|in:admin,superadmin',
+            'is_active' => 'sometimes|boolean'
+        ]);
+
+        $updateData = [];
+        if (isset($validated['name'])) $updateData['name'] = $validated['name'];
+        if (isset($validated['email'])) $updateData['email'] = $validated['email'];
+        if (isset($validated['password'])) $updateData['password'] = Hash::make($validated['password']);
+        if (isset($validated['role'])) $updateData['role'] = $validated['role'];
+        if (isset($validated['is_active'])) $updateData['is_active'] = $validated['is_active'];
+        $updateData['updated_at'] = now();
+
+        DB::table('admin_users')
+            ->where('id', $id)
+            ->update($updateData);
+
+        DB::table('activity_logs')->insert([
+            'icon' => 'edit',
+            'user_name' => $request->session()->get('admin_name'),
+            'action' => 'updated admin user: ' . $user->name,
+            'location' => 'Admin Management',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin user updated successfully'
+        ]);
+    }
+
+    public function deleteAdminUser(Request $request, $id)
+    {
+        $adminRole = $request->session()->get('admin_role', 'admin');
+
+        if ($adminRole !== 'superadmin') {
+            return response()->json(['error' => 'Unauthorized. Superadmin access required.'], 403);
+        }
+
+        $currentAdminId = $request->session()->get('admin_id');
+
+        if ($currentAdminId == $id) {
+            return response()->json(['error' => 'Cannot delete your own account'], 400);
+        }
+
+        $user = DB::table('admin_users')->where('id', $id)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'Admin user not found'], 404);
+        }
+
+        DB::table('admin_users')->where('id', $id)->delete();
+
+        DB::table('activity_logs')->insert([
+            'icon' => 'person_remove',
+            'user_name' => $request->session()->get('admin_name'),
+            'action' => 'deleted admin user: ' . $user->name,
+            'location' => 'Admin Management',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin user deleted successfully'
         ]);
     }
 }

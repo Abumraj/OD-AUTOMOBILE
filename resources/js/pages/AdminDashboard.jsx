@@ -24,6 +24,7 @@ import AdminAboutUsPage from './admin/content/AboutUsPage';
 import AdminCarouselPage from './admin/AdminCarouselPage';
 import AdminServicesPage from './admin/AdminServicesPage';
 import AdminLoginPage from './admin/AdminLoginPage';
+import AdminUsersPage from './admin/AdminUsersPage';
 
 function AdminDashboard() {
     const [authenticated, setAuthenticated] = useState(null);
@@ -79,7 +80,7 @@ function AdminDashboard() {
 
     return (
         <div className="overflow-hidden bg-surface min-h-screen">
-            <AdminSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <AdminSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} admin={admin} />
 
             <main className="lg:ml-64 flex flex-col min-h-screen bg-surface">
                 <AdminTopBar admin={admin} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(true)} />
@@ -107,6 +108,7 @@ function AdminDashboard() {
                         <Route path="/settings/performance" element={<PerformanceSettingsPage />} />
                         <Route path="/settings/tracking" element={<TrackingSettingsPage />} />
                         <Route path="/settings/shipping" element={<ShippingConfigPage />} />
+                        <Route path="/admin-users" element={<AdminUsersPage />} />
                     </Routes>
                 </div>
             </main>

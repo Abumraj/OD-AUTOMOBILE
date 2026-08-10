@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-function AdminSidebar({ mobileOpen, onClose }) {
+function AdminSidebar({ mobileOpen, onClose, admin }) {
     const location = useLocation();
     const [settingsOpen, setSettingsOpen] = useState(location.pathname.startsWith('/admin/settings'));
 
-    const navItems = [
+    const baseNavItems = [
         { path: '/admin', icon: 'dashboard', label: 'Dashboard' },
         { path: '/admin/analytics', icon: 'analytics', label: 'Analytics' },
         { path: '/admin/shipments', icon: 'local_shipping', label: 'Shipments' },
@@ -18,6 +18,14 @@ function AdminSidebar({ mobileOpen, onClose }) {
         { path: '/admin/legal-pages', icon: 'policy', label: 'Legal Pages' },
         { path: '/admin/about-us', icon: 'info', label: 'About Us' },
     ];
+
+    const superadminNavItems = [
+        { path: '/admin/admin-users', icon: 'admin_panel_settings', label: 'Admin Users' },
+    ];
+
+    const navItems = admin?.role === 'superadmin' 
+        ? [...baseNavItems, ...superadminNavItems] 
+        : baseNavItems;
 
     const settingsItems = [
         { path: '/admin/settings/general', icon: 'tune', label: 'General' },
