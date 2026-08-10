@@ -935,6 +935,7 @@ class AdminDashboardController extends Controller
     {
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
+        $search = $request->get('search', '');
 
         // Validate sort parameters
         $allowedSortFields = [
@@ -972,11 +973,39 @@ class AdminDashboardController extends Controller
             $sortOrder = 'desc';
         }
 
-        $shipments = DB::table('shipments')
+        $query = DB::table('shipments')
             ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
             ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
-            ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
-            ->orderBy('shipments.' . $sortBy, $sortOrder)
+            ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name');
+
+        // Apply search filter
+        if (!empty($search)) {
+            $searchTerm = '%' . $search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('shipments.reference_number', 'like', $searchTerm)
+                    ->orWhere('shipments.tracking_number', 'like', $searchTerm)
+                    ->orWhere('shipments.customer_name', 'like', $searchTerm)
+                    ->orWhere('shipments.customer_email', 'like', $searchTerm)
+                    ->orWhere('shipments.customer_phone', 'like', $searchTerm)
+                    ->orWhere('shipments.vehicle_make', 'like', $searchTerm)
+                    ->orWhere('shipments.vehicle_model', 'like', $searchTerm)
+                    ->orWhere('shipments.vehicle_year', 'like', $searchTerm)
+                    ->orWhere('shipments.car_model', 'like', $searchTerm)
+                    ->orWhere('shipments.vin', 'like', $searchTerm)
+                    ->orWhere('shipments.container_number', 'like', $searchTerm)
+                    ->orWhere('shipments.c_number', 'like', $searchTerm)
+                    ->orWhere('shipments.booking_number', 'like', $searchTerm)
+                    ->orWhere('shipments.vessel_name', 'like', $searchTerm)
+                    ->orWhere('shipments.origin_port', 'like', $searchTerm)
+                    ->orWhere('shipments.destination_port', 'like', $searchTerm)
+                    ->orWhere('shipments.shipping_provider', 'like', $searchTerm)
+                    ->orWhere('shipments.status', 'like', $searchTerm)
+                    ->orWhere('shipping_types.name', 'like', $searchTerm)
+                    ->orWhere('shipping_lines.name', 'like', $searchTerm);
+            });
+        }
+
+        $shipments = $query->orderBy('shipments.' . $sortBy, $sortOrder)
             ->get()
             ->map(function ($shipment) {
                 return [

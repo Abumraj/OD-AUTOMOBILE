@@ -9,6 +9,7 @@ function ShipmentsManager() {
     const [editingShipment, setEditingShipment] = useState(null);
     const [notification, setNotification] = useState(null);
     const [filter, setFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState('table');
     const [showColumnSelector, setShowColumnSelector] = useState(false);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -142,12 +143,16 @@ function ShipmentsManager() {
     });
 
     useEffect(() => {
-        fetchShipments();
-    }, [sortBy, sortOrder]);
+        const timer = setTimeout(() => {
+            fetchShipments();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [sortBy, sortOrder, searchQuery]);
 
     const fetchShipments = async () => {
         try {
-            const response = await fetch(`/api/admin/shipments?sort_by=${sortBy}&sort_order=${sortOrder}`);
+            const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+            const response = await fetch(`/api/admin/shipments?sort_by=${sortBy}&sort_order=${sortOrder}${searchParam}`);
             const data = await response.json();
             setShipments(data);
         } catch (error) {
@@ -463,6 +468,29 @@ function ShipmentsManager() {
                     </button>
                 </div>
             </div>
+
+            {viewMode === 'table' && (
+                <div className="mb-md">
+                    <div className="relative max-w-md">
+                        <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by reference, customer, vehicle, container, C number, VIN..."
+                            className="w-full bg-surface-container-lowest border border-white/20 text-white pl-2xl pr-md py-sm rounded-lg focus:outline-none focus:border-secondary-container placeholder:text-on-surface-variant/50"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-white transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {viewMode === 'table' && (
                 <div className="flex gap-sm mb-md overflow-x-auto">
