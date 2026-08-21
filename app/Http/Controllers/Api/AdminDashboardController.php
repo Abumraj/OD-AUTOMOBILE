@@ -660,12 +660,25 @@ class AdminDashboardController extends Controller
 
     public function getWhatsAppSettings()
     {
-        $phone = DB::table('settings')->where('key', 'whatsapp_phone')->value('value');
-        $message = DB::table('settings')->where('key', 'whatsapp_message')->value('value');
+        $isAdmin = request()->session()->has('admin_id');
+        $settings = DB::table('settings')
+            ->whereIn('key', [
+                'whatsapp_phone',
+                'whatsapp_message',
+                'whatsapp_enabled',
+                'whatsapp_access_token',
+                'whatsapp_phone_number_id',
+                'whatsapp_api_version'
+            ])
+            ->pluck('value', 'key');
 
         return response()->json([
-            'phone' => $phone ?? '',
-            'message' => $message ?? 'Hello! I would like to inquire about your auto import services.'
+            'phone' => $settings['whatsapp_phone'] ?? '',
+            'message' => $settings['whatsapp_message'] ?? 'Hello! I would like to inquire about your auto import services.',
+            'enabled' => $isAdmin && ($settings['whatsapp_enabled'] ?? 'false') === 'true',
+            'access_token' => $isAdmin ? ($settings['whatsapp_access_token'] ?? '') : '',
+            'phone_number_id' => $isAdmin ? ($settings['whatsapp_phone_number_id'] ?? '') : '',
+            'api_version' => $isAdmin ? ($settings['whatsapp_api_version'] ?? 'v20.0') : null
         ]);
     }
 
@@ -673,22 +686,28 @@ class AdminDashboardController extends Controller
     {
         $validated = $request->validate([
             'phone' => 'required|string|max:20',
-            'message' => 'required|string|max:500'
+            'message' => 'required|string|max:500',
+            'enabled' => 'required|boolean',
+            'access_token' => 'nullable|string',
+            'phone_number_id' => 'nullable|string|max:100',
+            'api_version' => 'required|string|max:20'
         ]);
 
-        DB::table('settings')
-            ->where('key', 'whatsapp_phone')
-            ->update([
-                'value' => $validated['phone'],
-                'updated_at' => now()
-            ]);
-
-        DB::table('settings')
-            ->where('key', 'whatsapp_message')
-            ->update([
-                'value' => $validated['message'],
-                'updated_at' => now()
-            ]);
+        foreach (
+            [
+                'whatsapp_phone' => $validated['phone'],
+                'whatsapp_message' => $validated['message'],
+                'whatsapp_enabled' => $validated['enabled'] ? 'true' : 'false',
+                'whatsapp_access_token' => $validated['access_token'] ?? '',
+                'whatsapp_phone_number_id' => $validated['phone_number_id'] ?? '',
+                'whatsapp_api_version' => $validated['api_version']
+            ] as $key => $value
+        ) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $key],
+                ['value' => $value, 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
 
         DB::table('activity_logs')->insert([
             'icon' => 'settings',

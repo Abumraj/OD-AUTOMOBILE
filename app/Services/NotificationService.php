@@ -9,17 +9,19 @@ use Illuminate\Support\Facades\Log;
 class NotificationService
 {
     protected $termiiService;
+    protected $whatsappService;
 
     public function __construct()
     {
         $this->termiiService = new TermiiService();
+        $this->whatsappService = new WhatsAppService();
     }
 
     /**
      * Send email using template from database.
      * Silently fails on any error and logs it.
      */
-    public function sendEmail($templateSlug, $to, $variables = [])
+    public function sendEmail($templateSlug, $to, $variables = [], $attachments = [])
     {
         if (empty($to)) {
             return false;
@@ -38,9 +40,13 @@ class NotificationService
 
             $settings = DB::table('settings')
                 ->whereIn('key', [
-                    'office_address', 'office_city', 'office_country',
-                    'office_phone', 'office_email',
-                    'social_facebook', 'social_instagram'
+                    'office_address',
+                    'office_city',
+                    'office_country',
+                    'office_phone',
+                    'office_email',
+                    'social_facebook',
+                    'social_instagram'
                 ])
                 ->pluck('value', 'key')
                 ->toArray();
@@ -49,9 +55,15 @@ class NotificationService
 
             $subject = $this->replaceVariables($template->subject, $data);
 
-            Mail::send('emails.' . $template->slug, $data, function ($message) use ($to, $subject) {
+            Mail::send('emails.' . $template->slug, $data, function ($message) use ($to, $subject, $attachments) {
                 $message->to($to)
                     ->subject($subject);
+
+                foreach ($attachments as $attachment) {
+                    $message->attachData($attachment['contents'], $attachment['name'], [
+                        'mime' => $attachment['mime'] ?? 'application/octet-stream'
+                    ]);
+                }
             });
 
             Log::info('Email sent successfully', [
@@ -95,17 +107,48 @@ class NotificationService
         }
     }
 
+    public function sendWhatsApp($templateSlug, $to, $variables = [], $attachment = null)
+    {
+        if (empty($to)) {
+            return false;
+        }
+
+        try {
+            $template = DB::table('sms_templates')
+                ->where('slug', $templateSlug)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$template) {
+                Log::warning('WhatsApp template not found or inactive', ['slug' => $templateSlug]);
+                return false;
+            }
+
+            $message = $this->replaceVariables($template->message, $variables);
+            $result = $attachment
+                ? $this->whatsappService->sendDocument($to, $attachment['contents'], $attachment['name'], $message, $attachment['mime'] ?? 'application/pdf')
+                : $this->whatsappService->sendText($to, $message);
+
+            return $result['success'] ?? false;
+        } catch (\Exception $e) {
+            Log::error('Failed to send WhatsApp notification', ['to' => $to, 'template' => $templateSlug, 'error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
     /**
      * Send both email and SMS notifications.
      */
-    public function send($emailTemplateSlug, $smsTemplateSlug, $email, $phone, $variables = [])
+    public function send($emailTemplateSlug, $smsTemplateSlug, $email, $phone, $variables = [], $attachments = [])
     {
-        $emailSent = $this->sendEmail($emailTemplateSlug, $email, $variables);
+        $emailSent = $this->sendEmail($emailTemplateSlug, $email, $variables, $attachments);
         $smsSent = $this->sendSMS($smsTemplateSlug, $phone, $variables);
+        $whatsappSent = $this->sendWhatsApp($smsTemplateSlug, $phone, $variables, $attachments[0] ?? null);
 
         return [
             'email_sent' => $emailSent,
-            'sms_sent' => $smsSent
+            'sms_sent' => $smsSent,
+            'whatsapp_sent' => $whatsappSent
         ];
     }
 

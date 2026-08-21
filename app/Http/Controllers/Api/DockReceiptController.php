@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,8 @@ class DockReceiptController extends Controller
             'date_received' => 'nullable|date',
             'location_received' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
-            'send_email' => 'nullable|boolean'
+            'send_email' => 'nullable|boolean',
+            'send_whatsapp' => 'nullable|boolean'
         ]);
 
         try {
@@ -54,25 +56,25 @@ class DockReceiptController extends Controller
                 'updated_at' => now()
             ]);
 
+            $receipt = DB::table('dock_receipts')->where('id', $receiptId)->first();
+            $pdfOutput = null;
+            if (!empty($validated['send_email']) || !empty($validated['send_whatsapp'])) {
+                $pdfData = [
+                    'receipt' => $receipt,
+                    'shipment' => $shipment,
+                    'stage_name' => $this->getStageName($receipt->stage),
+                    'generated_date' => date('F d, Y', strtotime($receipt->generated_at))
+                ];
+
+                $pdf = Pdf::loadView('receipts.dock-receipt', $pdfData);
+                $pdf->setPaper('a4', 'portrait');
+                $pdfOutput = $pdf->output();
+            }
+
             // Send email if requested
             $emailSent = false;
             if (!empty($validated['send_email']) && $shipment->customer_email) {
                 try {
-                    // Get the receipt data for PDF generation
-                    $receipt = DB::table('dock_receipts')->where('id', $receiptId)->first();
-
-                    $pdfData = [
-                        'receipt' => $receipt,
-                        'shipment' => $shipment,
-                        'stage_name' => $this->getStageName($receipt->stage),
-                        'generated_date' => date('F d, Y', strtotime($receipt->generated_at))
-                    ];
-
-                    // Generate PDF
-                    $pdf = Pdf::loadView('receipts.dock-receipt', $pdfData);
-                    $pdf->setPaper('a4', 'portrait');
-                    $pdfOutput = $pdf->output();
-
                     // Send email with PDF attachment
                     Mail::send('emails.dock-receipt-email', [
                         'customer_name' => $shipment->customer_name,
@@ -108,6 +110,26 @@ class DockReceiptController extends Controller
                 }
             }
 
+            $whatsappSent = false;
+            if (!empty($validated['send_whatsapp']) && $shipment->customer_phone) {
+                try {
+                    $whatsappResult = (new WhatsAppService())->sendDocument(
+                        $shipment->customer_phone,
+                        $pdfOutput ?? null,
+                        "dock-receipt-{$receiptNumber}.pdf",
+                        "Dock Receipt - {$receiptNumber}",
+                        'application/pdf'
+                    );
+                    $whatsappSent = $whatsappResult['success'] ?? false;
+                } catch (\Exception $e) {
+                    Log::error('Failed to send dock receipt WhatsApp document', [
+                        'receipt_id' => $receiptId,
+                        'customer_phone' => $shipment->customer_phone,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
             // Log activity
             DB::table('activity_stream')->insert([
                 'action' => 'Dock Receipt Generated',
@@ -122,6 +144,7 @@ class DockReceiptController extends Controller
                 'receipt_id' => $receiptId,
                 'receipt_number' => $receiptNumber,
                 'email_sent' => $emailSent,
+                'whatsapp_sent' => $whatsappSent,
                 'message' => $emailSent
                     ? 'Dock receipt generated and sent to customer email'
                     : 'Dock receipt generated successfully'
