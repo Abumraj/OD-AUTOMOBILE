@@ -7,7 +7,9 @@ function GeneralSettingsManager() {
         office_city: '',
         office_country: '',
         office_phone: '',
-        office_email: ''
+        office_email: '',
+        site_title: '',
+        site_description: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -77,6 +79,42 @@ function GeneralSettingsManager() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-md">
+                <div className="border-b border-white/10 pb-md">
+                    <h3 className="font-title-md text-white mb-md">Site Identity (Browser Tab & Link Previews)</h3>
+                    <div className="space-y-md">
+                        <div>
+                            <label className="block font-label-md text-on-surface-variant mb-xs">
+                                Site Title
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.site_title}
+                                onChange={(e) => setSettings({...settings, site_title: e.target.value})}
+                                className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
+                                placeholder="OD Automotive & Logistics | Professional Industrial Transport"
+                            />
+                            <p className="text-xs text-on-surface-variant mt-xs">
+                                Shown in the browser tab and as the title when the site is shared on social media or messaging apps
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block font-label-md text-on-surface-variant mb-xs">
+                                Site Description
+                            </label>
+                            <textarea
+                                value={settings.site_description}
+                                onChange={(e) => setSettings({...settings, site_description: e.target.value})}
+                                rows="2"
+                                className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
+                                placeholder="Professional automotive logistics and transport services..."
+                            />
+                            <p className="text-xs text-on-surface-variant mt-xs">
+                                Shown as the description when the site is shared on social media or messaging apps
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label className="block font-label-md text-on-surface-variant mb-xs">
                         Minimum Deposit ($)

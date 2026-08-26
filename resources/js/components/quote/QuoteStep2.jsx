@@ -1,4 +1,77 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+function YearPicker({ value, onChange }) {
+    const [open, setOpen] = useState(false);
+    const currentYear = new Date().getFullYear();
+    const [decadeStart, setDecadeStart] = useState(Math.floor((value || currentYear) / 10) * 10);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (containerRef.current && !containerRef.current.contains(e.target)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const years = Array.from({ length: 12 }, (_, i) => decadeStart - 1 + i);
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors bg-white text-gray-900 flex items-center justify-between"
+            >
+                <span className={value ? 'text-gray-900' : 'text-gray-400'}>{value || 'Select Year'}</span>
+                <span className="material-symbols-outlined text-outline text-xl">calendar_month</span>
+            </button>
+            {open && (
+                <div className="absolute z-20 mt-xs w-full bg-white border-2 border-surface-container-highest rounded-lg shadow-lg p-sm">
+                    <div className="flex items-center justify-between mb-sm px-xs">
+                        <button
+                            type="button"
+                            onClick={() => setDecadeStart(decadeStart - 10)}
+                            className="p-1 rounded hover:bg-surface-container-highest text-primary-container"
+                        >
+                            <span className="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <span className="font-label-md text-label-md text-primary-container">{decadeStart} - {decadeStart + 9}</span>
+                        <button
+                            type="button"
+                            onClick={() => setDecadeStart(decadeStart + 10)}
+                            className="p-1 rounded hover:bg-surface-container-highest text-primary-container"
+                        >
+                            <span className="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-xs">
+                        {years.map((y) => (
+                            <button
+                                key={y}
+                                type="button"
+                                onClick={() => {
+                                    onChange(String(y));
+                                    setOpen(false);
+                                }}
+                                disabled={y > currentYear + 1 || y < 1980}
+                                className={`py-2 rounded-lg text-sm font-bold transition-colors ${
+                                    String(y) === String(value)
+                                        ? 'bg-secondary-container text-white'
+                                        : 'hover:bg-surface-container-highest text-gray-900'
+                                } disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent`}
+                            >
+                                {y}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
     const handleChange = (field, value) => {
@@ -75,19 +148,7 @@ function QuoteStep2({ formData, updateFormData, nextStep, prevStep }) {
                         </div>
                         <div className="space-y-xs">
                             <label className="block font-label-md text-label-md text-primary-container">Year *</label>
-                            <select
-                                value={formData.year || ''}
-                                onChange={(e) => handleChange('year', e.target.value)}
-                                className="w-full p-sm border-2 border-surface-container-highest rounded-lg focus:border-secondary-container focus:ring-0 outline-none transition-colors appearance-none bg-white text-gray-900"
-                                required
-                            >
-                                <option value="">Select Year</option>
-                                <option value="2024">2024</option>
-                                <option value="2023">2023</option>
-                                <option value="2022">2022</option>
-                                <option value="2021">2021</option>
-                                <option value="2020">2020</option>
-                            </select>
+                            <YearPicker value={formData.year} onChange={(year) => handleChange('year', year)} />
                         </div>
                         <div className="space-y-xs">
                             <label className="block font-label-md text-label-md text-primary-container">Origin Country *</label>

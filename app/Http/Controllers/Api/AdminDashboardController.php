@@ -2211,7 +2211,7 @@ class AdminDashboardController extends Controller
     // General Settings
     public function getGeneralSettings()
     {
-        $keys = ['minimum_deposit', 'office_address', 'office_city', 'office_country', 'office_phone', 'office_email'];
+        $keys = ['minimum_deposit', 'office_address', 'office_city', 'office_country', 'office_phone', 'office_email', 'site_title', 'site_description'];
         $settings = DB::table('settings')
             ->whereIn('key', $keys)
             ->pluck('value', 'key');
@@ -2222,7 +2222,9 @@ class AdminDashboardController extends Controller
             'office_city' => $settings['office_city'] ?? '',
             'office_country' => $settings['office_country'] ?? '',
             'office_phone' => $settings['office_phone'] ?? '',
-            'office_email' => $settings['office_email'] ?? ''
+            'office_email' => $settings['office_email'] ?? '',
+            'site_title' => $settings['site_title'] ?? 'OD Automotive & Logistics | Professional Industrial Transport',
+            'site_description' => $settings['site_description'] ?? 'Professional automotive logistics and transport services. Expert vehicle procurement, auction bidding, and door-to-door delivery.'
         ]);
     }
 
@@ -2234,7 +2236,9 @@ class AdminDashboardController extends Controller
             'office_city' => 'nullable|string|max:255',
             'office_country' => 'nullable|string|max:255',
             'office_phone' => 'nullable|string|max:50',
-            'office_email' => 'nullable|email|max:255'
+            'office_email' => 'nullable|email|max:255',
+            'site_title' => 'nullable|string|max:255',
+            'site_description' => 'nullable|string|max:500'
         ]);
 
         foreach ($validated as $key => $value) {

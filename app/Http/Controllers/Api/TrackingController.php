@@ -116,8 +116,8 @@ class TrackingController extends Controller
                     'shipping_line' => $shipment->shipping_line_name ?? 'N/A',
                     'eta' => $shipment->eta ? date('d/m/Y', strtotime($shipment->eta)) : ($shipment->estimated_arrival_date ?? 'TBD'),
                     'client_name' => $shipment->client_name ?? $shipment->customer_name ?? 'N/A',
-                    'origin' => $shipment->origin ?? 'N/A',
-                    'destination' => $shipment->destination ?? 'N/A',
+                    'origin' => trim(implode(', ', array_filter([$shipment->origin_port ?? null, $shipment->origin_country ?? null]))) ?: 'N/A',
+                    'destination' => trim(implode(', ', array_filter([$shipment->destination_port ?? null, $shipment->destination_country ?? null]))) ?: 'N/A',
                     'vessel' => $shipment->vessel_name ?? 'TBD',
                     'container_number' => $shipment->container_number ?? 'N/A',
                     'booking_number' => $shipment->booking_number ?? 'N/A'

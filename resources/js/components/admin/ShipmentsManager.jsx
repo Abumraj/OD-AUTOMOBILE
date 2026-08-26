@@ -16,6 +16,10 @@ function ShipmentsManager() {
     const [selectedShipmentForReceipt, setSelectedShipmentForReceipt] = useState(null);
     const [sortBy, setSortBy] = useState('created_at');
     const [sortOrder, setSortOrder] = useState('desc');
+    const [shippingTypes, setShippingTypes] = useState([]);
+    const [shippingLines, setShippingLines] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     
     // Column visibility state with localStorage persistence
     const [visibleColumns, setVisibleColumns] = useState(() => {
@@ -148,6 +152,25 @@ function ShipmentsManager() {
         }, 300);
         return () => clearTimeout(timer);
     }, [sortBy, sortOrder, searchQuery]);
+
+    useEffect(() => {
+        fetchShippingConfig();
+    }, []);
+
+    const fetchShippingConfig = async () => {
+        try {
+            const [typesRes, linesRes] = await Promise.all([
+                fetch('/api/admin/shipping-types'),
+                fetch('/api/admin/shipping-lines')
+            ]);
+            const types = await typesRes.json();
+            const lines = await linesRes.json();
+            setShippingTypes(Array.isArray(types) ? types.filter(t => t.is_active) : []);
+            setShippingLines(Array.isArray(lines) ? lines.filter(l => l.is_active) : []);
+        } catch (error) {
+            console.error('Error fetching shipping config:', error);
+        }
+    };
 
     const fetchShipments = async () => {
         try {
@@ -353,6 +376,13 @@ function ShipmentsManager() {
     const filteredShipments = filter === 'all' 
         ? shipments 
         : shipments.filter(s => s.status === filter);
+
+    const totalPages = Math.max(1, Math.ceil(filteredShipments.length / itemsPerPage));
+    const paginatedShipments = filteredShipments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter, searchQuery, sortBy, sortOrder]);
 
     if (loading) {
         return (
@@ -667,7 +697,7 @@ function ShipmentsManager() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredShipments.map(shipment => (
+                        {paginatedShipments.map(shipment => (
                             <tr key={shipment.id} className="border-b border-white/5 hover:bg-primary-container/50 transition-colors">
                                 {visibleColumns.reference && (
                                     <td className="py-md px-md">
@@ -827,6 +857,33 @@ function ShipmentsManager() {
                     {filteredShipments.length === 0 && (
                         <div className="text-center py-xl text-on-surface-variant">
                             No shipments found
+                        </div>
+                    )}
+
+                    {filteredShipments.length > 0 && (
+                        <div className="flex items-center justify-between mt-md pt-md border-t border-white/10">
+                            <span className="font-caption text-on-surface-variant">
+                                Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredShipments.length)} of {filteredShipments.length}
+                            </span>
+                            <div className="flex items-center gap-xs">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-xs rounded-lg bg-surface-container-high text-on-surface disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-sm">chevron_left</span>
+                                </button>
+                                <span className="font-caption text-on-surface-variant px-sm">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-xs rounded-lg bg-surface-container-high text-on-surface disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-sm">chevron_right</span>
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -1162,16 +1219,33 @@ function ShipmentsManager() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-md mt-md">
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Shipping Provider</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Shipping Type</label>
                                         <select
-                                            value={formData.shipping_provider}
-                                            onChange={(e) => setFormData({...formData, shipping_provider: e.target.value})}
+                                            value={formData.shipping_type_id}
+                                            onChange={(e) => setFormData({...formData, shipping_type_id: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         >
-                                            <option value="">Select Provider</option>
-                                            <option value="grimaldi">Grimaldi Lines</option>
-                                            <option value="sallaum">Sallaum Lines</option>
-                                            <option value="other">Other</option>
+                                            <option value="">Select Shipping Type</option>
+                                            {shippingTypes.map(type => (
+                                                <option key={type.id} value={type.id}>{type.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Shipping Line</label>
+                                        <select
+                                            value={formData.shipping_line_id}
+                                            onChange={(e) => {
+                                                const lineId = e.target.value;
+                                                const line = shippingLines.find(l => String(l.id) === lineId);
+                                                setFormData({...formData, shipping_line_id: lineId, shipping_provider: line ? line.name : ''});
+                                            }}
+                                            className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
+                                        >
+                                            <option value="">Select Shipping Line</option>
+                                            {shippingLines.map(line => (
+                                                <option key={line.id} value={line.id}>{line.name}</option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div>
@@ -1227,11 +1301,11 @@ function ShipmentsManager() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Estimated Arrival</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Estimated Arrival (ETA)</label>
                                         <input
                                             type="date"
                                             value={formData.estimated_arrival_date}
-                                            onChange={(e) => setFormData({...formData, estimated_arrival_date: e.target.value})}
+                                            onChange={(e) => setFormData({...formData, estimated_arrival_date: e.target.value, eta: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         />
                                     </div>

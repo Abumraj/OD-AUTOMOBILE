@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useScrollAnimation, fadeInUp, scaleIn } from '../hooks/useScrollAnimation';
 import Toast from '../components/Toast';
 
 function TrackingPage() {
-    const [referenceNumber, setReferenceNumber] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [referenceNumber, setReferenceNumber] = useState(searchParams.get('ref') || '');
     const [trackingData, setTrackingData] = useState(null);
     const [headerRef, headerVisible] = useScrollAnimation();
     const [searchRef, searchVisible] = useScrollAnimation();
@@ -12,8 +14,9 @@ function TrackingPage() {
     const [toast, setToast] = useState(null);
     const trackingResultsRef = useRef(null);
 
-    const handleTrack = async () => {
-        if (!referenceNumber.trim()) {
+    const handleTrack = async (idOverride) => {
+        const trackingId = (idOverride ?? referenceNumber).trim();
+        if (!trackingId) {
             return;
         }
 
@@ -26,7 +29,7 @@ function TrackingPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ tracking_id: referenceNumber })
+                body: JSON.stringify({ tracking_id: trackingId })
             });
 
             const result = await response.json();
@@ -36,6 +39,7 @@ function TrackingPage() {
                     setTrackingData(result.data);
                     setShowResults(true);
                     setToast({ message: 'Shipment found successfully!', type: 'success' });
+                    setSearchParams({ ref: result.data.reference || trackingId }, { replace: true });
                     
                     // Auto-scroll to tracking results
                     setTimeout(() => {
@@ -59,6 +63,14 @@ function TrackingPage() {
             });
         }
     };
+
+    useEffect(() => {
+        const ref = searchParams.get('ref');
+        if (ref) {
+            handleTrack(ref);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="min-h-screen bg-primary-container py-xl">
@@ -90,7 +102,7 @@ function TrackingPage() {
                             />
                             <button 
                                 className="w-full bg-secondary-container text-on-secondary-container font-label-md text-label-md py-2.5 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all"
-                                onClick={handleTrack}
+                                onClick={() => handleTrack()}
                             >
                                 Track Shipment
                             </button>
