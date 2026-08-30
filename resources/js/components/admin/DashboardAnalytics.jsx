@@ -68,19 +68,9 @@ function DashboardAnalytics() {
         revenue: safeNumber(item.revenue)
     }));
 
-    const profitData = (analytics.monthly_profit_over_time || []).map(item => ({
-        month: formatMonthLabel(item.month),
-        profit: safeNumber(item.profit)
-    }));
-
     const destinationsData = (analytics.top_destinations || []).map(item => ({
         country: item.destination_country || 'Unknown',
         shipments: safeNumber(item.count)
-    }));
-
-    const serviceProfitData = (analytics.service_profit_breakdown || []).map(item => ({
-        name: item.service || 'Service',
-        value: safeNumber(item.profit)
     }));
 
     const quotesVsShipmentsData = (analytics.quotes_vs_shipments || []).reduce((acc, item) => {
@@ -128,44 +118,6 @@ function DashboardAnalytics() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
-                <div className="bg-surface-container rounded-xl p-lg border border-white/10">
-                    <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
-                        <span className="material-symbols-outlined text-secondary-container">payments</span>
-                        Site Profit Trend (6 Months)
-                    </h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={profitData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                            <XAxis dataKey="month" stroke="#ffffff80" style={{ fontSize: '12px' }} />
-                            <YAxis stroke="#ffffff80" style={{ fontSize: '12px' }} />
-                            <Tooltip
-                                formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}
-                                content={<CustomTooltip />}
-                            />
-                            <Legend wrapperStyle={{ color: '#ffffff' }} />
-                            <Line type="monotone" dataKey="profit" name="Profit" stroke="#48bb78" strokeWidth={2} dot={{ fill: '#48bb78', r: 4 }} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="bg-surface-container rounded-xl p-lg border border-white/10">
-                    <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
-                        <span className="material-symbols-outlined text-secondary-container">donut_small</span>
-                        Service Profit Mix
-                    </h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                            <Pie data={serviceProfitData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={45} paddingAngle={2}>
-                                {serviceProfitData.map((entry, index) => (
-                                    <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)} content={<CustomTooltip />} />
-                            <Legend wrapperStyle={{ color: '#ffffff' }} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-
                 <div className="bg-surface-container rounded-xl p-lg border border-white/10">
                     <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
                         <span className="material-symbols-outlined text-secondary-container">trending_up</span>

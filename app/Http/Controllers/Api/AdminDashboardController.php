@@ -198,18 +198,6 @@ class AdminDashboardController extends Controller
         $autoSalesCount = DB::table('autosales')->where('is_active', true)->count();
         $clearanceCount = DB::table('clearances')->where('is_active', true)->count();
 
-        $siteOverallProfit = (float) collect([
-            ['table' => 'procurements', 'profit' => 'profit'],
-            ['table' => 'truckings', 'profit' => 'profit'],
-            ['table' => 'autosales', 'profit' => 'profit'],
-            ['table' => 'clearances', 'profit' => 'profit'],
-        ])->sum(function ($service) {
-            return (float) DB::table($service['table'])
-                ->where('is_active', true)
-                ->whereNotNull($service['profit'])
-                ->sum($service['profit']) ?? 0;
-        });
-
         // Quote growth calculation - last 30 days vs previous 30 days
         $lastMonthQuotes = DB::table('quotes')
             ->where('created_at', '>=', now()->subDays(30))
@@ -259,7 +247,6 @@ class AdminDashboardController extends Controller
             'trucking_count' => $truckingCount,
             'auto_sales_count' => $autoSalesCount,
             'clearance_count' => $clearanceCount,
-            'site_overall_profit' => round($siteOverallProfit, 2),
         ]);
     }
 
@@ -368,7 +355,7 @@ class AdminDashboardController extends Controller
                 ->groupBy('month')
                 ->orderBy('month');
 
-            return $query->get()->map(fn ($row) => [
+            return $query->get()->map(fn($row) => [
                 'month' => $row->month,
                 'service' => $service['service'],
                 'profit' => (float) ($row->profit ?? 0),

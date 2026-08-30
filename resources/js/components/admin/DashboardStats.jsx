@@ -77,17 +77,10 @@ function DashboardStats() {
             trend: { label: 'Revenue opportunities', icon: 'payments', color: 'text-purple-400' },
             bgIcon: 'attach_money'
         },
-        {
-            label: 'Site Overall Profit',
-            icon: 'payments',
-            value: currencyFormatter.format(Number(statsData?.site_overall_profit || 0)),
-            trend: { label: 'Across all service lines', icon: 'trending_up', color: 'text-green-400' },
-            bgIcon: 'account_balance_wallet'
-        },
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-md">
             {stats.map((stat, index) => (
                 <div
                     key={index}
