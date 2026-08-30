@@ -8,7 +8,12 @@ function AdminSidebar({ mobileOpen, onClose, admin }) {
     const baseNavItems = [
         { path: '/admin', icon: 'dashboard', label: 'Dashboard' },
         { path: '/admin/analytics', icon: 'analytics', label: 'Analytics' },
+        { path: '/admin/client-orders', icon: 'person_search', label: 'Client Orders' },
         { path: '/admin/shipments', icon: 'local_shipping', label: 'Shipments' },
+        { path: '/admin/procurement', icon: 'inventory_2', label: 'Procurement' },
+        { path: '/admin/autosales', icon: 'sell', label: 'Autosales' },
+        { path: '/admin/clearance', icon: 'fact_check', label: 'Clearance' },
+        { path: '/admin/trucking', icon: 'local_shipping', label: 'Trucking' },
         { path: '/admin/quotes', icon: 'request_quote', label: 'Quotes' },
         { path: '/admin/auctions', icon: 'gavel', label: 'Auctions' },
         { path: '/admin/testimonials', icon: 'star', label: 'Testimonials' },
@@ -20,6 +25,7 @@ function AdminSidebar({ mobileOpen, onClose, admin }) {
     ];
 
     const superadminNavItems = [
+        { path: '/admin/revenue-analysis', icon: 'paid', label: 'Revenue Analysis' },
         { path: '/admin/admin-users', icon: 'admin_panel_settings', label: 'Admin Users' },
     ];
 

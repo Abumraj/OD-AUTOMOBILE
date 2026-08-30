@@ -5,6 +5,10 @@ import AdminTopBar from '../components/admin/AdminTopBar';
 import AdminOverview from './admin/AdminOverview';
 import AdminAnalyticsPage from './admin/AdminAnalyticsPage';
 import AdminShipmentsPage from './admin/AdminShipmentsPage';
+import ProcurementPage from './admin/ProcurementPage';
+import AutosalesPage from './admin/AutosalesPage';
+import ClearancePage from './admin/ClearancePage';
+import TruckingPage from './admin/TruckingPage';
 import AdminQuotesPage from './admin/AdminQuotesPage';
 import AdminTestimonialsPage from './admin/AdminTestimonialsPage';
 import AdminSettingsPage from './admin/AdminSettingsPage';
@@ -25,6 +29,8 @@ import AdminCarouselPage from './admin/AdminCarouselPage';
 import AdminServicesPage from './admin/AdminServicesPage';
 import AdminLoginPage from './admin/AdminLoginPage';
 import AdminUsersPage from './admin/AdminUsersPage';
+import ClientOrdersPage from './admin/ClientOrdersPage';
+import RevenueAnalysisPage from './admin/RevenueAnalysisPage';
 
 function AdminDashboard() {
     const [authenticated, setAuthenticated] = useState(null);
@@ -89,7 +95,12 @@ function AdminDashboard() {
                     <Routes>
                         <Route path="/" element={<AdminOverview />} />
                         <Route path="/analytics" element={<AdminAnalyticsPage />} />
+                        <Route path="/client-orders" element={<ClientOrdersPage />} />
                         <Route path="/shipments" element={<AdminShipmentsPage />} />
+                        <Route path="/procurement" element={<ProcurementPage />} />
+                        <Route path="/autosales" element={<AutosalesPage />} />
+                        <Route path="/clearance" element={<ClearancePage />} />
+                        <Route path="/trucking" element={<TruckingPage />} />
                         <Route path="/quotes" element={<AdminQuotesPage />} />
                         <Route path="/auctions" element={<AdminAuctionsPage />} />
                         <Route path="/testimonials" element={<AdminTestimonialsPage />} />
@@ -108,6 +119,7 @@ function AdminDashboard() {
                         <Route path="/settings/performance" element={<PerformanceSettingsPage />} />
                         <Route path="/settings/tracking" element={<TrackingSettingsPage />} />
                         <Route path="/settings/shipping" element={<ShippingConfigPage />} />
+                        <Route path="/revenue-analysis" element={admin?.role === 'superadmin' ? <RevenueAnalysisPage /> : <AdminOverview />} />
                         <Route path="/admin-users" element={<AdminUsersPage />} />
                     </Routes>
                 </div>

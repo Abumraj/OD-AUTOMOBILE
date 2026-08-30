@@ -12,6 +12,90 @@ use Illuminate\Support\Facades\Mail;
 
 class AdminDashboardController extends Controller
 {
+    public function getRevenueAnalysis(Request $request)
+    {
+        if ($request->session()->get('admin_role', 'admin') !== 'superadmin') {
+            return response()->json(['error' => 'Unauthorized. Superadmin access required.'], 403);
+        }
+
+        $validated = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+        $startDate = $validated['start_date'] ?? now()->startOfYear()->toDateString();
+        $endDate = $validated['end_date'] ?? now()->toDateString();
+        $services = [
+            ['service' => 'Shipments', 'table' => 'shipments', 'amount' => 'total_cost', 'date' => 'created_at'],
+            ['service' => 'Procurement', 'table' => 'procurements', 'amount' => 'price_usd', 'date' => 'date_procured'],
+            ['service' => 'Autosales', 'table' => 'autosales', 'amount' => 'amount', 'date' => 'sale_date'],
+            ['service' => 'Clearance', 'table' => 'clearances', 'amount' => 'total_paid', 'date' => 'date_stamp'],
+            ['service' => 'Trucking', 'table' => 'truckings', 'amount' => 'amount', 'date' => 'trucking_date'],
+        ];
+
+        $breakdown = collect($services)->map(function ($service) use ($startDate, $endDate) {
+            $query = DB::table($service['table'])->whereNotNull($service['date']);
+            $query->whereBetween($service['date'], [$startDate, $endDate]);
+
+            return [
+                'service' => $service['service'],
+                'orders' => $query->count(),
+                'revenue' => (float) (DB::table($service['table'])
+                    ->whereNotNull($service['date'])
+                    ->whereBetween($service['date'], [$startDate, $endDate])
+                    ->sum($service['amount']) ?? 0),
+            ];
+        })->values();
+
+        $monthly = collect($services)->flatMap(function ($service) use ($startDate, $endDate) {
+            return DB::table($service['table'])
+                ->selectRaw("DATE_FORMAT({$service['date']}, '%Y-%m') as month, SUM({$service['amount']}) as revenue")
+                ->whereNotNull($service['date'])
+                ->whereBetween($service['date'], [$startDate, $endDate])
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->map(fn($row) => ['month' => $row->month, 'service' => $service['service'], 'revenue' => (float) $row->revenue]);
+        })->groupBy('month')->map(function ($entries, $month) {
+            return ['month' => $month, 'revenue' => $entries->sum('revenue')];
+        })->sortBy('month')->values();
+
+        return response()->json([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'total_revenue' => $breakdown->sum('revenue'),
+            'total_orders' => $breakdown->sum('orders'),
+            'breakdown' => $breakdown,
+            'monthly_revenue' => $monthly,
+        ]);
+    }
+
+    public function getClientOrders(Request $request)
+    {
+        $query = trim((string) $request->get('query', ''));
+        if (strlen($query) < 2) {
+            return response()->json(['message' => 'Enter at least two characters to search for a client.'], 422);
+        }
+
+        $term = '%' . $query . '%';
+        $orders = collect([
+            ...DB::table('quotes')->where(fn($builder) => $builder->where('customer_name', 'like', $term)->orWhere('email', 'like', $term))->orderByDesc('created_at')->get()->map(fn($record) => ['service' => 'Quote', 'status' => $record->status, 'date' => $record->created_at, 'details' => $record]),
+            ...DB::table('shipments')->where(fn($builder) => $builder->where('customer_name', 'like', $term)->orWhere('customer_email', 'like', $term))->orderByDesc('created_at')->get()->map(fn($record) => ['service' => 'Shipment', 'status' => $record->status, 'date' => $record->created_at, 'details' => $record]),
+            ...DB::table('truckings')->where(fn($builder) => $builder->where('customer_name', 'like', $term)->orWhere('customer_email', 'like', $term))->orderByDesc('created_at')->get()->map(fn($record) => ['service' => 'Trucking', 'status' => $record->shipment_status ?? $record->status, 'date' => $record->trucking_date ?? $record->created_at, 'details' => $record]),
+            ...DB::table('clearances')->where('client_name', 'like', $term)->orderByDesc('created_at')->get()->map(fn($record) => ['service' => 'Clearance', 'status' => $record->status, 'date' => $record->date_stamp ?? $record->created_at, 'details' => $record]),
+        ])->sortByDesc('date')->values();
+
+        return response()->json([
+            'summary' => [
+                'total' => $orders->count(),
+                'quotes' => $orders->where('service', 'Quote')->count(),
+                'shipments' => $orders->where('service', 'Shipment')->count(),
+                'truckings' => $orders->where('service', 'Trucking')->count(),
+                'clearances' => $orders->where('service', 'Clearance')->count(),
+            ],
+            'orders' => $orders,
+        ]);
+    }
+
     // Authentication
     public function login(Request $request)
     {
@@ -946,6 +1030,653 @@ class AdminDashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tracking settings updated successfully'
+        ]);
+    }
+
+    // Autosales Management
+    public function getAutosales(Request $request)
+    {
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = strtolower($request->get('sort_order', 'desc'));
+        $search = $request->get('search', '');
+        $allowedSortFields = ['id', 'sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount', 'profit', 'created_at'];
+
+        if (!in_array($sortBy, $allowedSortFields, true)) {
+            $sortBy = 'created_at';
+        }
+        if (!in_array($sortOrder, ['asc', 'desc'], true)) {
+            $sortOrder = 'desc';
+        }
+
+        $query = DB::table('autosales');
+        if ($search !== '') {
+            $searchTerm = '%' . $search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                foreach (['sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount', 'profit'] as $field) {
+                    $q->orWhere($field, 'like', $searchTerm);
+                }
+            });
+        }
+
+        return response()->json($query->orderBy($sortBy, $sortOrder)->get());
+    }
+
+    public function getAutosale($id)
+    {
+        $record = DB::table('autosales')->where('id', $id)->first();
+        return $record
+            ? response()->json($record)
+            : response()->json(['error' => 'Autosale record not found'], 404);
+    }
+
+    public function createAutosale(Request $request)
+    {
+        $validated = $request->validate([
+            'sale_date' => 'nullable|date',
+            'car_make' => 'required|string|max:255',
+            'car_model' => 'required|string|max:255',
+            'car_year' => 'nullable|string|max:10',
+            'sale_type' => 'required|string|in:outright,swap',
+            'color' => 'nullable|string|max:100',
+            'vin' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric',
+            'profit' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $id = DB::table('autosales')->insertGetId(array_merge($validated, [
+            'is_active' => $validated['is_active'] ?? true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
+        DB::table('activity_stream')->insert([
+            'action' => 'Autosale Created',
+            'description' => 'New autosale record created',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Autosale record created successfully', 'id' => $id]);
+    }
+
+    public function updateAutosale(Request $request, $id)
+    {
+        if (!DB::table('autosales')->where('id', $id)->exists()) {
+            return response()->json(['error' => 'Autosale record not found'], 404);
+        }
+        $validated = $request->validate([
+            'sale_date' => 'nullable|date',
+            'car_make' => 'required|string|max:255',
+            'car_model' => 'required|string|max:255',
+            'car_year' => 'nullable|string|max:10',
+            'sale_type' => 'required|string|in:outright,swap',
+            'color' => 'nullable|string|max:100',
+            'vin' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric',
+            'profit' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+        DB::table('autosales')->where('id', $id)->update(array_merge($validated, [
+            'is_active' => $validated['is_active'] ?? true,
+            'updated_at' => now(),
+        ]));
+        DB::table('activity_stream')->insert([
+            'action' => 'Autosale Updated',
+            'description' => 'Autosale record updated',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Autosale record updated successfully']);
+    }
+
+    public function deleteAutosale($id)
+    {
+        if (!DB::table('autosales')->where('id', $id)->exists()) {
+            return response()->json(['error' => 'Autosale record not found'], 404);
+        }
+        DB::table('autosales')->where('id', $id)->delete();
+        DB::table('activity_stream')->insert([
+            'action' => 'Autosale Deleted',
+            'description' => 'Autosale record deleted',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Autosale record deleted successfully']);
+    }
+
+    // Procurement Management
+    public function getProcurements(Request $request)
+    {
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = strtolower($request->get('sort_order', 'desc'));
+        $search = $request->get('search', '');
+
+        $allowedSortFields = ['id', 'date_procured', 'car_make', 'car_model', 'car_year', 'price_usd', 'auction_charge_usd', 'auction_site', 'state', 'trucking', 'shipping', 'arrival_date', 'profit_ngn', 'trucking_fee', 'status', 'created_at'];
+        if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'created_at';
+        if (!in_array($sortOrder, ['asc', 'desc'], true)) {
+            $sortOrder = 'desc';
+        }
+        $query = DB::table('procurements');
+        if ($search !== '') {
+            $searchTerm = '%' . $search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                foreach (['date_procured', 'car_make', 'car_model', 'car_year', 'auction_site', 'state', 'shipping', 'trucking_fee', 'status'] as $field) {
+                    $q->orWhere($field, 'like', $searchTerm);
+                }
+            });
+        }
+        return response()->json($query->orderBy($sortBy, $sortOrder)->get());
+    }
+
+    public function getProcurement($id)
+    {
+        $record = DB::table('procurements')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Procurement record not found'], 404);
+        }
+
+        return response()->json($record);
+    }
+
+    public function createProcurement(Request $request)
+    {
+        $validated = $request->validate([
+            'date_procured' => 'nullable|date',
+            'car_make' => 'required|string|max:100',
+            'car_model' => 'required|string|max:100',
+            'car_year' => 'nullable|string|max:10',
+            'price_usd' => 'nullable|numeric',
+            'auction_charge_usd' => 'nullable|numeric',
+            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
+            'state' => 'nullable|string|max:255',
+            'trucking' => 'nullable|numeric',
+            'shipping' => 'nullable|string|max:50',
+            'arrival_date' => 'nullable|date',
+            'profit_ngn' => 'nullable|numeric',
+            'trucking_fee' => 'nullable|string|max:50',
+            'status' => 'required|string|in:pending,purchased,cancelled,on_vessel,arrived',
+            'is_active' => 'boolean',
+        ]);
+
+        $id = DB::table('procurements')->insertGetId(array_merge($validated, [
+            'is_active' => $validated['is_active'] ?? true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Procurement Created',
+            'description' => 'New procurement record created',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Procurement record created successfully',
+            'id' => $id,
+        ]);
+    }
+
+    public function updateProcurement(Request $request, $id)
+    {
+        $record = DB::table('procurements')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Procurement record not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'date_procured' => 'nullable|date',
+            'car_make' => 'required|string|max:100',
+            'car_model' => 'required|string|max:100',
+            'car_year' => 'nullable|string|max:10',
+            'price_usd' => 'nullable|numeric',
+            'auction_charge_usd' => 'nullable|numeric',
+            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
+            'state' => 'nullable|string|max:255',
+            'trucking' => 'nullable|numeric',
+            'shipping' => 'nullable|string|max:50',
+            'arrival_date' => 'nullable|date',
+            'profit_ngn' => 'nullable|numeric',
+            'trucking_fee' => 'nullable|string|max:50',
+            'status' => 'required|string|in:pending,purchased,cancelled,on_vessel,arrived',
+            'is_active' => 'boolean',
+        ]);
+
+        DB::table('procurements')->where('id', $id)->update(array_merge($validated, [
+            'is_active' => $validated['is_active'] ?? true,
+            'updated_at' => now(),
+        ]));
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Procurement Updated',
+            'description' => 'Procurement record updated',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Procurement record updated successfully',
+        ]);
+    }
+
+    public function deleteProcurement($id)
+    {
+        $record = DB::table('procurements')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Procurement record not found'], 404);
+        }
+
+        DB::table('procurements')->where('id', $id)->delete();
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Procurement Deleted',
+            'description' => 'Procurement record deleted',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Procurement record deleted successfully',
+        ]);
+    }
+
+    // Clearance Management
+    public function getClearances(Request $request)
+    {
+        $sortBy = $request->get('sort_by', 'date_stamp');
+        $sortOrder = strtolower($request->get('sort_order', 'desc'));
+        $search = $request->get('search', '');
+        $allowedSortFields = ['id', 'item', 'client_name', 'status', 'date_stamp', 'total_paid', 'profit', 'created_at'];
+        if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'date_stamp';
+        if (!in_array($sortOrder, ['asc', 'desc'], true)) $sortOrder = 'desc';
+
+        $query = DB::table('clearances')
+            ->leftJoin('shipping_types', 'clearances.shipping_type_id', '=', 'shipping_types.id')
+            ->leftJoin('shipping_lines', 'clearances.shipping_line_id', '=', 'shipping_lines.id')
+            ->select('clearances.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name');
+        if ($search !== '') {
+            $term = '%' . $search . '%';
+            $query->where(function ($q) use ($term) {
+                foreach (['clearances.item', 'clearances.client_name', 'clearances.status', 'shipping_types.name', 'shipping_lines.name'] as $field) {
+                    $q->orWhere($field, 'like', $term);
+                }
+            });
+        }
+        return response()->json($query->orderBy('clearances.' . $sortBy, $sortOrder)->get());
+    }
+
+    public function getClearance($id)
+    {
+        $record = DB::table('clearances')->where('id', $id)->first();
+        return $record ? response()->json($record) : response()->json(['error' => 'Clearance record not found'], 404);
+    }
+
+    public function createClearance(Request $request)
+    {
+        $validated = $request->validate([
+            'item' => 'required|string|max:255',
+            'client_name' => 'required|string|max:255',
+            'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
+            'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
+            'status' => 'required|in:cleared,not_cleared',
+            'date_stamp' => 'nullable|date',
+            'total_paid' => 'nullable|numeric',
+            'profit' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+        $id = DB::table('clearances')->insertGetId(array_merge($validated, ['is_active' => $validated['is_active'] ?? true, 'created_at' => now(), 'updated_at' => now()]));
+        DB::table('activity_stream')->insert(['action' => 'Clearance Created', 'description' => 'New clearance record created', 'location' => 'Admin Dashboard', 'created_at' => now(), 'updated_at' => now()]);
+        return response()->json(['success' => true, 'message' => 'Clearance record created successfully', 'id' => $id]);
+    }
+
+    public function updateClearance(Request $request, $id)
+    {
+        if (!DB::table('clearances')->where('id', $id)->exists()) return response()->json(['error' => 'Clearance record not found'], 404);
+        $validated = $request->validate([
+            'item' => 'required|string|max:255',
+            'client_name' => 'required|string|max:255',
+            'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
+            'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
+            'status' => 'required|in:cleared,not_cleared',
+            'date_stamp' => 'nullable|date',
+            'total_paid' => 'nullable|numeric',
+            'profit' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+        DB::table('clearances')->where('id', $id)->update(array_merge($validated, ['is_active' => $validated['is_active'] ?? true, 'updated_at' => now()]));
+        DB::table('activity_stream')->insert(['action' => 'Clearance Updated', 'description' => 'Clearance record updated', 'location' => 'Admin Dashboard', 'created_at' => now(), 'updated_at' => now()]);
+        return response()->json(['success' => true, 'message' => 'Clearance record updated successfully']);
+    }
+
+    public function deleteClearance($id)
+    {
+        if (!DB::table('clearances')->where('id', $id)->exists()) return response()->json(['error' => 'Clearance record not found'], 404);
+        DB::table('clearances')->where('id', $id)->delete();
+        DB::table('activity_stream')->insert(['action' => 'Clearance Deleted', 'description' => 'Clearance record deleted', 'location' => 'Admin Dashboard', 'created_at' => now(), 'updated_at' => now()]);
+        return response()->json(['success' => true, 'message' => 'Clearance record deleted successfully']);
+    }
+
+    // Trucking Management
+    public function getTruckings(Request $request)
+    {
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $search = $request->get('search', '');
+
+        $allowedSortFields = [
+            'id',
+            'customer_name',
+            'customer_email',
+            'vehicle_make',
+            'vehicle_model',
+            'vehicle_year',
+            'auction_site',
+            'shipping_type',
+            'shipping_line_id',
+            'trucking_date',
+            'payment_status',
+            'shipment_status',
+            'location',
+            'tracking',
+            'trucking_fee_status',
+            'status',
+            'origin_port',
+            'destination_port',
+            'amount',
+            'profit',
+            'created_at'
+        ];
+
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'created_at';
+        }
+
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        $query = DB::table('truckings')
+            ->leftJoin('shipping_lines', 'truckings.shipping_line_id', '=', 'shipping_lines.id')
+            ->select('truckings.*', 'shipping_lines.name as shipping_line_name');
+
+        if (!empty($search)) {
+            $searchTerm = '%' . $search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('customer_name', 'like', $searchTerm)
+                    ->orWhere('customer_email', 'like', $searchTerm)
+                    ->orWhere('customer_phone', 'like', $searchTerm)
+                    ->orWhere('vehicle_make', 'like', $searchTerm)
+                    ->orWhere('vehicle_model', 'like', $searchTerm)
+                    ->orWhere('vehicle_year', 'like', $searchTerm)
+                    ->orWhere('auction_site', 'like', $searchTerm)
+                    ->orWhere('shipping_type', 'like', $searchTerm)
+                    ->orWhere('shipping_lines.name', 'like', $searchTerm)
+                    ->orWhere('vin', 'like', $searchTerm)
+                    ->orWhere('location', 'like', $searchTerm)
+                    ->orWhere('tracking', 'like', $searchTerm)
+                    ->orWhere('trucking_fee_status', 'like', $searchTerm)
+                    ->orWhere('status', 'like', $searchTerm)
+                    ->orWhere('origin_port', 'like', $searchTerm)
+                    ->orWhere('destination_port', 'like', $searchTerm)
+                    ->orWhere('origin_country', 'like', $searchTerm)
+                    ->orWhere('destination_country', 'like', $searchTerm);
+            });
+        }
+
+        $truckings = $query->orderBy('truckings.' . $sortBy, $sortOrder)->get()->map(function ($record) {
+            return [
+                'id' => $record->id,
+                'customer_name' => $record->customer_name,
+                'customer_email' => $record->customer_email,
+                'customer_phone' => $record->customer_phone,
+                'vehicle_make' => $record->vehicle_make,
+                'vehicle_model' => $record->vehicle_model,
+                'vehicle_year' => $record->vehicle_year,
+                'auction_site' => $record->auction_site,
+                'shipping_type' => $record->shipping_type,
+                'shipping_line_id' => $record->shipping_line_id,
+                'shipping_line_name' => $record->shipping_line_name,
+                'trucking_date' => $record->trucking_date,
+                'color' => $record->color,
+                'vin' => $record->vin,
+                'payment_status' => $record->payment_status,
+                'shipment_status' => $record->shipment_status,
+                'location' => $record->location,
+                'tracking' => $record->tracking,
+                'trucking_fee_status' => $record->trucking_fee_status,
+                'status' => $record->status,
+                'origin_port' => $record->origin_port,
+                'origin_country' => $record->origin_country,
+                'destination_port' => $record->destination_port,
+                'destination_country' => $record->destination_country,
+                'amount' => $record->amount,
+                'profit' => $record->profit,
+                'notes' => $record->notes,
+                'admin_notes' => $record->admin_notes,
+                'is_active' => $record->is_active,
+                'created_at' => $record->created_at,
+            ];
+        });
+
+        return response()->json($truckings);
+    }
+
+    public function getTrucking($id)
+    {
+        $record = DB::table('truckings')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Trucking record not found'], 404);
+        }
+
+        return response()->json($record);
+    }
+
+    public function createTrucking(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
+            'customer_phone' => 'nullable|string|max:50',
+            'vehicle_make' => 'nullable|string|max:100',
+            'vehicle_model' => 'nullable|string|max:100',
+            'vehicle_year' => 'nullable|string|max:4',
+            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
+            'shipping_type' => 'required|string|in:container,roro',
+            'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
+            'trucking_date' => 'nullable|date',
+            'color' => 'nullable|string|max:100',
+            'vin' => 'nullable|string|max:255',
+            'payment_status' => 'nullable|string|max:50',
+            'shipment_status' => 'nullable|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'tracking' => 'nullable|string|max:255',
+            'trucking_fee_status' => 'required|string|in:paid,unpaid',
+            'status' => 'required|string|in:pending,arrived,on_vessel',
+            'origin_port' => 'nullable|string|max:255',
+            'origin_country' => 'nullable|string|max:255',
+            'destination_port' => 'nullable|string|max:255',
+            'destination_country' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric',
+            'profit' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $id = DB::table('truckings')->insertGetId([
+            'customer_name' => $validated['customer_name'],
+            'customer_email' => $validated['customer_email'] ?? null,
+            'customer_phone' => $validated['customer_phone'] ?? null,
+            'vehicle_make' => $validated['vehicle_make'] ?? null,
+            'vehicle_model' => $validated['vehicle_model'] ?? null,
+            'vehicle_year' => $validated['vehicle_year'] ?? null,
+            'auction_site' => $validated['auction_site'],
+            'shipping_type' => $validated['shipping_type'],
+            'shipping_line_id' => $validated['shipping_line_id'] ?? null,
+            'trucking_date' => $validated['trucking_date'] ?? null,
+            'color' => $validated['color'] ?? null,
+            'vin' => $validated['vin'] ?? null,
+            'payment_status' => $validated['payment_status'] ?? null,
+            'shipment_status' => $validated['shipment_status'] ?? null,
+            'location' => $validated['location'] ?? null,
+            'tracking' => $validated['tracking'] ?? null,
+            'trucking_fee_status' => $validated['trucking_fee_status'],
+            'status' => $validated['status'],
+            'origin_port' => $validated['origin_port'] ?? null,
+            'origin_country' => $validated['origin_country'] ?? null,
+            'destination_port' => $validated['destination_port'] ?? null,
+            'destination_country' => $validated['destination_country'] ?? null,
+            'amount' => $validated['amount'] ?? null,
+            'profit' => $validated['profit'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'admin_notes' => $validated['admin_notes'] ?? null,
+            'is_active' => $validated['is_active'] ?? true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Trucking Created',
+            'description' => 'New trucking record for ' . $validated['customer_name'] . ' created',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trucking record created successfully',
+            'id' => $id,
+        ]);
+    }
+
+    public function updateTrucking(Request $request, $id)
+    {
+        $record = DB::table('truckings')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Trucking record not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
+            'customer_phone' => 'nullable|string|max:50',
+            'vehicle_make' => 'nullable|string|max:100',
+            'vehicle_model' => 'nullable|string|max:100',
+            'vehicle_year' => 'nullable|string|max:4',
+            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
+            'shipping_type' => 'required|string|in:container,roro',
+            'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
+            'trucking_date' => 'nullable|date',
+            'color' => 'nullable|string|max:100',
+            'vin' => 'nullable|string|max:255',
+            'payment_status' => 'nullable|string|max:50',
+            'shipment_status' => 'nullable|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'tracking' => 'nullable|string|max:255',
+            'trucking_fee_status' => 'required|string|in:paid,unpaid',
+            'status' => 'required|string|in:pending,arrived,on_vessel',
+            'origin_port' => 'nullable|string|max:255',
+            'origin_country' => 'nullable|string|max:255',
+            'destination_port' => 'nullable|string|max:255',
+            'destination_country' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric',
+            'profit' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        DB::table('truckings')->where('id', $id)->update([
+            'customer_name' => $validated['customer_name'],
+            'customer_email' => $validated['customer_email'] ?? null,
+            'customer_phone' => $validated['customer_phone'] ?? null,
+            'vehicle_make' => $validated['vehicle_make'] ?? null,
+            'vehicle_model' => $validated['vehicle_model'] ?? null,
+            'vehicle_year' => $validated['vehicle_year'] ?? null,
+            'auction_site' => $validated['auction_site'],
+            'shipping_type' => $validated['shipping_type'],
+            'shipping_line_id' => $validated['shipping_line_id'] ?? null,
+            'trucking_date' => $validated['trucking_date'] ?? null,
+            'color' => $validated['color'] ?? null,
+            'vin' => $validated['vin'] ?? null,
+            'payment_status' => $validated['payment_status'] ?? null,
+            'shipment_status' => $validated['shipment_status'] ?? null,
+            'location' => $validated['location'] ?? null,
+            'tracking' => $validated['tracking'] ?? null,
+            'trucking_fee_status' => $validated['trucking_fee_status'],
+            'status' => $validated['status'],
+            'origin_port' => $validated['origin_port'] ?? null,
+            'origin_country' => $validated['origin_country'] ?? null,
+            'destination_port' => $validated['destination_port'] ?? null,
+            'destination_country' => $validated['destination_country'] ?? null,
+            'amount' => $validated['amount'] ?? null,
+            'profit' => $validated['profit'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'admin_notes' => $validated['admin_notes'] ?? null,
+            'is_active' => $validated['is_active'] ?? true,
+            'updated_at' => now(),
+        ]);
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Trucking Updated',
+            'description' => 'Trucking record for ' . $record->customer_name . ' updated',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trucking record updated successfully',
+        ]);
+    }
+
+    public function deleteTrucking($id)
+    {
+        $record = DB::table('truckings')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Trucking record not found'], 404);
+        }
+
+        DB::table('truckings')->where('id', $id)->delete();
+
+        DB::table('activity_stream')->insert([
+            'action' => 'Trucking Deleted',
+            'description' => 'Trucking record for ' . $record->customer_name . ' deleted',
+            'location' => 'Admin Dashboard',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trucking record deleted successfully',
         ]);
     }
 

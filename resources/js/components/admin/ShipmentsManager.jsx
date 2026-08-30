@@ -344,7 +344,7 @@ function ShipmentsManager() {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         } else {
             setSortBy(column);
-            setSortOrder('asc');
+            setSortOrder(column === 'created_at' ? 'desc' : 'asc');
         }
     };
 

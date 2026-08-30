@@ -50,6 +50,7 @@ Route::middleware('api')->group(function () {
     // Protected admin routes
     Route::prefix('admin')->middleware('admin.auth')->group(function () {
         Route::get('/stats', [AdminDashboardController::class, 'getStats']);
+        Route::get('/client-orders', [AdminDashboardController::class, 'getClientOrders']);
         Route::get('/kanban', [AdminDashboardController::class, 'getKanbanData']);
         Route::get('/activity', [AdminDashboardController::class, 'getActivityStream']);
         Route::get('/fleet-health', [AdminDashboardController::class, 'getFleetHealth']);
@@ -57,6 +58,30 @@ Route::middleware('api')->group(function () {
         Route::post('/quotes/{id}/approve', [AdminDashboardController::class, 'approveQuote']);
         Route::delete('/quotes/{id}/reject', [AdminDashboardController::class, 'rejectQuote']);
         Route::patch('/shipments/{id}/status', [AdminDashboardController::class, 'updateShipmentStatus']);
+
+        Route::get('/procurements', [AdminDashboardController::class, 'getProcurements']);
+        Route::post('/procurements/import', [ShipmentImportExportController::class, 'importProcurements']);
+        Route::get('/procurements/export', [ShipmentImportExportController::class, 'exportProcurements']);
+        Route::get('/procurements/{id}', [AdminDashboardController::class, 'getProcurement']);
+        Route::post('/procurements', [AdminDashboardController::class, 'createProcurement']);
+        Route::put('/procurements/{id}', [AdminDashboardController::class, 'updateProcurement']);
+        Route::delete('/procurements/{id}', [AdminDashboardController::class, 'deleteProcurement']);
+
+        Route::get('/autosales', [AdminDashboardController::class, 'getAutosales']);
+        Route::post('/autosales/import', [ShipmentImportExportController::class, 'importAutosales']);
+        Route::get('/autosales/export', [ShipmentImportExportController::class, 'exportAutosales']);
+        Route::get('/autosales/{id}', [AdminDashboardController::class, 'getAutosale']);
+        Route::post('/autosales', [AdminDashboardController::class, 'createAutosale']);
+        Route::put('/autosales/{id}', [AdminDashboardController::class, 'updateAutosale']);
+        Route::delete('/autosales/{id}', [AdminDashboardController::class, 'deleteAutosale']);
+
+        Route::get('/clearances', [AdminDashboardController::class, 'getClearances']);
+        Route::post('/clearances/import', [ShipmentImportExportController::class, 'importClearances']);
+        Route::get('/clearances/export', [ShipmentImportExportController::class, 'exportClearances']);
+        Route::get('/clearances/{id}', [AdminDashboardController::class, 'getClearance']);
+        Route::post('/clearances', [AdminDashboardController::class, 'createClearance']);
+        Route::put('/clearances/{id}', [AdminDashboardController::class, 'updateClearance']);
+        Route::delete('/clearances/{id}', [AdminDashboardController::class, 'deleteClearance']);
 
         Route::get('/testimonials', [AdminDashboardController::class, 'getTestimonials']);
         Route::post('/testimonials', [AdminDashboardController::class, 'createTestimonial']);
@@ -82,6 +107,13 @@ Route::middleware('api')->group(function () {
         Route::put('/shipments/{id}', [AdminDashboardController::class, 'updateShipment']);
         Route::delete('/shipments/{id}', [AdminDashboardController::class, 'deleteShipment']);
         Route::post('/shipments/{id}/updates', [AdminDashboardController::class, 'addShipmentUpdate']);
+
+        Route::get('/truckings', [AdminDashboardController::class, 'getTruckings']);
+        Route::get('/truckings/export', [ShipmentImportExportController::class, 'exportTruckings']);
+        Route::get('/truckings/{id}', [AdminDashboardController::class, 'getTrucking']);
+        Route::post('/truckings', [AdminDashboardController::class, 'createTrucking']);
+        Route::put('/truckings/{id}', [AdminDashboardController::class, 'updateTrucking']);
+        Route::delete('/truckings/{id}', [AdminDashboardController::class, 'deleteTrucking']);
 
         Route::get('/auctions', [AdminDashboardController::class, 'getAuctions']);
         Route::get('/auctions/{id}', [AdminDashboardController::class, 'getAuction']);
@@ -160,6 +192,10 @@ Route::middleware('api')->group(function () {
         // Import/Export
         Route::post('/shipments/import', [ShipmentImportExportController::class, 'importExcel']);
         Route::get('/shipments/export', [ShipmentImportExportController::class, 'exportExcel']);
+        Route::post('/procurements/import', [ShipmentImportExportController::class, 'importProcurements']);
+        Route::get('/procurements/export', [ShipmentImportExportController::class, 'exportProcurements']);
+        Route::post('/truckings/import', [ShipmentImportExportController::class, 'importTruckings']);
+        Route::get('/truckings/export', [ShipmentImportExportController::class, 'exportTruckings']);
 
         // Image Upload
         Route::post('/upload/vehicle-image', [ImageUploadController::class, 'uploadVehicleImage']);
@@ -173,6 +209,7 @@ Route::middleware('api')->group(function () {
 
         // Analytics
         Route::get('/analytics', [AdminDashboardController::class, 'getAnalytics']);
+        Route::get('/revenue-analysis', [AdminDashboardController::class, 'getRevenueAnalysis']);
 
         // Admin User Management (Superadmin only)
         Route::get('/admin-users', [AdminDashboardController::class, 'getAdminUsers']);
