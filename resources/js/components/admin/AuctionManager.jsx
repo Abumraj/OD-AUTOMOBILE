@@ -10,6 +10,8 @@ function AuctionManager() {
     const [notification, setNotification] = useState(null);
     const [activeTab, setActiveTab] = useState('auctions');
     const [filter, setFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const handleExportAuctions = () => {
         const exportData = filteredAuctions.map(auction => ({
@@ -292,9 +294,17 @@ function AuctionManager() {
         return colors[status] || colors.pending;
     };
 
-    const filteredAuctions = filter === 'all' 
-        ? auctions 
+    const filteredAuctions = filter === 'all'
+        ? auctions
         : auctions.filter(a => a.status === filter);
+    const totalAuctionPages = Math.max(1, Math.ceil(filteredAuctions.length / itemsPerPage));
+    const paginatedAuctions = filteredAuctions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalRequestPages = Math.max(1, Math.ceil(requests.length / itemsPerPage));
+    const paginatedRequests = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter, activeTab]);
 
     if (loading) {
         return (
@@ -401,7 +411,7 @@ function AuctionManager() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredAuctions.map(auction => (
+                                {paginatedAuctions.map(auction => (
                                     <tr key={auction.id} className="border-b border-white/5 hover:bg-primary-container/50 transition-colors">
                                         <td className="py-md px-md font-label-md text-white">{auction.auction_number}</td>
                                         <td className="py-md px-md">
@@ -453,6 +463,19 @@ function AuctionManager() {
                                 No auctions found
                             </div>
                         )}
+
+                        {filteredAuctions.length > 0 && (
+                            <div className="flex items-center justify-between mt-md pt-md border-t border-white/10">
+                                <span className="font-caption text-on-surface-variant">
+                                    Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredAuctions.length)} of {filteredAuctions.length}
+                                </span>
+                                <div className="flex items-center gap-xs">
+                                    <button onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className="p-xs rounded-lg bg-surface-container-high text-on-surface disabled:opacity-30">Prev</button>
+                                    <span className="font-caption text-on-surface-variant px-sm">Page {currentPage} of {totalAuctionPages}</span>
+                                    <button onClick={() => setCurrentPage((page) => Math.min(totalAuctionPages, page + 1))} disabled={currentPage === totalAuctionPages} className="p-xs rounded-lg bg-surface-container-high text-on-surface disabled:opacity-30">Next</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
@@ -470,7 +493,7 @@ function AuctionManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {requests.map(request => (
+                            {paginatedRequests.map(request => (
                                 <tr key={request.id} className="border-b border-white/5 hover:bg-primary-container/50 transition-colors">
                                     <td className="py-md px-md">
                                         <div className="font-body-md text-white">{request.customer_name}</div>
@@ -510,6 +533,19 @@ function AuctionManager() {
                     {requests.length === 0 && (
                         <div className="text-center py-xl text-on-surface-variant">
                             No customer requests
+                        </div>
+                    )}
+
+                    {requests.length > 0 && (
+                        <div className="flex items-center justify-between mt-md pt-md border-t border-white/10">
+                            <span className="font-caption text-on-surface-variant">
+                                Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, requests.length)} of {requests.length}
+                            </span>
+                            <div className="flex items-center gap-xs">
+                                <button onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className="p-xs rounded-lg bg-surface-container-high text-on-surface disabled:opacity-30">Prev</button>
+                                <span className="font-caption text-on-surface-variant px-sm">Page {currentPage} of {totalRequestPages}</span>
+                                <button onClick={() => setCurrentPage((page) => Math.min(totalRequestPages, page + 1))} disabled={currentPage === totalRequestPages} className="p-xs rounded-lg bg-surface-container-high text-on-surface disabled:opacity-30">Next</button>
+                            </div>
                         </div>
                     )}
                 </div>

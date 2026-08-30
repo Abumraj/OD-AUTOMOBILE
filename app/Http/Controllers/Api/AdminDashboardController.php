@@ -192,6 +192,24 @@ class AdminDashboardController extends Controller
             ->whereYear('created_at', date('Y'))
             ->count();
 
+        // New service totals and profit summary
+        $procurementCount = DB::table('procurements')->where('is_active', true)->count();
+        $truckingCount = DB::table('truckings')->where('is_active', true)->count();
+        $autoSalesCount = DB::table('autosales')->where('is_active', true)->count();
+        $clearanceCount = DB::table('clearances')->where('is_active', true)->count();
+
+        $siteOverallProfit = (float) collect([
+            ['table' => 'procurements', 'profit' => 'profit'],
+            ['table' => 'truckings', 'profit' => 'profit'],
+            ['table' => 'autosales', 'profit' => 'profit'],
+            ['table' => 'clearances', 'profit' => 'profit'],
+        ])->sum(function ($service) {
+            return (float) DB::table($service['table'])
+                ->where('is_active', true)
+                ->whereNotNull($service['profit'])
+                ->sum($service['profit']) ?? 0;
+        });
+
         // Quote growth calculation - last 30 days vs previous 30 days
         $lastMonthQuotes = DB::table('quotes')
             ->where('created_at', '>=', now()->subDays(30))
@@ -236,7 +254,12 @@ class AdminDashboardController extends Controller
             'pending_clearance' => $pendingClearance,
             'critical_delays' => $criticalDelays,
             'delivered_ytd' => $deliveredYTD,
-            'success_rate' => $successRate
+            'success_rate' => $successRate,
+            'procurement_count' => $procurementCount,
+            'trucking_count' => $truckingCount,
+            'auto_sales_count' => $autoSalesCount,
+            'clearance_count' => $clearanceCount,
+            'site_overall_profit' => round($siteOverallProfit, 2),
         ]);
     }
 
@@ -329,12 +352,53 @@ class AdminDashboardController extends Controller
             ->orderBy('month')
             ->get();
 
+        $serviceProfitSources = [
+            ['service' => 'Procurement', 'table' => 'procurements', 'date' => 'created_at', 'profit' => 'profit'],
+            ['service' => 'Trucking', 'table' => 'truckings', 'date' => 'created_at', 'profit' => 'profit'],
+            ['service' => 'Auto Sales', 'table' => 'autosales', 'date' => 'sale_date', 'profit' => 'profit'],
+            ['service' => 'Clearance', 'table' => 'clearances', 'date' => 'date_stamp', 'profit' => 'profit'],
+        ];
+
+        $monthlyProfitOverTime = collect($serviceProfitSources)->flatMap(function ($service) {
+            $query = DB::table($service['table'])
+                ->selectRaw("DATE_FORMAT({$service['date']}, '%Y-%m') as month, SUM(CAST({$service['profit']} AS DECIMAL(12,2))) as profit")
+                ->whereNotNull($service['date'])
+                ->whereNotNull($service['profit'])
+                ->where($service['date'], '>=', now()->subMonths(6))
+                ->groupBy('month')
+                ->orderBy('month');
+
+            return $query->get()->map(fn ($row) => [
+                'month' => $row->month,
+                'service' => $service['service'],
+                'profit' => (float) ($row->profit ?? 0),
+            ]);
+        })->groupBy('month')->map(function ($entries, $month) {
+            return [
+                'month' => $month,
+                'profit' => round((float) $entries->sum('profit'), 2),
+            ];
+        })->sortBy('month')->values();
+
+        $serviceProfitBreakdown = collect($serviceProfitSources)->map(function ($service) {
+            $profit = (float) DB::table($service['table'])
+                ->whereNotNull($service['profit'])
+                ->sum($service['profit']) ?? 0;
+
+            return [
+                'service' => $service['service'],
+                'profit' => round($profit, 2),
+            ];
+        })->values();
+
         return response()->json([
             'shipments_over_time' => $shipmentsOverTime,
             'status_distribution' => $statusDistribution,
             'monthly_revenue' => $monthlyRevenue,
             'top_destinations' => $topDestinations,
-            'quotes_vs_shipments' => $quotesVsShipments
+            'quotes_vs_shipments' => $quotesVsShipments,
+            'monthly_profit_over_time' => $monthlyProfitOverTime,
+            'service_profit_breakdown' => $serviceProfitBreakdown,
         ]);
     }
 

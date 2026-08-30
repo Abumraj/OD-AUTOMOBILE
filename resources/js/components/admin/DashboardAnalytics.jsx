@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+const formatMonthLabel = (monthValue) => {
+    if (!monthValue) return 'N/A';
+
+    const [year, month] = String(monthValue).split('-');
+    if (!year || !month) return monthValue;
+
+    const date = new Date(Number(year), Number(month) - 1, 1);
+    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+};
+
+const safeNumber = (value) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : 0;
+};
+
 function DashboardAnalytics() {
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -38,38 +53,45 @@ function DashboardAnalytics() {
         return null;
     }
 
-    // Transform data for charts
-    const shipmentsData = analytics.shipments_over_time.map(item => ({
-        month: new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-        shipments: parseInt(item.count)
+    const shipmentsData = (analytics.shipments_over_time || []).map(item => ({
+        month: formatMonthLabel(item.month),
+        shipments: safeNumber(item.count)
     }));
 
-    const statusData = analytics.status_distribution.map(item => ({
-        name: item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        value: parseInt(item.count)
+    const statusData = (analytics.status_distribution || []).map(item => ({
+        name: String(item.status || 'Unknown').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: safeNumber(item.count)
     }));
 
-    const revenueData = analytics.monthly_revenue.map(item => ({
-        month: new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-        revenue: parseFloat(item.revenue || 0)
+    const revenueData = (analytics.monthly_revenue || []).map(item => ({
+        month: formatMonthLabel(item.month),
+        revenue: safeNumber(item.revenue)
     }));
 
-    const destinationsData = analytics.top_destinations.map(item => ({
-        country: item.destination_country,
-        shipments: parseInt(item.count)
+    const profitData = (analytics.monthly_profit_over_time || []).map(item => ({
+        month: formatMonthLabel(item.month),
+        profit: safeNumber(item.profit)
     }));
 
-    // Process quotes vs shipments data
-    const quotesVsShipmentsData = analytics.quotes_vs_shipments.reduce((acc, item) => {
-        const month = new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    const destinationsData = (analytics.top_destinations || []).map(item => ({
+        country: item.destination_country || 'Unknown',
+        shipments: safeNumber(item.count)
+    }));
+
+    const serviceProfitData = (analytics.service_profit_breakdown || []).map(item => ({
+        name: item.service || 'Service',
+        value: safeNumber(item.profit)
+    }));
+
+    const quotesVsShipmentsData = (analytics.quotes_vs_shipments || []).reduce((acc, item) => {
+        const month = formatMonthLabel(item.month);
         const existing = acc.find(d => d.month === month);
+        const count = safeNumber(item.count);
+
         if (existing) {
-            existing[item.type] = parseInt(item.count);
+            existing[item.type] = count;
         } else {
-            acc.push({
-                month,
-                [item.type]: parseInt(item.count)
-            });
+            acc.push({ month, [item.type]: count });
         }
         return acc;
     }, []);
@@ -96,7 +118,7 @@ function DashboardAnalytics() {
         <div className="space-y-md">
             <div className="flex items-center justify-between mb-md">
                 <h2 className="font-headline-sm text-headline-sm text-white">Analytics Dashboard</h2>
-                <button 
+                <button
                     onClick={fetchAnalytics}
                     className="flex items-center gap-sm bg-surface-container hover:bg-surface-container-high text-white px-md py-sm rounded-lg transition-colors"
                 >
@@ -106,7 +128,44 @@ function DashboardAnalytics() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
-                {/* Shipments Over Time */}
+                <div className="bg-surface-container rounded-xl p-lg border border-white/10">
+                    <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-secondary-container">payments</span>
+                        Site Profit Trend (6 Months)
+                    </h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={profitData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                            <XAxis dataKey="month" stroke="#ffffff80" style={{ fontSize: '12px' }} />
+                            <YAxis stroke="#ffffff80" style={{ fontSize: '12px' }} />
+                            <Tooltip
+                                formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}
+                                content={<CustomTooltip />}
+                            />
+                            <Legend wrapperStyle={{ color: '#ffffff' }} />
+                            <Line type="monotone" dataKey="profit" name="Profit" stroke="#48bb78" strokeWidth={2} dot={{ fill: '#48bb78', r: 4 }} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div className="bg-surface-container rounded-xl p-lg border border-white/10">
+                    <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-secondary-container">donut_small</span>
+                        Service Profit Mix
+                    </h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                            <Pie data={serviceProfitData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={45} paddingAngle={2}>
+                                {serviceProfitData.map((entry, index) => (
+                                    <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)} content={<CustomTooltip />} />
+                            <Legend wrapperStyle={{ color: '#ffffff' }} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+
                 <div className="bg-surface-container rounded-xl p-lg border border-white/10">
                     <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
                         <span className="material-symbols-outlined text-secondary-container">trending_up</span>
@@ -129,7 +188,6 @@ function DashboardAnalytics() {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Status Distribution */}
                 <div className="bg-surface-container rounded-xl p-lg border border-white/10">
                     <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
                         <span className="material-symbols-outlined text-secondary-container">donut_small</span>
@@ -156,7 +214,6 @@ function DashboardAnalytics() {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Revenue Trend */}
                 <div className="bg-surface-container rounded-xl p-lg border border-white/10">
                     <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
                         <span className="material-symbols-outlined text-secondary-container">payments</span>
@@ -167,14 +224,13 @@ function DashboardAnalytics() {
                             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
                             <XAxis dataKey="month" stroke="#ffffff80" style={{ fontSize: '12px' }} />
                             <YAxis stroke="#ffffff80" style={{ fontSize: '12px' }} />
-                            <Tooltip content={<CustomTooltip />} />
+                            <Tooltip formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)} content={<CustomTooltip />} />
                             <Legend wrapperStyle={{ color: '#ffffff' }} />
-                            <Line type="monotone" dataKey="revenue" stroke="#48bb78" strokeWidth={2} dot={{ fill: '#48bb78', r: 4 }} />
+                            <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#48bb78" strokeWidth={2} dot={{ fill: '#48bb78', r: 4 }} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
 
-                {/* Top Destinations */}
                 <div className="bg-surface-container rounded-xl p-lg border border-white/10">
                     <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
                         <span className="material-symbols-outlined text-secondary-container">public</span>
@@ -191,7 +247,6 @@ function DashboardAnalytics() {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Quotes vs Shipments */}
                 <div className="bg-surface-container rounded-xl p-lg border border-white/10 lg:col-span-2">
                     <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
                         <span className="material-symbols-outlined text-secondary-container">compare_arrows</span>
