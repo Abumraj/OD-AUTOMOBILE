@@ -162,7 +162,7 @@ class ShipmentImportExportController extends Controller
 
                     // Generate tracking and reference numbers if not provided
                     $trackingNumber = 'TRK-' . strtoupper(substr(md5(uniqid()), 0, 10));
-                    $referenceNumber = $shipmentNumber ?? ('OD-' . date('Y') . '-' . str_pad(DB::table('shipments')->count() + 1, 4, '0', STR_PAD_LEFT));
+                    $referenceNumber = $shipmentNumber ?? \App\Http\Controllers\Api\AdminDashboardController::generateUniqueShipmentReference();
 
                     // Map status to our system
                     $validStatuses = ['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered', 'cancelled'];

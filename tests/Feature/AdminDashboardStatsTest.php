@@ -13,9 +13,36 @@ class AdminDashboardStatsTest extends TestCase
     {
         parent::setUp();
 
-        foreach (['procurements', 'truckings', 'autosales', 'clearances'] as $table) {
+        foreach (['shipments', 'shipment_updates', 'procurements', 'truckings', 'autosales', 'clearances'] as $table) {
             Schema::dropIfExists($table);
         }
+
+        Schema::create('shipments', function ($table) {
+            $table->id();
+            $table->string('tracking_number')->unique();
+            $table->string('reference_number')->unique();
+            $table->string('customer_name');
+            $table->string('customer_email');
+            $table->string('customer_phone')->nullable();
+            $table->string('origin_port');
+            $table->string('origin_country');
+            $table->string('destination_port');
+            $table->string('destination_country');
+            $table->string('status')->default('pending');
+            $table->integer('progress_percentage')->default(0);
+            $table->decimal('total_cost', 10, 2)->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('shipment_updates', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('shipment_id');
+            $table->string('status');
+            $table->text('description');
+            $table->timestamp('update_date');
+            $table->timestamps();
+        });
 
         Schema::create('procurements', function ($table) {
             $table->id();
@@ -89,5 +116,32 @@ class AdminDashboardStatsTest extends TestCase
         $this->assertSame(3, $payload['auto_sales_count']);
         $this->assertSame(2, $payload['clearance_count']);
         $this->assertEquals(2900.00, round((float) $payload['site_overall_profit'], 2));
+    }
+
+    public function test_create_shipment_uses_unique_reference_numbers_even_when_existing_numbers_are_non_sequential(): void
+    {
+        DB::table('shipments')->insert([
+            ['tracking_number' => 'TRK-EXIST-001', 'reference_number' => 'OD-2026-0001', 'customer_name' => 'Existing One', 'customer_email' => 'one@example.com', 'origin_port' => 'Lagos', 'origin_country' => 'Nigeria', 'destination_port' => 'Rotterdam', 'destination_country' => 'Netherlands', 'status' => 'pending', 'progress_percentage' => 0, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['tracking_number' => 'TRK-EXIST-002', 'reference_number' => 'OD-2026-0002', 'customer_name' => 'Existing Two', 'customer_email' => 'two@example.com', 'origin_port' => 'Lagos', 'origin_country' => 'Nigeria', 'destination_port' => 'Rotterdam', 'destination_country' => 'Netherlands', 'status' => 'pending', 'progress_percentage' => 0, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['tracking_number' => 'TRK-EXIST-003', 'reference_number' => 'OD-2026-0003', 'customer_name' => 'Existing Three', 'customer_email' => 'three@example.com', 'origin_port' => 'Lagos', 'origin_country' => 'Nigeria', 'destination_port' => 'Rotterdam', 'destination_country' => 'Netherlands', 'status' => 'pending', 'progress_percentage' => 0, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['tracking_number' => 'TRK-EXIST-005', 'reference_number' => 'OD-2026-0005', 'customer_name' => 'Existing Five', 'customer_email' => 'five@example.com', 'origin_port' => 'Lagos', 'origin_country' => 'Nigeria', 'destination_port' => 'Rotterdam', 'destination_country' => 'Netherlands', 'status' => 'pending', 'progress_percentage' => 0, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = (new AdminDashboardController())->createShipment(new \Illuminate\Http\Request([
+            'customer_name' => 'New Client',
+            'customer_email' => 'new@example.com',
+            'customer_phone' => '1234567890',
+            'origin_port' => 'Lagos',
+            'origin_country' => 'Nigeria',
+            'destination_port' => 'Rotterdam',
+            'destination_country' => 'Netherlands',
+            'status' => 'pending',
+            'total_cost' => 1500.00,
+        ]));
+
+        $this->assertSame(200, $response->status());
+        $payload = json_decode($response->getContent(), true);
+        $this->assertMatchesRegularExpression('/^OD-2026-\d{4}$/', $payload['reference_number']);
+        $this->assertNotSame('OD-2026-0005', $payload['reference_number']);
     }
 }

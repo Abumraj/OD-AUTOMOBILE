@@ -1884,6 +1884,32 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    public static function generateUniqueShipmentReference(string $year = null): string
+    {
+        $year = $year ?: date('Y');
+
+        for ($attempt = 0; $attempt < 25; $attempt++) {
+            $suffix = str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
+            $reference = "OD-{$year}-{$suffix}";
+
+            if (!DB::table('shipments')->where('reference_number', $reference)->exists()) {
+                return $reference;
+            }
+        }
+
+        $counter = (int) DB::table('shipments')->where('reference_number', 'like', "OD-{$year}-%")->count() + 1;
+
+        while (true) {
+            $reference = "OD-{$year}-" . str_pad((string) $counter, 4, '0', STR_PAD_LEFT);
+
+            if (!DB::table('shipments')->where('reference_number', $reference)->exists()) {
+                return $reference;
+            }
+
+            $counter++;
+        }
+    }
+
     public function createShipment(Request $request)
     {
         $validated = $request->validate([
@@ -1927,7 +1953,7 @@ class AdminDashboardController extends Controller
 
         // Generate tracking and reference numbers
         $trackingNumber = 'TRK-' . strtoupper(substr(md5(uniqid()), 0, 10));
-        $referenceNumber = 'OD-' . date('Y') . '-' . str_pad(DB::table('shipments')->count() + 1, 4, '0', STR_PAD_LEFT);
+        $referenceNumber = self::generateUniqueShipmentReference();
 
         // Calculate progress based on status
         $progressMap = [

@@ -390,3 +390,5 @@
 #52 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('...')
 #53 {main}
 "} 
+[2026-08-31 12:10:18] local.ERROR: Failed to send email {"to":"abumraj@gmail.com","template":"shipment-update","error":"Connection could not be established with host \"mailpit:1025\": stream_socket_client(): php_network_getaddresses: getaddrinfo for mailpit failed: No such host is known. "} 
+[2026-08-31 12:10:18] local.INFO: Termii SMS disabled. Message not sent. {"to":"09025254345"} 
