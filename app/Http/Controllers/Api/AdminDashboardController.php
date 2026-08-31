@@ -1887,27 +1887,35 @@ class AdminDashboardController extends Controller
     public static function generateUniqueShipmentReference(string $year = null): string
     {
         $year = $year ?: date('Y');
+        $prefix = "OD-{$year}-";
 
-        for ($attempt = 0; $attempt < 25; $attempt++) {
-            $suffix = str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
-            $reference = "OD-{$year}-{$suffix}";
+        $nextNumber = 1;
+        $existingReferences = DB::table('shipments')
+            ->where('reference_number', 'like', $prefix . '%')
+            ->pluck('reference_number')
+            ->all();
 
-            if (!DB::table('shipments')->where('reference_number', $reference)->exists()) {
-                return $reference;
+        foreach ($existingReferences as $reference) {
+            $suffix = preg_replace('/^' . preg_quote($prefix, '/') . '/', '', (string) $reference);
+            if (preg_match('/^\d{4}$/', (string) $suffix)) {
+                $nextNumber = max($nextNumber, (int) $suffix + 1);
             }
         }
 
-        $counter = (int) DB::table('shipments')->where('reference_number', 'like', "OD-{$year}-%")->count() + 1;
+        $reference = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
 
-        while (true) {
-            $reference = "OD-{$year}-" . str_pad((string) $counter, 4, '0', STR_PAD_LEFT);
-
-            if (!DB::table('shipments')->where('reference_number', $reference)->exists()) {
-                return $reference;
+        $attempts = 0;
+        while (DB::table('shipments')->where('reference_number', $reference)->exists()) {
+            $attempts++;
+            if ($attempts > 25) {
+                throw new \RuntimeException('Unable to generate a unique shipment reference for the current year.');
             }
 
-            $counter++;
+            $nextNumber++;
+            $reference = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
         }
+
+        return $reference;
     }
 
     public function createShipment(Request $request)
