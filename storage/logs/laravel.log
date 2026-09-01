@@ -2,3 +2,50 @@
 [stacktrace]
 #0 {main}
 "} 
+[2026-09-01 11:52:29] local.ERROR: PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR on line 1 {"exception":"[object] (Psy\\Exception\\ParseErrorException(code: 0): PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR on line 1 at C:/od-auto/laravel-backend/vendor/psy/psysh/src/Exception/ParseErrorException.php:44)
+[stacktrace]
+#0 C:/od-auto/laravel-backend/vendor/psy/psysh/src/CodeCleaner.php(657): Psy/Exception/ParseErrorException::fromParseError()
+#1 C:/od-auto/laravel-backend/vendor/psy/psysh/src/CodeCleaner.php(273): Psy/CodeCleaner->parse()
+#2 C:/od-auto/laravel-backend/vendor/psy/psysh/src/Shell.php(1364): Psy/CodeCleaner->clean()
+#3 C:/od-auto/laravel-backend/vendor/psy/psysh/src/Shell.php(1471): Psy/Shell->appendCode()
+#4 C:/od-auto/laravel-backend/vendor/psy/psysh/src/Shell.php(2180): Psy/Shell->setCode()
+#5 C:/od-auto/laravel-backend/vendor/laravel/tinker/src/Console/TinkerCommand.php(77): Psy/Shell->execute()
+#6 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Laravel/Tinker/Console/TinkerCommand->handle()
+#7 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(41): Illuminate/Container/BoundMethod::Illuminate/Container/{closure}()
+#8 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(93): Illuminate/Container/Util::unwrapIfClosure()
+#9 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod()
+#10 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(662): Illuminate/Container/BoundMethod::call()
+#11 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(211): Illuminate/Container/Container->call()
+#12 C:/od-auto/laravel-backend/vendor/symfony/console/Command/Command.php(326): Illuminate/Console/Command->execute()
+#13 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(180): Symfony/Component/Console/Command/Command->run()
+#14 C:/od-auto/laravel-backend/vendor/symfony/console/Application.php(1121): Illuminate/Console/Command->run()
+#15 C:/od-auto/laravel-backend/vendor/symfony/console/Application.php(324): Symfony/Component/Console/Application->doRunCommand()
+#16 C:/od-auto/laravel-backend/vendor/symfony/console/Application.php(175): Symfony/Component/Console/Application->doRun()
+#17 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(201): Symfony/Component/Console/Application->run()
+#18 C:/od-auto/laravel-backend/artisan(12): Illuminate/Foundation/Console/Kernel->handle()
+#19 {main}
+"} 
+[2026-09-01 11:52:47] local.ERROR: Command "db:query" is not defined.
+
+Did you mean one of these?
+    db
+    db:monitor
+    db:seed
+    db:show
+    db:table
+    db:wipe {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"db:query\" is not defined.
+
+Did you mean one of these?
+    db
+    db:monitor
+    db:seed
+    db:show
+    db:table
+    db:wipe at C:/od-auto/laravel-backend/vendor/symfony/console/Application.php:745)
+[stacktrace]
+#0 C:/od-auto/laravel-backend/vendor/symfony/console/Application.php(266): Symfony/Component/Console/Application->find()
+#1 C:/od-auto/laravel-backend/vendor/symfony/console/Application.php(175): Symfony/Component/Console/Application->doRun()
+#2 C:/od-auto/laravel-backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(201): Symfony/Component/Console/Application->run()
+#3 C:/od-auto/laravel-backend/artisan(12): Illuminate/Foundation/Console/Kernel->handle()
+#4 {main}
+"} 
