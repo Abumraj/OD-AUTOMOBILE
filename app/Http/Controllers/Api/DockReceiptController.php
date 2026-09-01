@@ -14,6 +14,26 @@ class DockReceiptController extends Controller
 {
     public function generateReceipt(Request $request, $shipmentId)
     {
+        return $this->generateServiceReceipt($request, 'shipments', $shipmentId);
+    }
+
+    public function generateProcurementReceipt(Request $request, $recordId)
+    {
+        return $this->generateServiceReceipt($request, 'procurements', $recordId);
+    }
+
+    public function generateTruckingReceipt(Request $request, $recordId)
+    {
+        return $this->generateServiceReceipt($request, 'truckings', $recordId);
+    }
+
+    public function generateClearanceReceipt(Request $request, $recordId)
+    {
+        return $this->generateServiceReceipt($request, 'clearances', $recordId);
+    }
+
+    public function generateServiceReceipt(Request $request, $service, $recordId)
+    {
         $validated = $request->validate([
             'stage' => 'required|string|in:pending,auction_won,documentation,shipping,in_transit,customs,delivered',
             'date_received' => 'nullable|date',
@@ -24,31 +44,46 @@ class DockReceiptController extends Controller
         ]);
 
         try {
-            // Get shipment details with related data
-            $shipment = DB::table('shipments')
-                ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
-                ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
-                ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
-                ->where('shipments.id', $shipmentId)
-                ->first();
-
-            if (!$shipment) {
-                return response()->json(['error' => 'Shipment not found'], 404);
+            $serviceTable = $this->resolveServiceTable($service);
+            if (!$serviceTable) {
+                return response()->json(['error' => 'Unsupported service type'], 422);
             }
 
-            // Generate unique receipt number
+            $record = DB::table($serviceTable)
+                ->where('id', $recordId)
+                ->first();
+
+            if (!$record) {
+                return response()->json(['error' => ucfirst($service) . ' record not found'], 404);
+            }
+
+            $referenceNumber = $record->reference_number ?? $record->tracking_number ?? ($service . '-' . $record->id);
+            $customerName = $record->customer_name ?? $record->client_name ?? 'Customer';
+            $customerEmail = $record->customer_email ?? $record->client_email ?? null;
+            $customerPhone = $record->customer_phone ?? null;
+            $vehicleDescription = $this->getVehicleDescription($record);
+            $location = $validated['location_received'] ?? ($record->origin_port ?? $record->location ?? 'N/A');
+
+            if (!empty($record->origin_port) && !empty($record->origin_country)) {
+                $location = $record->origin_port . ', ' . $record->origin_country;
+            }
+            if (empty($location) && !empty($record->destination_port) && !empty($record->destination_country)) {
+                $location = $record->destination_port . ', ' . $record->destination_country;
+            }
+
             $receiptNumber = 'ODR-' . date('Y') . '-' . str_pad(DB::table('dock_receipts')->count() + 1, 6, '0', STR_PAD_LEFT);
 
-            // Create dock receipt record
             $receiptId = DB::table('dock_receipts')->insertGetId([
                 'receipt_number' => $receiptNumber,
-                'shipment_id' => $shipmentId,
+                'shipment_id' => $service === 'shipments' ? $recordId : null,
+                'record_type' => $serviceTable,
+                'record_id' => $recordId,
                 'stage' => $validated['stage'],
-                'customer_name' => $shipment->customer_name,
-                'reference_number' => $shipment->reference_number,
-                'vehicle_description' => $this->getVehicleDescription($shipment),
+                'customer_name' => $customerName,
+                'reference_number' => $referenceNumber,
+                'vehicle_description' => $vehicleDescription,
                 'date_received' => $validated['date_received'] ?? now()->toDateString(),
-                'location_received' => $validated['location_received'] ?? ($shipment->origin_port . ', ' . $shipment->origin_country),
+                'location_received' => $location,
                 'notes' => $validated['notes'] ?? null,
                 'generated_by' => 'Admin',
                 'generated_at' => now(),
@@ -61,7 +96,7 @@ class DockReceiptController extends Controller
             if (!empty($validated['send_email']) || !empty($validated['send_whatsapp'])) {
                 $pdfData = [
                     'receipt' => $receipt,
-                    'shipment' => $shipment,
+                    'shipment' => $record,
                     'stage_name' => $this->getStageName($receipt->stage),
                     'generated_date' => date('F d, Y', strtotime($receipt->generated_at))
                 ];
@@ -71,19 +106,17 @@ class DockReceiptController extends Controller
                 $pdfOutput = $pdf->output();
             }
 
-            // Send email if requested
             $emailSent = false;
-            if (!empty($validated['send_email']) && $shipment->customer_email) {
+            if (!empty($validated['send_email']) && $customerEmail) {
                 try {
-                    // Send email with PDF attachment
                     Mail::send('emails.dock-receipt-email', [
-                        'customer_name' => $shipment->customer_name,
+                        'customer_name' => $customerName,
                         'receipt_number' => $receiptNumber,
-                        'reference_number' => $shipment->reference_number,
+                        'reference_number' => $referenceNumber,
                         'stage_name' => $this->getStageName($receipt->stage),
-                        'vehicle_description' => $this->getVehicleDescription($shipment)
-                    ], function ($message) use ($shipment, $receiptNumber, $pdfOutput) {
-                        $message->to($shipment->customer_email, $shipment->customer_name)
+                        'vehicle_description' => $vehicleDescription
+                    ], function ($message) use ($customerEmail, $customerName, $receiptNumber, $pdfOutput) {
+                        $message->to($customerEmail, $customerName)
                             ->subject("Dock Receipt - {$receiptNumber}")
                             ->attachData($pdfOutput, "dock-receipt-{$receiptNumber}.pdf", [
                                 'mime' => 'application/pdf',
@@ -92,10 +125,9 @@ class DockReceiptController extends Controller
 
                     $emailSent = true;
 
-                    // Log email activity
                     DB::table('activity_stream')->insert([
                         'action' => 'Dock Receipt Emailed',
-                        'description' => "Receipt {$receiptNumber} sent to {$shipment->customer_email}",
+                        'description' => "Receipt {$receiptNumber} sent to {$customerEmail}",
                         'location' => 'Admin Dashboard',
                         'created_at' => now(),
                         'updated_at' => now()
@@ -103,18 +135,17 @@ class DockReceiptController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Failed to send dock receipt email', [
                         'receipt_id' => $receiptId,
-                        'customer_email' => $shipment->customer_email,
+                        'customer_email' => $customerEmail,
                         'error' => $e->getMessage()
                     ]);
-                    // Don't fail the whole operation if email fails
                 }
             }
 
             $whatsappSent = false;
-            if (!empty($validated['send_whatsapp']) && $shipment->customer_phone) {
+            if (!empty($validated['send_whatsapp']) && $customerPhone) {
                 try {
                     $whatsappResult = (new WhatsAppService())->sendDocument(
-                        $shipment->customer_phone,
+                        $customerPhone,
                         $pdfOutput ?? null,
                         "dock-receipt-{$receiptNumber}.pdf",
                         "Dock Receipt - {$receiptNumber}",
@@ -124,16 +155,15 @@ class DockReceiptController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Failed to send dock receipt WhatsApp document', [
                         'receipt_id' => $receiptId,
-                        'customer_phone' => $shipment->customer_phone,
+                        'customer_phone' => $customerPhone,
                         'error' => $e->getMessage()
                     ]);
                 }
             }
 
-            // Log activity
             DB::table('activity_stream')->insert([
                 'action' => 'Dock Receipt Generated',
-                'description' => "Receipt {$receiptNumber} generated for shipment {$shipment->reference_number}",
+                'description' => "Receipt {$receiptNumber} generated for {$serviceTable} {$referenceNumber}",
                 'location' => 'Admin Dashboard',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -151,7 +181,8 @@ class DockReceiptController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to generate dock receipt', [
-                'shipment_id' => $shipmentId,
+                'service' => $service,
+                'record_id' => $recordId,
                 'error' => $e->getMessage()
             ]);
             return response()->json(['error' => 'Failed to generate dock receipt'], 500);
@@ -159,6 +190,26 @@ class DockReceiptController extends Controller
     }
 
     public function previewReceipt(Request $request, $shipmentId)
+    {
+        return $this->previewServiceReceipt($request, 'shipments', $shipmentId);
+    }
+
+    public function previewProcurementReceipt(Request $request, $recordId)
+    {
+        return $this->previewServiceReceipt($request, 'procurements', $recordId);
+    }
+
+    public function previewTruckingReceipt(Request $request, $recordId)
+    {
+        return $this->previewServiceReceipt($request, 'truckings', $recordId);
+    }
+
+    public function previewClearanceReceipt(Request $request, $recordId)
+    {
+        return $this->previewServiceReceipt($request, 'clearances', $recordId);
+    }
+
+    public function previewServiceReceipt(Request $request, $service, $recordId)
     {
         $validated = $request->validate([
             'stage' => 'required|string|in:pending,auction_won,documentation,shipping,in_transit,customs,delivered',
@@ -168,47 +219,43 @@ class DockReceiptController extends Controller
         ]);
 
         try {
-            // Get shipment details with related data
-            $shipment = DB::table('shipments')
-                ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
-                ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
-                ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
-                ->where('shipments.id', $shipmentId)
-                ->first();
-
-            if (!$shipment) {
-                return response()->json(['error' => 'Shipment not found'], 404);
+            $serviceTable = $this->resolveServiceTable($service);
+            if (!$serviceTable) {
+                return response()->json(['error' => 'Unsupported service type'], 422);
             }
 
-            // Create temporary receipt object for preview
+            $record = DB::table($serviceTable)->where('id', $recordId)->first();
+            if (!$record) {
+                return response()->json(['error' => ucfirst($service) . ' record not found'], 404);
+            }
+
             $tempReceipt = (object) [
                 'receipt_number' => 'PREVIEW',
-                'reference_number' => $shipment->reference_number,
-                'customer_name' => $shipment->customer_name,
-                'vehicle_description' => $this->getVehicleDescription($shipment),
+                'reference_number' => $record->reference_number ?? $record->tracking_number ?? ($service . '-' . $record->id),
+                'customer_name' => $record->customer_name ?? $record->client_name ?? 'Customer',
+                'vehicle_description' => $this->getVehicleDescription($record),
                 'date_received' => $validated['date_received'] ?? now()->toDateString(),
-                'location_received' => $validated['location_received'] ?? ($shipment->origin_port . ', ' . $shipment->origin_country),
+                'location_received' => $validated['location_received'] ?? ($record->origin_port ?? $record->location ?? 'N/A'),
                 'notes' => $validated['notes'] ?? null,
                 'stage' => $validated['stage'],
                 'generated_at' => now()
             ];
 
-            // Prepare data for PDF
             $data = [
                 'receipt' => $tempReceipt,
-                'shipment' => $shipment,
+                'shipment' => $record,
                 'stage_name' => $this->getStageName($validated['stage']),
                 'generated_date' => date('F d, Y')
             ];
 
-            // Generate PDF and return as inline view
             $pdf = Pdf::loadView('receipts.dock-receipt', $data);
             $pdf->setPaper('a4', 'portrait');
 
             return $pdf->stream('dock-receipt-preview.pdf');
         } catch (\Exception $e) {
             Log::error('Failed to preview dock receipt', [
-                'shipment_id' => $shipmentId,
+                'service' => $service,
+                'record_id' => $recordId,
                 'error' => $e->getMessage()
             ]);
             return response()->json(['error' => 'Failed to preview receipt'], 500);
@@ -218,31 +265,20 @@ class DockReceiptController extends Controller
     public function downloadReceipt($receiptId)
     {
         try {
-            // Get receipt with shipment details
-            $receipt = DB::table('dock_receipts')
-                ->where('id', $receiptId)
-                ->first();
-
+            $receipt = DB::table('dock_receipts')->where('id', $receiptId)->first();
             if (!$receipt) {
                 return response()->json(['error' => 'Receipt not found'], 404);
             }
 
-            $shipment = DB::table('shipments')
-                ->leftJoin('shipping_types', 'shipments.shipping_type_id', '=', 'shipping_types.id')
-                ->leftJoin('shipping_lines', 'shipments.shipping_line_id', '=', 'shipping_lines.id')
-                ->select('shipments.*', 'shipping_types.name as shipping_type_name', 'shipping_lines.name as shipping_line_name')
-                ->where('shipments.id', $receipt->shipment_id)
-                ->first();
-
-            // Prepare data for PDF
+            $serviceTable = $receipt->record_type ?: 'shipments';
+            $record = DB::table($serviceTable)->where('id', $receipt->record_id ?? $receipt->shipment_id)->first();
             $data = [
                 'receipt' => $receipt,
-                'shipment' => $shipment,
+                'shipment' => $record,
                 'stage_name' => $this->getStageName($receipt->stage),
                 'generated_date' => date('F d, Y', strtotime($receipt->generated_at))
             ];
 
-            // Generate PDF
             $pdf = Pdf::loadView('receipts.dock-receipt', $data);
             $pdf->setPaper('a4', 'portrait');
 
@@ -258,33 +294,63 @@ class DockReceiptController extends Controller
 
     public function getShipmentReceipts($shipmentId)
     {
-        $receipts = DB::table('dock_receipts')
-            ->where('shipment_id', $shipmentId)
-            ->orderBy('generated_at', 'desc')
-            ->get()
-            ->map(function ($receipt) {
-                return [
-                    'id' => $receipt->id,
-                    'receipt_number' => $receipt->receipt_number,
-                    'stage' => $receipt->stage,
-                    'stage_name' => $this->getStageName($receipt->stage),
-                    'date_received' => $receipt->date_received,
-                    'location_received' => $receipt->location_received,
-                    'generated_at' => $receipt->generated_at,
-                    'generated_by' => $receipt->generated_by
-                ];
-            });
-
-        return response()->json($receipts);
+        return $this->getServiceReceipts('shipments', $shipmentId);
     }
 
-    private function getVehicleDescription($shipment)
+    public function getProcurementReceipts($recordId)
+    {
+        return $this->getServiceReceipts('procurements', $recordId);
+    }
+
+    public function getTruckingReceipts($recordId)
+    {
+        return $this->getServiceReceipts('truckings', $recordId);
+    }
+
+    public function getClearanceReceipts($recordId)
+    {
+        return $this->getServiceReceipts('clearances', $recordId);
+    }
+
+    public function getServiceReceipts($service, $recordId)
+    {
+        $serviceTable = $this->resolveServiceTable($service);
+        if (!$serviceTable) {
+            return response()->json(['error' => 'Unsupported service type'], 422);
+        }
+
+        $receipts = DB::table('dock_receipts')
+            ->where(function ($query) use ($serviceTable, $recordId) {
+                $query->where('record_type', $serviceTable)
+                    ->where('record_id', $recordId);
+            })
+            ->orWhere(function ($query) use ($serviceTable, $recordId) {
+                $query->where('record_type', null)->where('shipment_id', $serviceTable === 'shipments' ? $recordId : null);
+            })
+            ->orderBy('generated_at', 'desc')
+            ->get();
+
+        return response()->json($receipts->map(function ($receipt) {
+            return [
+                'id' => $receipt->id,
+                'receipt_number' => $receipt->receipt_number,
+                'stage' => $receipt->stage,
+                'stage_name' => $this->getStageName($receipt->stage),
+                'date_received' => $receipt->date_received,
+                'location_received' => $receipt->location_received,
+                'generated_at' => $receipt->generated_at,
+                'generated_by' => $receipt->generated_by
+            ];
+        }));
+    }
+
+    private function getVehicleDescription($record)
     {
         $parts = array_filter([
-            $shipment->year ?? $shipment->vehicle_year,
-            $shipment->car_model ?? $shipment->vehicle_make,
-            $shipment->vehicle_model,
-            $shipment->car_color ? "({$shipment->car_color})" : null
+            $record->year ?? $record->vehicle_year ?? $record->car_year ?? null,
+            $record->car_model ?? $record->vehicle_make ?? $record->car_make ?? null,
+            $record->vehicle_model ?? $record->car_model ?? null,
+            $record->car_color ?? null,
         ]);
 
         return !empty($parts) ? implode(' ', $parts) : 'Vehicle/Goods';
@@ -303,5 +369,17 @@ class DockReceiptController extends Controller
         ];
 
         return $stages[$stage] ?? ucfirst(str_replace('_', ' ', $stage));
+    }
+
+    private function resolveServiceTable($service)
+    {
+        $allowed = [
+            'shipments' => 'shipments',
+            'procurements' => 'procurements',
+            'truckings' => 'truckings',
+            'clearances' => 'clearances',
+        ];
+
+        return $allowed[strtolower((string) $service)] ?? null;
     }
 }

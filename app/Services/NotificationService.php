@@ -153,6 +153,41 @@ class NotificationService
     }
 
     /**
+     * Send a status update email for admin-managed service records.
+     */
+    public function sendServiceStatusUpdate($serviceType, $record, $updateDescription = null)
+    {
+        if (!$record) {
+            return false;
+        }
+
+        $email = $record->customer_email ?? $record->client_email ?? null;
+        if (empty($email)) {
+            return false;
+        }
+
+        $status = $record->status ?? $record->shipment_status ?? 'updated';
+        $templateSlug = 'shipment-update';
+
+        $variables = [
+            'customer_name' => $record->customer_name ?? $record->client_name ?? 'Customer',
+            'tracking_number' => $record->tracking_number ?? $record->reference_number ?? $record->id ?? 'N/A',
+            'reference_number' => $record->reference_number ?? $record->tracking_number ?? $record->id ?? 'N/A',
+            'status' => ucwords(str_replace('_', ' ', $status)),
+            'current_location' => $updateDescription ?? ($record->location ?? $record->destination_port ?? $record->origin_port ?? 'Updated'),
+            'tracking_url' => url('/tracking'),
+            'service_name' => $serviceType,
+            'vehicle_details' => trim(($record->vehicle_year ?? '') . ' ' . ($record->vehicle_make ?? '') . ' ' . ($record->vehicle_model ?? '')),
+            'estimated_delivery' => $record->estimated_arrival_date ?? $record->arrival_date ?? $record->trucking_date ?? now()->toDateString(),
+            'delivery_date' => $record->delivery_date ?? now()->toDateString(),
+            'delivery_location' => $record->destination_port ?? $record->location ?? $record->origin_port ?? 'Updated location',
+            'service_details' => $updateDescription ?? $serviceType
+        ];
+
+        return $this->sendEmail($templateSlug, $email, $variables);
+    }
+
+    /**
      * Send shipment update notification to customer.
      */
     public function sendShipmentUpdate($shipment, $updateDescription = null)

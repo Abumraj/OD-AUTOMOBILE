@@ -1242,6 +1242,9 @@ class AdminDashboardController extends Controller
     public function createProcurement(Request $request)
     {
         $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
+            'customer_phone' => 'nullable|string|max:50',
             'date_procured' => 'nullable|date',
             'car_make' => 'required|string|max:100',
             'car_model' => 'required|string|max:100',
@@ -1260,10 +1263,19 @@ class AdminDashboardController extends Controller
         ]);
 
         $id = DB::table('procurements')->insertGetId(array_merge($validated, [
+            'customer_name' => $validated['customer_name'],
+            'customer_email' => $validated['customer_email'] ?? null,
+            'customer_phone' => $validated['customer_phone'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now(),
         ]));
+
+        $record = (object) array_merge($validated, ['id' => $id, 'customer_email' => $validated['customer_email'] ?? null]);
+
+        if (!empty($validated['customer_email'])) {
+            (new NotificationService())->sendServiceStatusUpdate('Procurement', $record, 'Procurement created');
+        }
 
         DB::table('activity_stream')->insert([
             'action' => 'Procurement Created',
@@ -1289,6 +1301,9 @@ class AdminDashboardController extends Controller
         }
 
         $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
+            'customer_phone' => 'nullable|string|max:50',
             'date_procured' => 'nullable|date',
             'car_make' => 'required|string|max:100',
             'car_model' => 'required|string|max:100',
@@ -1306,10 +1321,19 @@ class AdminDashboardController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $statusChanged = ($record->status ?? null) !== ($validated['status'] ?? null);
+
         DB::table('procurements')->where('id', $id)->update(array_merge($validated, [
+            'customer_name' => $validated['customer_name'],
+            'customer_email' => $validated['customer_email'] ?? null,
+            'customer_phone' => $validated['customer_phone'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'updated_at' => now(),
         ]));
+
+        if ($statusChanged && !empty($validated['customer_email'])) {
+            (new NotificationService())->sendServiceStatusUpdate('Procurement', (object) array_merge((array) $record, $validated, ['customer_email' => $validated['customer_email']]), 'Procurement status updated');
+        }
 
         DB::table('activity_stream')->insert([
             'action' => 'Procurement Updated',
@@ -1609,6 +1633,10 @@ class AdminDashboardController extends Controller
             'updated_at' => now(),
         ]);
 
+        if (!empty($validated['customer_email'])) {
+            (new NotificationService())->sendServiceStatusUpdate('Trucking', (object) array_merge($validated, ['id' => $id]), 'Trucking created');
+        }
+
         DB::table('activity_stream')->insert([
             'action' => 'Trucking Created',
             'description' => 'New trucking record for ' . $validated['customer_name'] . ' created',
@@ -1662,6 +1690,8 @@ class AdminDashboardController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $statusChanged = ($record->status ?? null) !== ($validated['status'] ?? null);
+
         DB::table('truckings')->where('id', $id)->update([
             'customer_name' => $validated['customer_name'],
             'customer_email' => $validated['customer_email'] ?? null,
@@ -1692,6 +1722,10 @@ class AdminDashboardController extends Controller
             'is_active' => $validated['is_active'] ?? true,
             'updated_at' => now(),
         ]);
+
+        if ($statusChanged && !empty($validated['customer_email'])) {
+            (new NotificationService())->sendServiceStatusUpdate('Trucking', (object) array_merge((array) $record, $validated, ['customer_email' => $validated['customer_email']]), 'Trucking status updated');
+        }
 
         DB::table('activity_stream')->insert([
             'action' => 'Trucking Updated',

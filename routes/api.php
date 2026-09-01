@@ -204,8 +204,21 @@ Route::middleware('api')->group(function () {
         // Dock Receipts
         Route::post('/shipments/{shipmentId}/dock-receipt/preview', [DockReceiptController::class, 'previewReceipt']);
         Route::post('/shipments/{shipmentId}/dock-receipt', [DockReceiptController::class, 'generateReceipt']);
-        Route::get('/dock-receipts/{receiptId}/download', [DockReceiptController::class, 'downloadReceipt']);
         Route::get('/shipments/{shipmentId}/dock-receipts', [DockReceiptController::class, 'getShipmentReceipts']);
+
+        Route::post('/procurements/{recordId}/dock-receipt/preview', [DockReceiptController::class, 'previewProcurementReceipt']);
+        Route::post('/procurements/{recordId}/dock-receipt', [DockReceiptController::class, 'generateProcurementReceipt']);
+        Route::get('/procurements/{recordId}/dock-receipts', [DockReceiptController::class, 'getProcurementReceipts']);
+
+        Route::post('/truckings/{recordId}/dock-receipt/preview', [DockReceiptController::class, 'previewTruckingReceipt']);
+        Route::post('/truckings/{recordId}/dock-receipt', [DockReceiptController::class, 'generateTruckingReceipt']);
+        Route::get('/truckings/{recordId}/dock-receipts', [DockReceiptController::class, 'getTruckingReceipts']);
+
+        Route::post('/clearances/{recordId}/dock-receipt/preview', [DockReceiptController::class, 'previewClearanceReceipt']);
+        Route::post('/clearances/{recordId}/dock-receipt', [DockReceiptController::class, 'generateClearanceReceipt']);
+        Route::get('/clearances/{recordId}/dock-receipts', [DockReceiptController::class, 'getClearanceReceipts']);
+
+        Route::get('/dock-receipts/{receiptId}/download', [DockReceiptController::class, 'downloadReceipt']);
 
         // Analytics
         Route::get('/analytics', [AdminDashboardController::class, 'getAnalytics']);
