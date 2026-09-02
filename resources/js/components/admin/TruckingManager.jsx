@@ -154,35 +154,35 @@ function ProcurementManager() {
             const data = await response.json();
 
             if (response.ok) {
-                showNotification(editingRecord ? 'Procurement record updated successfully' : 'Procurement record created successfully', 'success');
+                showNotification(editingRecord ? 'Trucking record updated successfully' : 'Trucking record created successfully', 'success');
                 setShowModal(false);
                 resetForm();
                 fetchTruckings();
             } else {
-                showNotification(data.message || 'Failed to save procurement record', 'error');
+                showNotification(data.message || 'Failed to save trucking record', 'error');
             }
         } catch (error) {
-            console.error('Error saving procurement record:', error);
-            showNotification('Failed to save procurement record', 'error');
+            console.error('Error saving trucking record:', error);
+            showNotification('Failed to save trucking record', 'error');
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this procurement record?')) {
+        if (!confirm('Are you sure you want to delete this trucking record?')) {
             return;
         }
 
         try {
             const response = await fetch(`/api/admin/truckings/${id}`, { method: 'DELETE' });
             if (response.ok) {
-                showNotification('Procurement record deleted', 'success');
+                showNotification('Trucking record deleted', 'success');
                 fetchTruckings();
             } else {
-                showNotification('Failed to delete procurement record', 'error');
+                showNotification('Failed to delete trucking record', 'error');
             }
         } catch (error) {
             console.error('Delete error:', error);
-            showNotification('Failed to delete procurement record', 'error');
+            showNotification('Failed to delete trucking record', 'error');
         }
     };
 

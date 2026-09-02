@@ -1,6 +1,25 @@
 import React, { useEffect, useState } from 'react';
 
-const emptyForm = { date_procured: '', car_make: '', car_model: '', car_year: '', price_usd: '', auction_charge_usd: '', auction_site: 'copart', state: '', trucking: '', shipping: 'container', arrival_date: '', profit_ngn: '', trucking_fee: 'unpaid', status: 'pending', is_active: true };
+const emptyForm = {
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    date_procured: '',
+    car_make: '',
+    car_model: '',
+    car_year: '',
+    price_usd: '',
+    auction_charge_usd: '',
+    auction_site: 'copart',
+    state: '',
+    trucking: '',
+    shipping: 'container',
+    arrival_date: '',
+    profit_ngn: '',
+    trucking_fee: 'unpaid',
+    status: 'pending',
+    is_active: true,
+};
 
 function ProcurementManager() {
     const [records, setRecords] = useState([]);

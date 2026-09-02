@@ -1122,12 +1122,14 @@ class AdminDashboardController extends Controller
 
     public function createAutosale(Request $request)
     {
-        $validated = $request->validate([
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'customer_name' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
             'sale_date' => 'nullable|date',
-            'car_make' => 'required|string|max:255',
-            'car_model' => 'required|string|max:255',
+            'car_make' => 'nullable|string|max:255',
+            'car_model' => 'nullable|string|max:255',
             'car_year' => 'nullable|string|max:10',
-            'sale_type' => 'required|string|in:outright,swap',
+            'sale_type' => 'nullable|string|in:outright,swap',
             'color' => 'nullable|string|max:100',
             'vin' => 'nullable|string|max:255',
             'amount' => 'nullable|numeric',
@@ -1135,13 +1137,27 @@ class AdminDashboardController extends Controller
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
             'is_active' => 'boolean',
-        ]);
+        ]));
+
+        $customerName = trim((string) ($validated['customer_name'] ?? '')) ?: 'Walk-in Customer';
+        $carMake = trim((string) ($validated['car_make'] ?? '')) ?: 'Vehicle';
+        $carModel = trim((string) ($validated['car_model'] ?? '')) ?: 'Unspecified';
 
         $id = DB::table('autosales')->insertGetId(array_merge($validated, [
+            'customer_name' => $customerName,
+            'customer_email' => $validated['customer_email'] ?? null,
+            'car_make' => $carMake,
+            'car_model' => $carModel,
+            'sale_type' => $validated['sale_type'] ?? 'outright',
             'is_active' => $validated['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now(),
         ]));
+
+        if (!empty($validated['customer_email'])) {
+            (new NotificationService())->sendServiceStatusUpdate('Autosale', (object) array_merge($validated, ['id' => $id, 'customer_name' => $customerName]), 'Autosale created');
+        }
+
         DB::table('activity_stream')->insert([
             'action' => 'Autosale Created',
             'description' => 'New autosale record created',
@@ -1158,12 +1174,14 @@ class AdminDashboardController extends Controller
         if (!DB::table('autosales')->where('id', $id)->exists()) {
             return response()->json(['error' => 'Autosale record not found'], 404);
         }
-        $validated = $request->validate([
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'customer_name' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
             'sale_date' => 'nullable|date',
-            'car_make' => 'required|string|max:255',
-            'car_model' => 'required|string|max:255',
+            'car_make' => 'nullable|string|max:255',
+            'car_model' => 'nullable|string|max:255',
             'car_year' => 'nullable|string|max:10',
-            'sale_type' => 'required|string|in:outright,swap',
+            'sale_type' => 'nullable|string|in:outright,swap',
             'color' => 'nullable|string|max:100',
             'vin' => 'nullable|string|max:255',
             'amount' => 'nullable|numeric',
@@ -1171,8 +1189,18 @@ class AdminDashboardController extends Controller
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
             'is_active' => 'boolean',
-        ]);
+        ]));
+
+        $customerName = trim((string) ($validated['customer_name'] ?? '')) ?: 'Walk-in Customer';
+        $carMake = trim((string) ($validated['car_make'] ?? '')) ?: 'Vehicle';
+        $carModel = trim((string) ($validated['car_model'] ?? '')) ?: 'Unspecified';
+
         DB::table('autosales')->where('id', $id)->update(array_merge($validated, [
+            'customer_name' => $customerName,
+            'customer_email' => $validated['customer_email'] ?? null,
+            'car_make' => $carMake,
+            'car_model' => $carModel,
+            'sale_type' => $validated['sale_type'] ?? 'outright',
             'is_active' => $validated['is_active'] ?? true,
             'updated_at' => now(),
         ]));
@@ -1202,6 +1230,17 @@ class AdminDashboardController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Autosale record deleted successfully']);
+    }
+
+    private function normalizeOptionalFields(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if ($value === '') {
+                $data[$key] = null;
+            }
+        }
+
+        return $data;
     }
 
     // Procurement Management
@@ -1241,37 +1280,41 @@ class AdminDashboardController extends Controller
 
     public function createProcurement(Request $request)
     {
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'date_procured' => 'nullable|date',
-            'car_make' => 'required|string|max:100',
-            'car_model' => 'required|string|max:100',
+            'car_make' => 'nullable|string|max:100',
+            'car_model' => 'nullable|string|max:100',
             'car_year' => 'nullable|string|max:10',
             'price_usd' => 'nullable|numeric',
             'auction_charge_usd' => 'nullable|numeric',
-            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
+            'auction_site' => 'nullable|string|in:copart,iaai,manheim,avc,dealership',
             'state' => 'nullable|string|max:255',
             'trucking' => 'nullable|numeric',
             'shipping' => 'nullable|string|max:50',
             'arrival_date' => 'nullable|date',
             'profit_ngn' => 'nullable|numeric',
             'trucking_fee' => 'nullable|string|max:50',
-            'status' => 'required|string|in:pending,purchased,cancelled,on_vessel,arrived',
+            'status' => 'nullable|string|in:pending,purchased,cancelled,on_vessel,arrived',
             'is_active' => 'boolean',
-        ]);
+        ]));
+
+        $customerName = trim((string) ($validated['customer_name'] ?? '')) ?: 'Walk-in Customer';
 
         $id = DB::table('procurements')->insertGetId(array_merge($validated, [
-            'customer_name' => $validated['customer_name'],
+            'customer_name' => $customerName,
             'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'] ?? null,
+            'auction_site' => $validated['auction_site'] ?? 'copart',
+            'status' => $validated['status'] ?? 'pending',
             'is_active' => $validated['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now(),
         ]));
 
-        $record = (object) array_merge($validated, ['id' => $id, 'customer_email' => $validated['customer_email'] ?? null]);
+        $record = (object) array_merge($validated, ['id' => $id, 'customer_name' => $customerName, 'customer_email' => $validated['customer_email'] ?? null]);
 
         if (!empty($validated['customer_email'])) {
             (new NotificationService())->sendServiceStatusUpdate('Procurement', $record, 'Procurement created');
@@ -1300,33 +1343,36 @@ class AdminDashboardController extends Controller
             return response()->json(['error' => 'Procurement record not found'], 404);
         }
 
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'date_procured' => 'nullable|date',
-            'car_make' => 'required|string|max:100',
-            'car_model' => 'required|string|max:100',
+            'car_make' => 'nullable|string|max:100',
+            'car_model' => 'nullable|string|max:100',
             'car_year' => 'nullable|string|max:10',
             'price_usd' => 'nullable|numeric',
             'auction_charge_usd' => 'nullable|numeric',
-            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
+            'auction_site' => 'nullable|string|in:copart,iaai,manheim,avc,dealership',
             'state' => 'nullable|string|max:255',
             'trucking' => 'nullable|numeric',
             'shipping' => 'nullable|string|max:50',
             'arrival_date' => 'nullable|date',
             'profit_ngn' => 'nullable|numeric',
             'trucking_fee' => 'nullable|string|max:50',
-            'status' => 'required|string|in:pending,purchased,cancelled,on_vessel,arrived',
+            'status' => 'nullable|string|in:pending,purchased,cancelled,on_vessel,arrived',
             'is_active' => 'boolean',
-        ]);
+        ]));
 
+        $customerName = trim((string) ($validated['customer_name'] ?? '')) ?: ($record->customer_name ?? 'Walk-in Customer');
         $statusChanged = ($record->status ?? null) !== ($validated['status'] ?? null);
 
         DB::table('procurements')->where('id', $id)->update(array_merge($validated, [
-            'customer_name' => $validated['customer_name'],
+            'customer_name' => $customerName,
             'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'] ?? null,
+            'auction_site' => $validated['auction_site'] ?? ($record->auction_site ?? 'copart'),
+            'status' => $validated['status'] ?? ($record->status ?? 'pending'),
             'is_active' => $validated['is_active'] ?? true,
             'updated_at' => now(),
         ]));
@@ -1406,20 +1452,35 @@ class AdminDashboardController extends Controller
 
     public function createClearance(Request $request)
     {
-        $validated = $request->validate([
-            'item' => 'required|string|max:255',
-            'client_name' => 'required|string|max:255',
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'item' => 'nullable|string|max:255',
+            'client_name' => 'nullable|string|max:255',
+            'client_email' => 'nullable|email|max:255',
             'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
             'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
-            'status' => 'required|in:cleared,not_cleared',
+            'status' => 'nullable|in:cleared,not_cleared',
             'date_stamp' => 'nullable|date',
             'total_paid' => 'nullable|numeric',
             'profit' => 'nullable|numeric',
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
             'is_active' => 'boolean',
-        ]);
-        $id = DB::table('clearances')->insertGetId(array_merge($validated, ['is_active' => $validated['is_active'] ?? true, 'created_at' => now(), 'updated_at' => now()]));
+        ]));
+
+        $item = trim((string) ($validated['item'] ?? '')) ?: 'New Clearance';
+        $clientName = trim((string) ($validated['client_name'] ?? '')) ?: 'Walk-in Client';
+
+        $id = DB::table('clearances')->insertGetId(array_merge($validated, [
+            'item' => $item,
+            'client_name' => $clientName,
+            'client_email' => $validated['client_email'] ?? null,
+            'shipping_type_id' => $validated['shipping_type_id'] ?? null,
+            'shipping_line_id' => $validated['shipping_line_id'] ?? null,
+            'status' => $validated['status'] ?? 'not_cleared',
+            'is_active' => $validated['is_active'] ?? true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
         DB::table('activity_stream')->insert(['action' => 'Clearance Created', 'description' => 'New clearance record created', 'location' => 'Admin Dashboard', 'created_at' => now(), 'updated_at' => now()]);
         return response()->json(['success' => true, 'message' => 'Clearance record created successfully', 'id' => $id]);
     }
@@ -1427,20 +1488,34 @@ class AdminDashboardController extends Controller
     public function updateClearance(Request $request, $id)
     {
         if (!DB::table('clearances')->where('id', $id)->exists()) return response()->json(['error' => 'Clearance record not found'], 404);
-        $validated = $request->validate([
-            'item' => 'required|string|max:255',
-            'client_name' => 'required|string|max:255',
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'item' => 'nullable|string|max:255',
+            'client_name' => 'nullable|string|max:255',
+            'client_email' => 'nullable|email|max:255',
             'shipping_type_id' => 'nullable|integer|exists:shipping_types,id',
             'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
-            'status' => 'required|in:cleared,not_cleared',
+            'status' => 'nullable|in:cleared,not_cleared',
             'date_stamp' => 'nullable|date',
             'total_paid' => 'nullable|numeric',
             'profit' => 'nullable|numeric',
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
             'is_active' => 'boolean',
-        ]);
-        DB::table('clearances')->where('id', $id)->update(array_merge($validated, ['is_active' => $validated['is_active'] ?? true, 'updated_at' => now()]));
+        ]));
+
+        $item = trim((string) ($validated['item'] ?? '')) ?: 'New Clearance';
+        $clientName = trim((string) ($validated['client_name'] ?? '')) ?: 'Walk-in Client';
+
+        DB::table('clearances')->where('id', $id)->update(array_merge($validated, [
+            'item' => $item,
+            'client_name' => $clientName,
+            'client_email' => $validated['client_email'] ?? null,
+            'shipping_type_id' => $validated['shipping_type_id'] ?? null,
+            'shipping_line_id' => $validated['shipping_line_id'] ?? null,
+            'status' => $validated['status'] ?? 'not_cleared',
+            'is_active' => $validated['is_active'] ?? true,
+            'updated_at' => now(),
+        ]));
         DB::table('activity_stream')->insert(['action' => 'Clearance Updated', 'description' => 'Clearance record updated', 'location' => 'Admin Dashboard', 'created_at' => now(), 'updated_at' => now()]);
         return response()->json(['success' => true, 'message' => 'Clearance record updated successfully']);
     }
@@ -1571,15 +1646,15 @@ class AdminDashboardController extends Controller
 
     public function createTrucking(Request $request)
     {
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'vehicle_make' => 'nullable|string|max:100',
             'vehicle_model' => 'nullable|string|max:100',
             'vehicle_year' => 'nullable|string|max:4',
-            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
-            'shipping_type' => 'required|string|in:container,roro',
+            'auction_site' => 'nullable|string|in:copart,iaai,manheim,avc,dealership',
+            'shipping_type' => 'nullable|string|in:container,roro',
             'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
             'trucking_date' => 'nullable|date',
             'color' => 'nullable|string|max:100',
@@ -1588,8 +1663,8 @@ class AdminDashboardController extends Controller
             'shipment_status' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
             'tracking' => 'nullable|string|max:255',
-            'trucking_fee_status' => 'required|string|in:paid,unpaid',
-            'status' => 'required|string|in:pending,arrived,on_vessel',
+            'trucking_fee_status' => 'nullable|string|in:paid,unpaid',
+            'status' => 'nullable|string|in:pending,arrived,on_vessel',
             'origin_port' => 'nullable|string|max:255',
             'origin_country' => 'nullable|string|max:255',
             'destination_port' => 'nullable|string|max:255',
@@ -1599,17 +1674,19 @@ class AdminDashboardController extends Controller
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
             'is_active' => 'boolean',
-        ]);
+        ]));
+
+        $customerName = trim((string) ($validated['customer_name'] ?? '')) ?: 'Walk-in Customer';
 
         $id = DB::table('truckings')->insertGetId([
-            'customer_name' => $validated['customer_name'],
+            'customer_name' => $customerName,
             'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'] ?? null,
             'vehicle_make' => $validated['vehicle_make'] ?? null,
             'vehicle_model' => $validated['vehicle_model'] ?? null,
             'vehicle_year' => $validated['vehicle_year'] ?? null,
-            'auction_site' => $validated['auction_site'],
-            'shipping_type' => $validated['shipping_type'],
+            'auction_site' => $validated['auction_site'] ?? 'copart',
+            'shipping_type' => $validated['shipping_type'] ?? 'container',
             'shipping_line_id' => $validated['shipping_line_id'] ?? null,
             'trucking_date' => $validated['trucking_date'] ?? null,
             'color' => $validated['color'] ?? null,
@@ -1618,8 +1695,8 @@ class AdminDashboardController extends Controller
             'shipment_status' => $validated['shipment_status'] ?? null,
             'location' => $validated['location'] ?? null,
             'tracking' => $validated['tracking'] ?? null,
-            'trucking_fee_status' => $validated['trucking_fee_status'],
-            'status' => $validated['status'],
+            'trucking_fee_status' => $validated['trucking_fee_status'] ?? 'unpaid',
+            'status' => $validated['status'] ?? 'pending',
             'origin_port' => $validated['origin_port'] ?? null,
             'origin_country' => $validated['origin_country'] ?? null,
             'destination_port' => $validated['destination_port'] ?? null,
@@ -1660,15 +1737,15 @@ class AdminDashboardController extends Controller
             return response()->json(['error' => 'Trucking record not found'], 404);
         }
 
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
+        $validated = $this->normalizeOptionalFields($request->validate([
+            'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'vehicle_make' => 'nullable|string|max:100',
             'vehicle_model' => 'nullable|string|max:100',
             'vehicle_year' => 'nullable|string|max:4',
-            'auction_site' => 'required|string|in:copart,iaai,manheim,avc,dealership',
-            'shipping_type' => 'required|string|in:container,roro',
+            'auction_site' => 'nullable|string|in:copart,iaai,manheim,avc,dealership',
+            'shipping_type' => 'nullable|string|in:container,roro',
             'shipping_line_id' => 'nullable|integer|exists:shipping_lines,id',
             'trucking_date' => 'nullable|date',
             'color' => 'nullable|string|max:100',
@@ -1677,8 +1754,8 @@ class AdminDashboardController extends Controller
             'shipment_status' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
             'tracking' => 'nullable|string|max:255',
-            'trucking_fee_status' => 'required|string|in:paid,unpaid',
-            'status' => 'required|string|in:pending,arrived,on_vessel',
+            'trucking_fee_status' => 'nullable|string|in:paid,unpaid',
+            'status' => 'nullable|string|in:pending,arrived,on_vessel',
             'origin_port' => 'nullable|string|max:255',
             'origin_country' => 'nullable|string|max:255',
             'destination_port' => 'nullable|string|max:255',
@@ -1688,19 +1765,20 @@ class AdminDashboardController extends Controller
             'notes' => 'nullable|string',
             'admin_notes' => 'nullable|string',
             'is_active' => 'boolean',
-        ]);
+        ]));
 
+        $customerName = trim((string) ($validated['customer_name'] ?? '')) ?: ($record->customer_name ?? 'Walk-in Customer');
         $statusChanged = ($record->status ?? null) !== ($validated['status'] ?? null);
 
         DB::table('truckings')->where('id', $id)->update([
-            'customer_name' => $validated['customer_name'],
+            'customer_name' => $customerName,
             'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'] ?? null,
             'vehicle_make' => $validated['vehicle_make'] ?? null,
             'vehicle_model' => $validated['vehicle_model'] ?? null,
             'vehicle_year' => $validated['vehicle_year'] ?? null,
-            'auction_site' => $validated['auction_site'],
-            'shipping_type' => $validated['shipping_type'],
+            'auction_site' => $validated['auction_site'] ?? ($record->auction_site ?? 'copart'),
+            'shipping_type' => $validated['shipping_type'] ?? ($record->shipping_type ?? 'container'),
             'shipping_line_id' => $validated['shipping_line_id'] ?? null,
             'trucking_date' => $validated['trucking_date'] ?? null,
             'color' => $validated['color'] ?? null,
@@ -1709,8 +1787,8 @@ class AdminDashboardController extends Controller
             'shipment_status' => $validated['shipment_status'] ?? null,
             'location' => $validated['location'] ?? null,
             'tracking' => $validated['tracking'] ?? null,
-            'trucking_fee_status' => $validated['trucking_fee_status'],
-            'status' => $validated['status'],
+            'trucking_fee_status' => $validated['trucking_fee_status'] ?? ($record->trucking_fee_status ?? 'unpaid'),
+            'status' => $validated['status'] ?? ($record->status ?? 'pending'),
             'origin_port' => $validated['origin_port'] ?? null,
             'origin_country' => $validated['origin_country'] ?? null,
             'destination_port' => $validated['destination_port'] ?? null,
@@ -1955,23 +2033,23 @@ class AdminDashboardController extends Controller
     public function createShipment(Request $request)
     {
         $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'vehicle_make' => 'nullable|string|max:100',
             'vehicle_model' => 'nullable|string|max:100',
             'vehicle_year' => 'nullable|string|max:4',
             'vehicle_vin' => 'nullable|string|max:100',
             'vehicle_description' => 'nullable|string',
-            'origin_port' => 'required|string|max:255',
-            'origin_country' => 'required|string|max:255',
-            'destination_port' => 'required|string|max:255',
-            'destination_country' => 'required|string|max:255',
+            'origin_port' => 'nullable|string|max:255',
+            'origin_country' => 'nullable|string|max:255',
+            'destination_port' => 'nullable|string|max:255',
+            'destination_country' => 'nullable|string|max:255',
             'shipping_provider' => 'nullable|string|max:100',
             'vessel_name' => 'nullable|string|max:255',
             'container_number' => 'nullable|string|max:100',
             'booking_number' => 'nullable|string|max:100',
-            'status' => 'required|string',
+            'status' => 'nullable|string',
             'auction_date' => 'nullable|date',
             'shipping_date' => 'nullable|date',
             'departure_date' => 'nullable|date',
@@ -2012,24 +2090,24 @@ class AdminDashboardController extends Controller
         $shipmentId = DB::table('shipments')->insertGetId([
             'tracking_number' => $trackingNumber,
             'reference_number' => $referenceNumber,
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
+            'customer_name' => $validated['customer_name'] ?? null,
+            'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'] ?? null,
             'vehicle_make' => $validated['vehicle_make'] ?? null,
             'vehicle_model' => $validated['vehicle_model'] ?? null,
             'vehicle_year' => $validated['vehicle_year'] ?? null,
             'vehicle_vin' => $validated['vehicle_vin'] ?? null,
             'vehicle_description' => $validated['vehicle_description'] ?? null,
-            'origin_port' => $validated['origin_port'],
-            'origin_country' => $validated['origin_country'],
-            'destination_port' => $validated['destination_port'],
-            'destination_country' => $validated['destination_country'],
+            'origin_port' => $validated['origin_port'] ?? null,
+            'origin_country' => $validated['origin_country'] ?? null,
+            'destination_port' => $validated['destination_port'] ?? null,
+            'destination_country' => $validated['destination_country'] ?? null,
             'shipping_provider' => $validated['shipping_provider'] ?? null,
             'vessel_name' => $validated['vessel_name'] ?? null,
             'container_number' => $validated['container_number'] ?? null,
             'booking_number' => $validated['booking_number'] ?? null,
-            'status' => $validated['status'],
-            'progress_percentage' => $progressMap[$validated['status']] ?? 0,
+            'status' => $validated['status'] ?? 'pending',
+            'progress_percentage' => $progressMap[$validated['status'] ?? 'pending'] ?? 0,
             'auction_date' => $validated['auction_date'] ?? null,
             'shipping_date' => $validated['shipping_date'] ?? null,
             'departure_date' => $validated['departure_date'] ?? null,
@@ -2057,7 +2135,7 @@ class AdminDashboardController extends Controller
         // Create initial update
         DB::table('shipment_updates')->insert([
             'shipment_id' => $shipmentId,
-            'status' => $validated['status'],
+            'status' => $validated['status'] ?? 'pending',
             'description' => 'Shipment created',
             'update_date' => now(),
             'created_at' => now(),
@@ -2071,17 +2149,17 @@ class AdminDashboardController extends Controller
                 'id' => $shipmentId,
                 'tracking_number' => $trackingNumber,
                 'reference_number' => $referenceNumber,
-                'customer_name' => $validated['customer_name'],
-                'customer_email' => $validated['customer_email'],
+                'customer_name' => $validated['customer_name'] ?? null,
+                'customer_email' => $validated['customer_email'] ?? null,
                 'customer_phone' => $validated['customer_phone'] ?? null,
-                'status' => $validated['status'],
+                'status' => $validated['status'] ?? 'pending',
                 'vehicle_year' => $validated['vehicle_year'],
                 'vehicle_make' => $validated['vehicle_make'],
                 'vehicle_model' => $validated['vehicle_model'],
-                'origin_port' => $validated['origin_port'],
-                'origin_country' => $validated['origin_country'],
-                'destination_port' => $validated['destination_port'],
-                'destination_country' => $validated['destination_country'],
+                'origin_port' => $validated['origin_port'] ?? null,
+                'origin_country' => $validated['origin_country'] ?? null,
+                'destination_port' => $validated['destination_port'] ?? null,
+                'destination_country' => $validated['destination_country'] ?? null,
                 'estimated_arrival_date' => $validated['estimated_arrival_date'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null
             ]);
@@ -2118,23 +2196,23 @@ class AdminDashboardController extends Controller
         }
 
         $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'vehicle_make' => 'nullable|string|max:100',
             'vehicle_model' => 'nullable|string|max:100',
             'vehicle_year' => 'nullable|string|max:4',
             'vehicle_vin' => 'nullable|string|max:100',
             'vehicle_description' => 'nullable|string',
-            'origin_port' => 'required|string|max:255',
-            'origin_country' => 'required|string|max:255',
-            'destination_port' => 'required|string|max:255',
-            'destination_country' => 'required|string|max:255',
+            'origin_port' => 'nullable|string|max:255',
+            'origin_country' => 'nullable|string|max:255',
+            'destination_port' => 'nullable|string|max:255',
+            'destination_country' => 'nullable|string|max:255',
             'shipping_provider' => 'nullable|string|max:100',
             'vessel_name' => 'nullable|string|max:255',
             'container_number' => 'nullable|string|max:100',
             'booking_number' => 'nullable|string|max:100',
-            'status' => 'required|string',
+            'status' => 'nullable|string',
             'auction_date' => 'nullable|date',
             'shipping_date' => 'nullable|date',
             'departure_date' => 'nullable|date',
@@ -2170,26 +2248,27 @@ class AdminDashboardController extends Controller
             'delivered' => 100,
             'cancelled' => 0
         ];
+        $status = $validated['status'] ?? $shipment->status ?? 'pending';
 
         DB::table('shipments')->where('id', $id)->update([
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
+            'customer_name' => $validated['customer_name'] ?? null,
+            'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'] ?? null,
             'vehicle_make' => $validated['vehicle_make'] ?? null,
             'vehicle_model' => $validated['vehicle_model'] ?? null,
             'vehicle_year' => $validated['vehicle_year'] ?? null,
             'vehicle_vin' => $validated['vehicle_vin'] ?? null,
             'vehicle_description' => $validated['vehicle_description'] ?? null,
-            'origin_port' => $validated['origin_port'],
-            'origin_country' => $validated['origin_country'],
-            'destination_port' => $validated['destination_port'],
-            'destination_country' => $validated['destination_country'],
+            'origin_port' => $validated['origin_port'] ?? null,
+            'origin_country' => $validated['origin_country'] ?? null,
+            'destination_port' => $validated['destination_port'] ?? null,
+            'destination_country' => $validated['destination_country'] ?? null,
             'shipping_provider' => $validated['shipping_provider'] ?? null,
             'vessel_name' => $validated['vessel_name'] ?? null,
             'container_number' => $validated['container_number'] ?? null,
             'booking_number' => $validated['booking_number'] ?? null,
-            'status' => $validated['status'],
-            'progress_percentage' => $progressMap[$validated['status']] ?? 0,
+            'status' => $status,
+            'progress_percentage' => $progressMap[$status] ?? 0,
             'auction_date' => $validated['auction_date'] ?? null,
             'shipping_date' => $validated['shipping_date'] ?? null,
             'departure_date' => $validated['departure_date'] ?? null,
@@ -2216,11 +2295,11 @@ class AdminDashboardController extends Controller
         ]);
 
         // Add update if status changed
-        if ($shipment->status !== $validated['status']) {
+        if ($shipment->status !== $status) {
             DB::table('shipment_updates')->insert([
                 'shipment_id' => $id,
-                'status' => $validated['status'],
-                'description' => 'Status updated to ' . $validated['status'],
+            'status' => $status,
+            'description' => 'Status updated to ' . $status,
                 'update_date' => now(),
                 'created_at' => now(),
                 'updated_at' => now()
@@ -2230,7 +2309,7 @@ class AdminDashboardController extends Controller
             try {
                 $notificationService = new NotificationService();
                 $notificationService->sendShipmentUpdate((object) array_merge((array) $shipment, [
-                    'status' => $validated['status']
+                    'status' => $status
                 ]));
             } catch (\Exception $e) {
                 Log::error('Failed to notify customer about shipment status change', [

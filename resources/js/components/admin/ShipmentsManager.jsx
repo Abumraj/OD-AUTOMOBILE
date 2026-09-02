@@ -1001,20 +1001,18 @@ function ShipmentsManager() {
                         <form onSubmit={handleSubmit} className="space-y-md">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                                 <div>
-                                    <label className="block font-label-md text-on-surface-variant mb-xs">Customer Name *</label>
+                                    <label className="block font-label-md text-on-surface-variant mb-xs">Customer Name</label>
                                     <input
                                         type="text"
-                                        required
                                         value={formData.customer_name}
                                         onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                                         className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-label-md text-on-surface-variant mb-xs">Customer Email *</label>
+                                    <label className="block font-label-md text-on-surface-variant mb-xs">Customer Email</label>
                                     <input
                                         type="email"
-                                        required
                                         value={formData.customer_email}
                                         onChange={(e) => setFormData({...formData, customer_email: e.target.value})}
                                         className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
@@ -1176,40 +1174,36 @@ function ShipmentsManager() {
                                 <h4 className="font-title-md text-white mb-md">Shipping Information</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Origin Port *</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Origin Port</label>
                                         <input
                                             type="text"
-                                            required
                                             value={formData.origin_port}
                                             onChange={(e) => setFormData({...formData, origin_port: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Origin Country *</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Origin Country</label>
                                         <input
                                             type="text"
-                                            required
                                             value={formData.origin_country}
                                             onChange={(e) => setFormData({...formData, origin_country: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Destination Port *</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Destination Port</label>
                                         <input
                                             type="text"
-                                            required
                                             value={formData.destination_port}
                                             onChange={(e) => setFormData({...formData, destination_port: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Destination Country *</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Destination Country</label>
                                         <input
                                             type="text"
-                                            required
                                             value={formData.destination_country}
                                             onChange={(e) => setFormData({...formData, destination_country: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
@@ -1283,9 +1277,8 @@ function ShipmentsManager() {
                                 <h4 className="font-title-md text-white mb-md">Status & Dates</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                                     <div>
-                                        <label className="block font-label-md text-on-surface-variant mb-xs">Status *</label>
+                                        <label className="block font-label-md text-on-surface-variant mb-xs">Status</label>
                                         <select
-                                            required
                                             value={formData.status}
                                             onChange={(e) => setFormData({...formData, status: e.target.value})}
                                             className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
