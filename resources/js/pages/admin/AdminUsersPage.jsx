@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { useConfirmation } from '../../components/admin/ConfirmationProvider';
 
 function AdminUsersPage() {
+    const { confirm } = useConfirmation();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -115,7 +117,7 @@ function AdminUsersPage() {
     };
 
     const handleDelete = async (userId, userName) => {
-        if (!confirm(`Are you sure you want to delete ${userName}?`)) {
+        if (!await confirm(`Are you sure you want to delete ${userName}?`)) {
             return;
         }
 

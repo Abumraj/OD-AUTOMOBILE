@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 
 function ShippingTypesManager() {
+    const { confirm } = useConfirmation();
     const [types, setTypes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
@@ -55,7 +57,7 @@ function ShippingTypesManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this shipping type?')) return;
+        if (!await confirm('Are you sure you want to delete this shipping type?')) return;
 
         try {
             await fetch(`/api/admin/shipping-types/${id}`, { method: 'DELETE' });

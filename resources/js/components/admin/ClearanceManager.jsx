@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
+import { useConfirmation } from './ConfirmationProvider';
 
 const emptyForm = {
     item: '',
@@ -15,6 +16,7 @@ const emptyForm = {
 };
 
 function ClearanceManager() {
+    const { confirm } = useConfirmation();
     const [records, setRecords] = useState([]);
     const [types, setTypes] = useState([]);
     const [lines, setLines] = useState([]);
@@ -69,7 +71,7 @@ function ClearanceManager() {
     };
 
     const remove = async (id) => {
-        if (!confirm('Delete this clearance record?')) return;
+        if (!await confirm('Delete this clearance record?')) return;
         const response = await fetch(`/api/admin/clearances/${id}`, { method: 'DELETE' });
         if (response.ok) fetchRecords();
     };

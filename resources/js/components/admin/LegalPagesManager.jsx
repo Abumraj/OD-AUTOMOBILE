@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 function LegalPagesManager() {
+    const { confirm } = useConfirmation();
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -72,7 +74,7 @@ function LegalPagesManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this page?')) {
+        if (!await confirm('Are you sure you want to delete this page?')) {
             return;
         }
 

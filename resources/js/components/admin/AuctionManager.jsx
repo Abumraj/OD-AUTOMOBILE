@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 import { exportToCSV } from '../../utils/csvExport';
 
 function AuctionManager() {
+    const { confirm } = useConfirmation();
     const [auctions, setAuctions] = useState([]);
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -150,7 +152,7 @@ function AuctionManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this auction?')) {
+        if (!await confirm('Are you sure you want to delete this auction?')) {
             return;
         }
 

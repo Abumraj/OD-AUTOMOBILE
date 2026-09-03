@@ -31,6 +31,7 @@ import AdminLoginPage from './admin/AdminLoginPage';
 import AdminUsersPage from './admin/AdminUsersPage';
 import ClientOrdersPage from './admin/ClientOrdersPage';
 import RevenueAnalysisPage from './admin/RevenueAnalysisPage';
+import { ConfirmationProvider } from '../components/admin/ConfirmationProvider';
 
 function AdminDashboard() {
     const [authenticated, setAuthenticated] = useState(null);
@@ -85,6 +86,7 @@ function AdminDashboard() {
     }
 
     return (
+        <ConfirmationProvider>
         <div className="overflow-hidden bg-surface min-h-screen">
             <AdminSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} admin={admin} />
 
@@ -125,6 +127,7 @@ function AdminDashboard() {
                 </div>
             </main>
         </div>
+        </ConfirmationProvider>
     );
 }
 

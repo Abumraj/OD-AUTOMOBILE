@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
+import { useConfirmation } from './ConfirmationProvider';
 
 const emptyForm = {
     customer_name: '', customer_email: '', sale_date: '', car_make: '', car_model: '', car_year: '', sale_type: 'outright', shipping_type: '',
@@ -7,6 +8,7 @@ const emptyForm = {
 };
 
 function AutosalesManager() {
+    const { confirm } = useConfirmation();
     const [records, setRecords] = useState([]);
     const [formData, setFormData] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
@@ -65,7 +67,7 @@ function AutosalesManager() {
     };
 
     const remove = async (id) => {
-        if (!confirm('Delete this autosale record?')) return;
+        if (!await confirm('Delete this autosale record?')) return;
         const response = await fetch(`/api/admin/autosales/${id}`, { method: 'DELETE' });
         if (response.ok) fetchRecords();
         else setMessage('Failed to delete autosale');

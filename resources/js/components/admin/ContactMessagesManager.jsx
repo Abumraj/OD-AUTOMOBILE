@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 import { exportToCSV } from '../../utils/csvExport';
 
 function ContactMessagesManager() {
+    const { confirm } = useConfirmation();
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedMessage, setSelectedMessage] = useState(null);
@@ -69,7 +71,7 @@ function ContactMessagesManager() {
     };
 
     const deleteMessage = async (id) => {
-        if (!confirm('Are you sure you want to delete this message?')) return;
+        if (!await confirm('Are you sure you want to delete this message?')) return;
 
         try {
             const response = await fetch(`/api/admin/contact-messages/${id}`, {

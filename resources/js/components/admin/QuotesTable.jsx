@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { exportToCSV } from '../../utils/csvExport';
+import { useConfirmation } from './ConfirmationProvider';
 
 function QuotesTable() {
+    const { confirm } = useConfirmation();
     const [quotes, setQuotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
@@ -41,7 +43,7 @@ function QuotesTable() {
     };
 
     const handleApprove = async (id) => {
-        if (!confirm('Are you sure you want to approve this quote? This will create a new shipment.')) {
+        if (!await confirm('Are you sure you want to approve this quote? This will create a new shipment.')) {
             return;
         }
 
@@ -56,7 +58,7 @@ function QuotesTable() {
     };
 
     const handleReject = async (id) => {
-        if (!confirm('Are you sure you want to reject and delete this quote?')) {
+        if (!await confirm('Are you sure you want to reject and delete this quote?')) {
             return;
         }
 

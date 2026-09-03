@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 import api from '../../services/api';
 
 function TestimonialsManager() {
+    const { confirm } = useConfirmation();
     const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -64,7 +66,7 @@ function TestimonialsManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this testimonial?')) {
+        if (!await confirm('Are you sure you want to delete this testimonial?')) {
             return;
         }
         try {

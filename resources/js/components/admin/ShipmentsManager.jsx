@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { exportToCSV } from '../../utils/csvExport';
 import DockReceiptGenerator from './DockReceiptGenerator';
 import ServiceFilterBar from './ServiceFilterBar';
+import { useConfirmation } from './ConfirmationProvider';
 
 function ShipmentsManager() {
+    const { confirm } = useConfirmation();
     const [shipments, setShipments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -226,7 +228,7 @@ function ShipmentsManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this shipment?')) {
+        if (!await confirm('Are you sure you want to delete this shipment?')) {
             return;
         }
 

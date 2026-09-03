@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 
 function CarouselManager() {
+    const { confirm } = useConfirmation();
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -71,7 +73,7 @@ function CarouselManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this carousel image?')) {
+        if (!await confirm('Are you sure you want to delete this carousel image?')) {
             return;
         }
 

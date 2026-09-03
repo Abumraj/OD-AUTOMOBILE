@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from '../../../components/admin/ConfirmationProvider';
 
 function AboutUsPage() {
+    const { confirm } = useConfirmation();
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingSection, setEditingSection] = useState(null);
@@ -97,7 +99,7 @@ function AboutUsPage() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this section?')) return;
+        if (!await confirm('Are you sure you want to delete this section?')) return;
         
         try {
             const response = await fetch(`/api/admin/about-us/${id}`, {

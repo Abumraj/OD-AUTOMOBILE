@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useConfirmation } from './ConfirmationProvider';
 import { exportToCSV } from '../../utils/csvExport';
 
 function ServicesManager() {
+    const { confirm } = useConfirmation();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -97,7 +99,7 @@ function ServicesManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this service?')) {
+        if (!await confirm('Are you sure you want to delete this service?')) {
             return;
         }
 

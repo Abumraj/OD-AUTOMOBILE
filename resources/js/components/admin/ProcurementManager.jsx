@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
+import { useConfirmation } from './ConfirmationProvider';
 
 const emptyForm = {
     customer_name: '',
@@ -23,6 +24,7 @@ const emptyForm = {
 };
 
 function ProcurementManager() {
+    const { confirm } = useConfirmation();
     const [records, setRecords] = useState([]);
     const [formData, setFormData] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
@@ -56,7 +58,7 @@ function ProcurementManager() {
     };
 
     const edit = (record) => { setEditingId(record.id); setFormData({ ...emptyForm, ...record }); setShowModal(true); };
-    const remove = async (id) => { if (!confirm('Delete this procurement record?')) return; const response = await fetch(`/api/admin/procurements/${id}`, { method: 'DELETE' }); if (response.ok) fetchRecords(); };
+    const remove = async (id) => { if (!await confirm('Delete this procurement record?')) return; const response = await fetch(`/api/admin/procurements/${id}`, { method: 'DELETE' }); if (response.ok) fetchRecords(); };
     const importFile = async (event) => { const file = event.target.files?.[0]; if (!file) return; const body = new FormData(); body.append('file', file); const response = await fetch('/api/admin/procurements/import', { method: 'POST', body }); const data = await response.json(); setMessage(data.message || 'Procurement import completed'); if (response.ok) fetchRecords(); event.target.value = ''; };
     const exportFile = async () => { const response = await fetch('/api/admin/procurements/export'); if (!response.ok) return setMessage('Procurement export failed'); const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href = url; link.download = 'procurements_export.xlsx'; link.click(); URL.revokeObjectURL(url); };
     const fields = [['date_procured', 'Date Procured', 'date'], ['car_make', 'Car Maker', 'text'], ['car_model', 'Car Model', 'text'], ['car_year', 'Year', 'text'], ['price_usd', 'Price (USD)', 'number'], ['auction_charge_usd', 'Auction Charge (USD)', 'number'], ['state', 'State', 'text'], ['trucking', 'Trucking', 'number'], ['shipping', 'Shipping', 'text'], ['arrival_date', 'Arrival Date', 'date'], ['profit_ngn', 'Profit (NGN)', 'number'], ['trucking_fee', 'Trucking Fee', 'text']];

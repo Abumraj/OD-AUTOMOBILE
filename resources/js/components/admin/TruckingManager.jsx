@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
+import { useConfirmation } from './ConfirmationProvider';
 
 function ProcurementManager() {
+    const { confirm } = useConfirmation();
     const [records, setRecords] = useState([]);
     const [shippingLines, setShippingLines] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -170,7 +172,7 @@ function ProcurementManager() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this trucking record?')) {
+        if (!await confirm('Are you sure you want to delete this trucking record?')) {
             return;
         }
 
