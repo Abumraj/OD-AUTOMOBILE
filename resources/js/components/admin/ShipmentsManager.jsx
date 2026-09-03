@@ -11,13 +11,13 @@ function ShipmentsManager() {
     const [notification, setNotification] = useState(null);
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [dateFilters, setDateFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
+    const [dateFilters, setDateFilters] = useState({ date_from: '', date_to: '', eta_from: '', eta_to: '', status: '', shipping_type: '', column: '' });
     const [viewMode, setViewMode] = useState('table');
     const [showColumnSelector, setShowColumnSelector] = useState(false);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [selectedShipmentForReceipt, setSelectedShipmentForReceipt] = useState(null);
-    const [sortBy, setSortBy] = useState('created_at');
-    const [sortOrder, setSortOrder] = useState('desc');
+    const [sortBy, setSortBy] = useState('eta');
+    const [sortOrder, setSortOrder] = useState('asc');
     const [shippingTypes, setShippingTypes] = useState([]);
     const [shippingLines, setShippingLines] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -176,7 +176,7 @@ function ShipmentsManager() {
 
     const fetchShipments = async () => {
         try {
-            const params = new URLSearchParams({ sort_by: sortBy, sort_order: sortOrder, search: searchQuery, date_from: dateFilters.date_from, date_to: dateFilters.date_to, status: dateFilters.status, customer: dateFilters.column });
+            const params = new URLSearchParams({ sort_by: sortBy, sort_order: sortOrder, search: searchQuery, date_from: dateFilters.date_from, date_to: dateFilters.date_to, eta_from: dateFilters.eta_from, eta_to: dateFilters.eta_to, status: dateFilters.status, shipping_type: dateFilters.shipping_type, customer: dateFilters.column });
             const response = await fetch(`/api/admin/shipments?${params}`);
             const data = await response.json();
             setShipments(data);
@@ -542,7 +542,7 @@ function ShipmentsManager() {
                 </div>
             )}
 
-            <ServiceFilterBar filters={dateFilters} onChange={setDateFilters} columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered', 'cancelled'].map((value) => ({ value, label: value.replace('_', ' ') }))} />
+            <ServiceFilterBar filters={dateFilters} onChange={setDateFilters} showEta columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered', 'cancelled'].map((value) => ({ value, label: value.replace('_', ' ') }))} />
 
             {viewMode === 'table' ? (
                 <div className="overflow-x-auto">

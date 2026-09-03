@@ -1093,6 +1093,7 @@ class AdminDashboardController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $status = $request->get('status');
+        $shippingType = $request->get('shipping_type');
         $customer = $request->get('customer');
         $allowedSortFields = ['id', 'sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount', 'profit', 'created_at'];
 
@@ -1115,6 +1116,7 @@ class AdminDashboardController extends Controller
         if ($dateFrom) $query->whereDate('sale_date', '>=', $dateFrom);
         if ($dateTo) $query->whereDate('sale_date', '<=', $dateTo);
         if ($status) $query->where('sale_type', $status);
+        if ($shippingType) $query->where('shipping_type', $shippingType);
         if ($customer) $query->where('customer_name', 'like', '%' . $customer . '%');
 
         return response()->json($query->orderBy($sortBy, $sortOrder)->get());
@@ -1138,6 +1140,7 @@ class AdminDashboardController extends Controller
             'car_model' => 'nullable|string|max:255',
             'car_year' => 'nullable|string|max:10',
             'sale_type' => 'nullable|string|in:outright,swap',
+            'shipping_type' => 'nullable|string|in:container,roro',
             'color' => 'nullable|string|max:100',
             'vin' => 'nullable|string|max:255',
             'amount' => 'nullable|numeric',
@@ -1157,6 +1160,7 @@ class AdminDashboardController extends Controller
             'car_make' => $carMake,
             'car_model' => $carModel,
             'sale_type' => $validated['sale_type'] ?? 'outright',
+            'shipping_type' => $validated['shipping_type'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now(),
@@ -1190,6 +1194,7 @@ class AdminDashboardController extends Controller
             'car_model' => 'nullable|string|max:255',
             'car_year' => 'nullable|string|max:10',
             'sale_type' => 'nullable|string|in:outright,swap',
+            'shipping_type' => 'nullable|string|in:container,roro',
             'color' => 'nullable|string|max:100',
             'vin' => 'nullable|string|max:255',
             'amount' => 'nullable|numeric',
@@ -1209,6 +1214,7 @@ class AdminDashboardController extends Controller
             'car_make' => $carMake,
             'car_model' => $carModel,
             'sale_type' => $validated['sale_type'] ?? 'outright',
+            'shipping_type' => $validated['shipping_type'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'updated_at' => now(),
         ]));
@@ -1254,16 +1260,17 @@ class AdminDashboardController extends Controller
     // Procurement Management
     public function getProcurements(Request $request)
     {
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = strtolower($request->get('sort_order', 'desc'));
+        $sortBy = $request->get('sort_by', 'arrival_date');
+        $sortOrder = strtolower($request->get('sort_order', 'asc'));
         $search = $request->get('search', '');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $status = $request->get('status');
+        $shippingType = $request->get('shipping_type');
         $auctionSite = $request->get('auction_site');
 
         $allowedSortFields = ['id', 'date_procured', 'car_make', 'car_model', 'car_year', 'price_usd', 'auction_charge_usd', 'auction_site', 'state', 'trucking', 'shipping', 'arrival_date', 'profit_ngn', 'trucking_fee', 'status', 'created_at'];
-        if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'created_at';
+        if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'arrival_date';
         if (!in_array($sortOrder, ['asc', 'desc'], true)) {
             $sortOrder = 'desc';
         }
@@ -1279,7 +1286,12 @@ class AdminDashboardController extends Controller
         if ($dateFrom) $query->whereDate('date_procured', '>=', $dateFrom);
         if ($dateTo) $query->whereDate('date_procured', '<=', $dateTo);
         if ($status) $query->where('status', $status);
+        if ($shippingType) $query->where('shipping', $shippingType);
         if ($auctionSite) $query->where('auction_site', $auctionSite);
+        if ($sortBy === 'arrival_date' && $sortOrder === 'asc') {
+            return response()->json($query->orderByRaw('arrival_date IS NULL ASC')->orderBy('arrival_date', 'asc')->get());
+        }
+
         return response()->json($query->orderBy($sortBy, $sortOrder)->get());
     }
 
@@ -1444,6 +1456,7 @@ class AdminDashboardController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $status = $request->get('status');
+        $shippingType = $request->get('shipping_type');
         $client = $request->get('client');
         $allowedSortFields = ['id', 'item', 'client_name', 'status', 'date_stamp', 'total_paid', 'profit', 'created_at'];
         if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'date_stamp';
@@ -1464,6 +1477,7 @@ class AdminDashboardController extends Controller
         if ($dateFrom) $query->whereDate('date_stamp', '>=', $dateFrom);
         if ($dateTo) $query->whereDate('date_stamp', '<=', $dateTo);
         if ($status) $query->where('clearances.status', $status);
+        if ($shippingType) $query->whereRaw('LOWER(shipping_types.code) = ?', [strtolower($shippingType)]);
         if ($client) $query->where('clearances.client_name', 'like', '%' . $client . '%');
         return response()->json($query->orderBy('clearances.' . $sortBy, $sortOrder)->get());
     }
@@ -1555,12 +1569,13 @@ class AdminDashboardController extends Controller
     // Trucking Management
     public function getTruckings(Request $request)
     {
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortBy = $request->get('sort_by', 'eta');
+        $sortOrder = $request->get('sort_order', 'asc');
         $search = $request->get('search', '');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $status = $request->get('status');
+        $shippingType = $request->get('shipping_type');
         $customer = $request->get('customer');
 
         $allowedSortFields = [
@@ -1588,7 +1603,7 @@ class AdminDashboardController extends Controller
         ];
 
         if (!in_array($sortBy, $allowedSortFields)) {
-            $sortBy = 'created_at';
+            $sortBy = 'eta';
         }
 
         if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
@@ -1625,6 +1640,7 @@ class AdminDashboardController extends Controller
         if ($dateFrom) $query->whereDate('trucking_date', '>=', $dateFrom);
         if ($dateTo) $query->whereDate('trucking_date', '<=', $dateTo);
         if ($status) $query->where('truckings.status', $status);
+        if ($shippingType) $query->where('truckings.shipping_type', $shippingType);
         if ($customer) $query->where('truckings.customer_name', 'like', '%' . $customer . '%');
 
         $truckings = $query->orderBy('truckings.' . $sortBy, $sortOrder)->get()->map(function ($record) {
@@ -1878,12 +1894,15 @@ class AdminDashboardController extends Controller
     // Shipment Management
     public function getShipments(Request $request)
     {
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortBy = $request->get('sort_by', 'eta');
+        $sortOrder = $request->get('sort_order', 'asc');
         $search = $request->get('search', '');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
+        $etaFrom = $request->get('eta_from');
+        $etaTo = $request->get('eta_to');
         $status = $request->get('status');
+        $shippingType = $request->get('shipping_type');
         $customer = $request->get('customer');
 
         // Validate sort parameters
@@ -1915,7 +1934,7 @@ class AdminDashboardController extends Controller
         ];
 
         if (!in_array($sortBy, $allowedSortFields)) {
-            $sortBy = 'created_at';
+            $sortBy = 'eta';
         }
 
         if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
@@ -1955,10 +1974,19 @@ class AdminDashboardController extends Controller
         }
         if ($dateFrom) $query->whereDate('shipments.created_at', '>=', $dateFrom);
         if ($dateTo) $query->whereDate('shipments.created_at', '<=', $dateTo);
+        if ($etaFrom) $query->whereDate('shipments.eta', '>=', $etaFrom);
+        if ($etaTo) $query->whereDate('shipments.eta', '<=', $etaTo);
         if ($status) $query->where('shipments.status', $status);
+        if ($shippingType) $query->whereRaw('LOWER(shipping_types.code) = ?', [strtolower($shippingType)]);
         if ($customer) $query->where('shipments.customer_name', 'like', '%' . $customer . '%');
 
-        $shipments = $query->orderBy('shipments.' . $sortBy, $sortOrder)
+        if ($sortBy === 'eta' && $sortOrder === 'asc') {
+            $query->orderByRaw('shipments.eta IS NULL ASC')->orderBy('shipments.eta', 'asc');
+        } else {
+            $query->orderBy('shipments.' . $sortBy, $sortOrder);
+        }
+
+        $shipments = $query
             ->get()
             ->map(function ($shipment) {
                 return [

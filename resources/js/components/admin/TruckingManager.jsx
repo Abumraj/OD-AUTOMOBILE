@@ -6,7 +6,7 @@ function ProcurementManager() {
     const [shippingLines, setShippingLines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
+    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', shipping_type: '', column: '' });
     const [showModal, setShowModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const [notification, setNotification] = useState(null);
@@ -67,7 +67,7 @@ function ProcurementManager() {
 
     const fetchTruckings = async () => {
         try {
-            const params = new URLSearchParams({ sort_by: sortBy, sort_order: sortOrder, search: searchQuery, date_from: filters.date_from, date_to: filters.date_to, status: filters.status, customer: filters.column });
+            const params = new URLSearchParams({ sort_by: sortBy, sort_order: sortOrder, search: searchQuery, date_from: filters.date_from, date_to: filters.date_to, status: filters.status, shipping_type: filters.shipping_type, customer: filters.column });
             const response = await fetch(`/api/admin/truckings?${params}`);
             const data = await response.json();
             setRecords(Array.isArray(data) ? data : []);
@@ -342,7 +342,7 @@ function ProcurementManager() {
                 </div>
             </div>
 
-            <ServiceFilterBar filters={filters} onChange={setFilters} columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={[{ value: 'pending', label: 'Pending' }, { value: 'in_transit', label: 'In transit' }, { value: 'delivered', label: 'Delivered' }, { value: 'cancelled', label: 'Cancelled' }]} />
+                <ServiceFilterBar filters={filters} onChange={setFilters} columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={[{ value: 'pending', label: 'Pending' }, { value: 'arrived', label: 'Arrived' }, { value: 'on_vessel', label: 'On vessel' }]} />
 
             {importResult && (
                 <div className={`mb-md p-md rounded-lg ${importResult.errors?.length ? 'bg-red-500/10 border border-red-500/30' : 'bg-green-500/10 border border-green-500/30'}`}>

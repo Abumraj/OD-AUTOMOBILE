@@ -25,12 +25,12 @@ function ClearanceManager() {
     const [search, setSearch] = useState('');
     const [message, setMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
+    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', shipping_type: '', column: '' });
     const itemsPerPage = 10;
 
     const fetchRecords = async () => {
         try {
-            const params = new URLSearchParams({ search, sort_by: 'date_stamp', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, client: filters.column });
+            const params = new URLSearchParams({ search, sort_by: 'date_stamp', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, shipping_type: filters.shipping_type, client: filters.column });
             const response = await fetch(`/api/admin/clearances?${params}`);
             const data = await response.json();
             setRecords(Array.isArray(data) ? data : []);

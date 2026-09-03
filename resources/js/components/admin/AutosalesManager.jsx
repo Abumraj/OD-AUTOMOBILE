@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
 
 const emptyForm = {
-    customer_name: '', customer_email: '', sale_date: '', car_make: '', car_model: '', car_year: '', sale_type: 'outright',
+    customer_name: '', customer_email: '', sale_date: '', car_make: '', car_model: '', car_year: '', sale_type: 'outright', shipping_type: '',
     color: '', vin: '', amount: '', profit: '', notes: '', admin_notes: '', is_active: true,
 };
 
@@ -15,11 +15,11 @@ function AutosalesManager() {
     const [saving, setSaving] = useState(false);
     const [search, setSearch] = useState('');
     const [message, setMessage] = useState('');
-    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
+    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', shipping_type: '', column: '' });
 
     const fetchRecords = async () => {
         try {
-            const params = new URLSearchParams({ search, sort_by: 'sale_date', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, customer: filters.column });
+            const params = new URLSearchParams({ search, sort_by: 'sale_date', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, shipping_type: filters.shipping_type, customer: filters.column });
             const response = await fetch(`/api/admin/autosales?${params}`);
             const data = await response.json();
             setRecords(Array.isArray(data) ? data : []);
@@ -124,7 +124,7 @@ function AutosalesManager() {
             </div>
             {showModal && <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-md"><form onSubmit={submit} className="bg-surface-container rounded-xl border border-outline-variant w-full max-w-3xl p-lg space-y-lg">
                 <div className="flex justify-between"><h3 className="text-xl font-bold">{editingId ? 'Edit Autosale' : 'Add Autosale'}</h3><button type="button" onClick={() => setShowModal(false)} className="material-symbols-outlined">close</button></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">{[['customer_name', 'Customer Name', 'text'], ['customer_email', 'Customer Email', 'email'], ['sale_date', 'Date', 'date'], ['car_make', 'Car Maker', 'text'], ['car_model', 'Car Model', 'text'], ['car_year', 'Year', 'text'], ['color', 'Color', 'text'], ['vin', 'VIN', 'text'], ['amount', 'Amount', 'number'], ['profit', 'Profit', 'number']].map(([name, label, type]) => <label key={name} className="text-sm text-on-surface-variant">{label}<input type={type} step={type === 'number' ? '0.01' : undefined} value={formData[name] || ''} onChange={(event) => setFormData({ ...formData, [name]: event.target.value })} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface" /></label>)}<label className="text-sm text-on-surface-variant">Sale/Type<select value={formData.sale_type} onChange={(event) => setFormData({ ...formData, sale_type: event.target.value })} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface"><option value="outright">Outright</option><option value="swap">Swap</option></select></label></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">{[['customer_name', 'Customer Name', 'text'], ['customer_email', 'Customer Email', 'email'], ['sale_date', 'Date', 'date'], ['car_make', 'Car Maker', 'text'], ['car_model', 'Car Model', 'text'], ['car_year', 'Year', 'text'], ['color', 'Color', 'text'], ['vin', 'VIN', 'text'], ['amount', 'Amount', 'number'], ['profit', 'Profit', 'number']].map(([name, label, type]) => <label key={name} className="text-sm text-on-surface-variant">{label}<input type={type} step={type === 'number' ? '0.01' : undefined} value={formData[name] || ''} onChange={(event) => setFormData({ ...formData, [name]: event.target.value })} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface" /></label>)}<label className="text-sm text-on-surface-variant">Sale/Type<select value={formData.sale_type} onChange={(event) => setFormData({ ...formData, sale_type: event.target.value })} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface"><option value="outright">Outright</option><option value="swap">Swap</option></select></label><label className="text-sm text-on-surface-variant">Shipping Type<select value={formData.shipping_type} onChange={(event) => setFormData({ ...formData, shipping_type: event.target.value })} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface"><option value="">Select shipping type</option><option value="container">Container</option><option value="roro">RoRo</option></select></label></div>
                 <div className="flex justify-end gap-md"><button type="button" onClick={() => setShowModal(false)} className="px-md py-sm rounded-lg border border-outline-variant">Cancel</button><button disabled={saving} className="bg-secondary text-on-secondary px-md py-sm rounded-lg font-bold">{saving ? 'Saving...' : editingId ? 'Update' : 'Create'}</button></div>
             </form></div>}
         </div>
