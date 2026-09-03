@@ -1090,6 +1090,10 @@ class AdminDashboardController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = strtolower($request->get('sort_order', 'desc'));
         $search = $request->get('search', '');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $status = $request->get('status');
+        $customer = $request->get('customer');
         $allowedSortFields = ['id', 'sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount', 'profit', 'created_at'];
 
         if (!in_array($sortBy, $allowedSortFields, true)) {
@@ -1108,6 +1112,10 @@ class AdminDashboardController extends Controller
                 }
             });
         }
+        if ($dateFrom) $query->whereDate('sale_date', '>=', $dateFrom);
+        if ($dateTo) $query->whereDate('sale_date', '<=', $dateTo);
+        if ($status) $query->where('sale_type', $status);
+        if ($customer) $query->where('customer_name', 'like', '%' . $customer . '%');
 
         return response()->json($query->orderBy($sortBy, $sortOrder)->get());
     }
@@ -1249,6 +1257,10 @@ class AdminDashboardController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = strtolower($request->get('sort_order', 'desc'));
         $search = $request->get('search', '');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $status = $request->get('status');
+        $auctionSite = $request->get('auction_site');
 
         $allowedSortFields = ['id', 'date_procured', 'car_make', 'car_model', 'car_year', 'price_usd', 'auction_charge_usd', 'auction_site', 'state', 'trucking', 'shipping', 'arrival_date', 'profit_ngn', 'trucking_fee', 'status', 'created_at'];
         if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'created_at';
@@ -1264,6 +1276,10 @@ class AdminDashboardController extends Controller
                 }
             });
         }
+        if ($dateFrom) $query->whereDate('date_procured', '>=', $dateFrom);
+        if ($dateTo) $query->whereDate('date_procured', '<=', $dateTo);
+        if ($status) $query->where('status', $status);
+        if ($auctionSite) $query->where('auction_site', $auctionSite);
         return response()->json($query->orderBy($sortBy, $sortOrder)->get());
     }
 
@@ -1425,6 +1441,10 @@ class AdminDashboardController extends Controller
         $sortBy = $request->get('sort_by', 'date_stamp');
         $sortOrder = strtolower($request->get('sort_order', 'desc'));
         $search = $request->get('search', '');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $status = $request->get('status');
+        $client = $request->get('client');
         $allowedSortFields = ['id', 'item', 'client_name', 'status', 'date_stamp', 'total_paid', 'profit', 'created_at'];
         if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'date_stamp';
         if (!in_array($sortOrder, ['asc', 'desc'], true)) $sortOrder = 'desc';
@@ -1441,6 +1461,10 @@ class AdminDashboardController extends Controller
                 }
             });
         }
+        if ($dateFrom) $query->whereDate('date_stamp', '>=', $dateFrom);
+        if ($dateTo) $query->whereDate('date_stamp', '<=', $dateTo);
+        if ($status) $query->where('clearances.status', $status);
+        if ($client) $query->where('clearances.client_name', 'like', '%' . $client . '%');
         return response()->json($query->orderBy('clearances.' . $sortBy, $sortOrder)->get());
     }
 
@@ -1534,6 +1558,10 @@ class AdminDashboardController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $search = $request->get('search', '');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $status = $request->get('status');
+        $customer = $request->get('customer');
 
         $allowedSortFields = [
             'id',
@@ -1594,6 +1622,10 @@ class AdminDashboardController extends Controller
                     ->orWhere('destination_country', 'like', $searchTerm);
             });
         }
+        if ($dateFrom) $query->whereDate('trucking_date', '>=', $dateFrom);
+        if ($dateTo) $query->whereDate('trucking_date', '<=', $dateTo);
+        if ($status) $query->where('truckings.status', $status);
+        if ($customer) $query->where('truckings.customer_name', 'like', '%' . $customer . '%');
 
         $truckings = $query->orderBy('truckings.' . $sortBy, $sortOrder)->get()->map(function ($record) {
             return [
@@ -1849,6 +1881,10 @@ class AdminDashboardController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $search = $request->get('search', '');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $status = $request->get('status');
+        $customer = $request->get('customer');
 
         // Validate sort parameters
         $allowedSortFields = [
@@ -1917,6 +1953,10 @@ class AdminDashboardController extends Controller
                     ->orWhere('shipping_lines.name', 'like', $searchTerm);
             });
         }
+        if ($dateFrom) $query->whereDate('shipments.created_at', '>=', $dateFrom);
+        if ($dateTo) $query->whereDate('shipments.created_at', '<=', $dateTo);
+        if ($status) $query->where('shipments.status', $status);
+        if ($customer) $query->where('shipments.customer_name', 'like', '%' . $customer . '%');
 
         $shipments = $query->orderBy('shipments.' . $sortBy, $sortOrder)
             ->get()
@@ -2298,8 +2338,8 @@ class AdminDashboardController extends Controller
         if ($shipment->status !== $status) {
             DB::table('shipment_updates')->insert([
                 'shipment_id' => $id,
-            'status' => $status,
-            'description' => 'Status updated to ' . $status,
+                'status' => $status,
+                'description' => 'Status updated to ' . $status,
                 'update_date' => now(),
                 'created_at' => now(),
                 'updated_at' => now()

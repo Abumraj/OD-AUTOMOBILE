@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { exportToCSV } from '../../utils/csvExport';
 import DockReceiptGenerator from './DockReceiptGenerator';
+import ServiceFilterBar from './ServiceFilterBar';
 
 function ShipmentsManager() {
     const [shipments, setShipments] = useState([]);
@@ -10,6 +11,7 @@ function ShipmentsManager() {
     const [notification, setNotification] = useState(null);
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [dateFilters, setDateFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
     const [viewMode, setViewMode] = useState('table');
     const [showColumnSelector, setShowColumnSelector] = useState(false);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -151,7 +153,7 @@ function ShipmentsManager() {
             fetchShipments();
         }, 300);
         return () => clearTimeout(timer);
-    }, [sortBy, sortOrder, searchQuery]);
+    }, [sortBy, sortOrder, searchQuery, dateFilters]);
 
     useEffect(() => {
         fetchShippingConfig();
@@ -174,8 +176,8 @@ function ShipmentsManager() {
 
     const fetchShipments = async () => {
         try {
-            const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
-            const response = await fetch(`/api/admin/shipments?sort_by=${sortBy}&sort_order=${sortOrder}${searchParam}`);
+            const params = new URLSearchParams({ sort_by: sortBy, sort_order: sortOrder, search: searchQuery, date_from: dateFilters.date_from, date_to: dateFilters.date_to, status: dateFilters.status, customer: dateFilters.column });
+            const response = await fetch(`/api/admin/shipments?${params}`);
             const data = await response.json();
             setShipments(data);
         } catch (error) {
@@ -539,6 +541,8 @@ function ShipmentsManager() {
                     ))}
                 </div>
             )}
+
+            <ServiceFilterBar filters={dateFilters} onChange={setDateFilters} columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered', 'cancelled'].map((value) => ({ value, label: value.replace('_', ' ') }))} />
 
             {viewMode === 'table' ? (
                 <div className="overflow-x-auto">

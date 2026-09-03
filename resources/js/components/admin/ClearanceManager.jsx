@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
+import ServiceFilterBar from './ServiceFilterBar';
 
 const emptyForm = {
     item: '',
@@ -24,11 +25,13 @@ function ClearanceManager() {
     const [search, setSearch] = useState('');
     const [message, setMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
     const itemsPerPage = 10;
 
     const fetchRecords = async () => {
         try {
-            const response = await fetch(`/api/admin/clearances?search=${encodeURIComponent(search)}&sort_by=date_stamp&sort_order=desc`);
+            const params = new URLSearchParams({ search, sort_by: 'date_stamp', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, client: filters.column });
+            const response = await fetch(`/api/admin/clearances?${params}`);
             const data = await response.json();
             setRecords(Array.isArray(data) ? data : []);
         } catch (error) {
@@ -41,7 +44,7 @@ function ClearanceManager() {
     useEffect(() => {
         const timer = setTimeout(fetchRecords, 200);
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, filters]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -136,6 +139,8 @@ function ClearanceManager() {
                     <button onClick={() => { setEditingId(null); setFormData(emptyForm); setShowModal(true); }} className="bg-secondary text-on-secondary px-md py-sm rounded-lg font-bold">+ Add Clearance</button>
                 </div>
             </div>
+
+            <ServiceFilterBar filters={filters} onChange={setFilters} columnLabel="Client" columnPlaceholder="Filter client" statusOptions={[{ value: 'cleared', label: 'Cleared' }, { value: 'not_cleared', label: 'Not cleared' }]} />
 
             <div className="overflow-x-auto">
                 <table className="min-w-full border-separate border-spacing-0">

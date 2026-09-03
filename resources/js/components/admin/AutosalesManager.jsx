@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ServiceFilterBar from './ServiceFilterBar';
 
 const emptyForm = {
     customer_name: '', customer_email: '', sale_date: '', car_make: '', car_model: '', car_year: '', sale_type: 'outright',
@@ -14,10 +15,12 @@ function AutosalesManager() {
     const [saving, setSaving] = useState(false);
     const [search, setSearch] = useState('');
     const [message, setMessage] = useState('');
+    const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', column: '' });
 
     const fetchRecords = async () => {
         try {
-            const response = await fetch(`/api/admin/autosales?search=${encodeURIComponent(search)}&sort_by=sale_date&sort_order=desc`);
+            const params = new URLSearchParams({ search, sort_by: 'sale_date', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, customer: filters.column });
+            const response = await fetch(`/api/admin/autosales?${params}`);
             const data = await response.json();
             setRecords(Array.isArray(data) ? data : []);
         } catch (error) {
@@ -30,7 +33,7 @@ function AutosalesManager() {
     useEffect(() => {
         const timer = setTimeout(fetchRecords, 200);
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, filters]);
 
     const submit = async (event) => {
         event.preventDefault();
@@ -110,6 +113,7 @@ function AutosalesManager() {
                     <button type="button" onClick={openNew} className="bg-secondary text-on-secondary px-md py-sm rounded-lg font-bold">+ Add Autosale</button>
                 </div>
             </div>
+            <ServiceFilterBar filters={filters} onChange={setFilters} columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={[{ value: 'outright', label: 'Outright' }, { value: 'swap', label: 'Swap' }]} />
             <div className="overflow-x-auto">
                 <table className="min-w-full border-separate border-spacing-0">
                     <thead><tr className="bg-[#0B3D2E] text-left">{['SN', 'DATE', 'CAR MAKER', 'CAR MODEL', 'YEAR', 'SALE/TYPE', 'COLOR', 'VIN', 'AMOUNT', 'PROFIT', 'Actions'].map((heading) => <th key={heading} className="px-md py-sm font-label-md text-white">{heading}</th>)}</tr></thead>
