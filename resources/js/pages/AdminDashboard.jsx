@@ -91,7 +91,7 @@ function AdminDashboard() {
             <main className="lg:ml-64 flex flex-col min-h-screen bg-surface">
                 <AdminTopBar admin={admin} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(true)} />
 
-                <div className="flex-grow overflow-y-auto p-4 lg:p-gutter">
+                <div className="flex-grow min-w-0 overflow-y-auto p-3 sm:p-4 lg:p-gutter">
                     <Routes>
                         <Route path="/" element={<AdminOverview />} />
                         <Route path="/analytics" element={<AdminAnalyticsPage />} />

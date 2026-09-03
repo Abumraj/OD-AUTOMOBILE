@@ -29,7 +29,7 @@ function DashboardStats() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-md">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-sm md:gap-md">
                 {[1, 2, 3, 4, 5, 6].map(i => (
                     <div key={i} className="bg-primary-container p-md rounded-xl border border-outline-variant/30 animate-pulse h-32"></div>
                 ))}
@@ -80,7 +80,7 @@ function DashboardStats() {
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-md">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-sm md:gap-md">
             {stats.map((stat, index) => (
                 <div
                     key={index}

@@ -64,11 +64,11 @@ function AdminTopBar({ admin, onLogout, onMenuToggle }) {
   };
 
   return (
-    <header className="h-16 flex justify-between items-center px-4 lg:px-gutter border-b border-outline-variant bg-surface sticky top-0 z-40">
+    <header className="min-h-16 flex justify-between items-center gap-2 px-3 sm:px-4 lg:px-gutter py-2 border-b border-outline-variant bg-surface sticky top-0 z-40">
       <div className="flex items-center flex-1 gap-3">
         <button
           onClick={onMenuToggle}
-          className="lg:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+          className="lg:hidden shrink-0 p-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
           aria-label="Open menu"
         >
           <span className="material-symbols-outlined">menu</span>
@@ -173,15 +173,15 @@ function AdminTopBar({ admin, onLogout, onMenuToggle }) {
             )}
         </div>
       </div>
-      <div className="flex items-center space-x-md">
+      <div className="flex items-center gap-1 sm:gap-md shrink-0">
         <button className="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
           <span className="material-symbols-outlined">notifications</span>
         </button>
         <button className="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
           <span className="material-symbols-outlined">history</span>
         </button>
-        <div className="flex items-center space-x-3 ml-2 border-l border-outline-variant pl-md">
-          <div className="text-right">
+        <div className="hidden sm:flex items-center space-x-3 ml-2 border-l border-outline-variant pl-md">
+          <div className="text-right min-w-0">
             <p className="font-label-md text-on-surface">
               {admin?.name || "Admin Center"}
             </p>
