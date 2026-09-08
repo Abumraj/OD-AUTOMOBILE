@@ -1,3 +1,0 @@
-[2026-09-02 12:19:36] local.ERROR: Failed to send email {"to":"abumraj@gmail.com","template":"shipment-delivered","error":"Connection could not be established with host \"mailpit:1025\": stream_socket_client(): php_network_getaddresses: getaddrinfo for mailpit failed: No such host is known. "} 
-[2026-09-02 12:19:37] local.INFO: Termii SMS disabled. Message not sent. {"to":"909345"} 
-[2026-09-02 12:27:33] local.INFO: Termii SMS disabled. Message not sent. {"to":"7896"} 

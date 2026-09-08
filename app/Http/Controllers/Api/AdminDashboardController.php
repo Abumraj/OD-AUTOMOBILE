@@ -24,48 +24,57 @@ class AdminDashboardController extends Controller
         ]);
         $startDate = $validated['start_date'] ?? now()->startOfYear()->toDateString();
         $endDate = $validated['end_date'] ?? now()->toDateString();
+
+        // Each column keeps the currency it's actually stored in. Procurement is the one
+        // mixed source: cars are bought in USD (price_usd) but its profit is booked in
+        // NGN (profit_ngn) — everything else is local Nigerian-side NGN throughout.
         $services = [
-            ['service' => 'Shipments', 'table' => 'shipments', 'amount' => 'total_cost', 'date' => 'created_at'],
-            ['service' => 'Procurement', 'table' => 'procurements', 'amount' => 'price_usd', 'date' => 'date_procured'],
-            ['service' => 'Autosales', 'table' => 'autosales', 'amount' => 'amount', 'date' => 'sale_date'],
-            ['service' => 'Clearance', 'table' => 'clearances', 'amount' => 'total_paid', 'date' => 'date_stamp'],
-            ['service' => 'Trucking', 'table' => 'truckings', 'amount' => 'amount', 'date' => 'trucking_date'],
+            ['service' => 'Procurement', 'table' => 'procurements', 'amount' => 'price_usd', 'profit' => 'profit_ngn', 'date' => 'date_procured', 'revenue_currency' => 'USD', 'profit_currency' => 'NGN'],
+            ['service' => 'Autosales', 'table' => 'autosales', 'amount' => 'amount', 'profit' => 'profit', 'date' => 'sale_date', 'revenue_currency' => 'NGN', 'profit_currency' => 'NGN'],
+            ['service' => 'Trucking', 'table' => 'truckings', 'amount' => 'amount', 'profit' => 'profit', 'date' => 'trucking_date', 'revenue_currency' => 'NGN', 'profit_currency' => 'NGN'],
+            ['service' => 'Clearance', 'table' => 'clearances', 'amount' => 'total_paid', 'profit' => 'profit', 'date' => 'date_stamp', 'revenue_currency' => 'NGN', 'profit_currency' => 'NGN'],
         ];
 
-        $breakdown = collect($services)->map(function ($service) use ($startDate, $endDate) {
-            $query = DB::table($service['table'])->whereNotNull($service['date']);
-            $query->whereBetween($service['date'], [$startDate, $endDate]);
+        $sources = collect($services)->map(function ($service) use ($startDate, $endDate) {
+            $baseQuery = fn() => DB::table($service['table'])
+                ->whereNotNull($service['date'])
+                ->whereBetween($service['date'], [$startDate, $endDate]);
 
-            return [
-                'service' => $service['service'],
-                'orders' => $query->count(),
-                'revenue' => (float) (DB::table($service['table'])
-                    ->whereNotNull($service['date'])
-                    ->whereBetween($service['date'], [$startDate, $endDate])
-                    ->sum($service['amount']) ?? 0),
-            ];
-        })->values();
-
-        $monthly = collect($services)->flatMap(function ($service) use ($startDate, $endDate) {
-            return DB::table($service['table'])
-                ->selectRaw("DATE_FORMAT({$service['date']}, '%Y-%m') as month, SUM({$service['amount']}) as revenue")
+            $monthly = DB::table($service['table'])
+                ->selectRaw("DATE_FORMAT({$service['date']}, '%Y-%m') as month, SUM({$service['amount']}) as revenue, SUM({$service['profit']}) as profit, COUNT(*) as orders")
                 ->whereNotNull($service['date'])
                 ->whereBetween($service['date'], [$startDate, $endDate])
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get()
-                ->map(fn($row) => ['month' => $row->month, 'service' => $service['service'], 'revenue' => (float) $row->revenue]);
-        })->groupBy('month')->map(function ($entries, $month) {
-            return ['month' => $month, 'revenue' => $entries->sum('revenue')];
-        })->sortBy('month')->values();
+                ->map(fn($row) => [
+                    'month' => $row->month,
+                    'revenue' => (float) $row->revenue,
+                    'profit' => (float) $row->profit,
+                    'orders' => (int) $row->orders,
+                ])->values();
+
+            return [
+                'service' => $service['service'],
+                'revenue_currency' => $service['revenue_currency'],
+                'profit_currency' => $service['profit_currency'],
+                'total_revenue' => (float) ($baseQuery()->sum($service['amount']) ?? 0),
+                'total_profit' => (float) ($baseQuery()->sum($service['profit']) ?? 0),
+                'total_orders' => $baseQuery()->count(),
+                'monthly' => $monthly,
+            ];
+        })->values();
+
+        $revenueByCurrency = $sources->groupBy('revenue_currency')->map(fn($group) => $group->sum('total_revenue'));
+        $profitByCurrency = $sources->groupBy('profit_currency')->map(fn($group) => $group->sum('total_profit'));
 
         return response()->json([
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'total_revenue' => $breakdown->sum('revenue'),
-            'total_orders' => $breakdown->sum('orders'),
-            'breakdown' => $breakdown,
-            'monthly_revenue' => $monthly,
+            'total_orders' => $sources->sum('total_orders'),
+            'revenue_by_currency' => $revenueByCurrency,
+            'profit_by_currency' => $profitByCurrency,
+            'sources' => $sources,
         ]);
     }
 
