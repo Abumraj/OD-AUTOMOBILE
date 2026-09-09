@@ -378,8 +378,8 @@ function ProcurementManager() {
                                 <td className="px-md py-sm text-on-surface">{record.color || '—'}</td>
                                 <td className="px-md py-sm text-on-surface">{record.customer_name || '—'}</td>
                                 <td className="px-md py-sm text-on-surface">{record.vin || '—'}</td>
-                                <td className="px-md py-sm text-on-surface">₦{Number(record.amount || 0).toFixed(2)}</td>
-                                <td className="px-md py-sm text-on-surface">₦{Number(record.profit || 0).toFixed(2)}</td>
+                                <td className="px-md py-sm text-on-surface">${Number(record.amount || 0).toFixed(2)}</td>
+                                <td className="px-md py-sm text-on-surface">${Number(record.profit || 0).toFixed(2)}</td>
                                 <td className="px-md py-sm"><span className={`px-2 py-1 rounded-full text-xs uppercase font-medium ${getFeeColor(record.payment_status || record.trucking_fee_status)}`}>{record.payment_status || record.trucking_fee_status || 'unpaid'}</span></td>
                                 <td className="px-md py-sm"><span className={`px-2 py-1 rounded-full text-xs uppercase font-medium ${getStatusColor(record.shipment_status || record.status)}`}>{record.shipment_status || record.status || 'pending'}</span></td>
                                 <td className="px-md py-sm text-on-surface">{record.location || '—'}</td>

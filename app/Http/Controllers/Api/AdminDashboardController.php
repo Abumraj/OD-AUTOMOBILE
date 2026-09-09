@@ -25,13 +25,14 @@ class AdminDashboardController extends Controller
         $startDate = $validated['start_date'] ?? now()->startOfYear()->toDateString();
         $endDate = $validated['end_date'] ?? now()->toDateString();
 
-        // Each column keeps the currency it's actually stored in. Procurement is the one
-        // mixed source: cars are bought in USD (price_usd) but its profit is booked in
-        // NGN (profit_ngn) — everything else is local Nigerian-side NGN throughout.
+        // Each column keeps the currency it's actually stored in:
+        // - Procurement: revenue (price_usd) is USD, profit (profit_ngn) is NGN.
+        // - Trucking: both revenue and profit are USD.
+        // - Autosales and Clearance: everything is NGN.
         $services = [
             ['service' => 'Procurement', 'table' => 'procurements', 'amount' => 'price_usd', 'profit' => 'profit_ngn', 'date' => 'date_procured', 'revenue_currency' => 'USD', 'profit_currency' => 'NGN'],
             ['service' => 'Autosales', 'table' => 'autosales', 'amount' => 'amount', 'profit' => 'profit', 'date' => 'sale_date', 'revenue_currency' => 'NGN', 'profit_currency' => 'NGN'],
-            ['service' => 'Trucking', 'table' => 'truckings', 'amount' => 'amount', 'profit' => 'profit', 'date' => 'trucking_date', 'revenue_currency' => 'NGN', 'profit_currency' => 'NGN'],
+            ['service' => 'Trucking', 'table' => 'truckings', 'amount' => 'amount', 'profit' => 'profit', 'date' => 'trucking_date', 'revenue_currency' => 'USD', 'profit_currency' => 'USD'],
             ['service' => 'Clearance', 'table' => 'clearances', 'amount' => 'total_paid', 'profit' => 'profit', 'date' => 'date_stamp', 'revenue_currency' => 'NGN', 'profit_currency' => 'NGN'],
         ];
 
