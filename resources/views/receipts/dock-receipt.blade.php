@@ -446,11 +446,12 @@
                             <div class="item-description">{{ $shipment->destination_country }}</div>
                         </td>
                     </tr>
-                    @if($shipment->vessel_name || $shipment->container_number || $shipment->booking_number)
+                    @if($shipment->shipping_provider || $shipment->vessel_name || $shipment->container_number || $shipment->booking_number)
                     <tr>
                         <td colspan="2">
                             <span class="item-code">#SHIPPING</span>
-                            @if($shipment->vessel_name)<strong>Vessel:</strong> {{ $shipment->vessel_name }}@endif
+                            @if($shipment->shipping_provider)<strong>Shipping Company:</strong> {{ $shipment->shipping_provider }}@endif
+                            @if($shipment->vessel_name) | <strong>Vessel:</strong> {{ $shipment->vessel_name }}@endif
                             @if($shipment->container_number) | <strong>Container:</strong> {{ $shipment->container_number }}@endif
                             @if($shipment->booking_number) | <strong>Booking:</strong> {{ $shipment->booking_number }}@endif
                         </td>

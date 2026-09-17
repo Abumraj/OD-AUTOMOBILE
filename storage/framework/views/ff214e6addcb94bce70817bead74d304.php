@@ -13,7 +13,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 11px;
+            font-size: 14px;
             line-height: 1.4;
             color: #0f172a;
             background: #f7f9fb;
@@ -73,7 +73,7 @@
         }
         
         .document-title {
-            font-size: 24px;
+            font-size: 27px;
             font-weight: 800;
             color: #0f172a;
             letter-spacing: -0.5px;
@@ -82,14 +82,14 @@
         }
         
         .document-number {
-            font-size: 11px;
+            font-size: 14px;
             font-weight: 700;
             color: #0f172a;
         }
         
         .company-info {
             text-align: right;
-            font-size: 8px;
+            font-size: 11px;
             color: #45464d;
             line-height: 1.4;
             font-weight: 500;
@@ -113,7 +113,7 @@
         }
         
         .info-label {
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 700;
             color: #45464d;
             text-transform: uppercase;
@@ -122,13 +122,13 @@
         }
         
         .info-value {
-            font-size: 12px;
+            font-size: 15px;
             font-weight: 600;
             color: #0f172a;
         }
         
         .section-title {
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 800;
             color: #0f172a;
             text-transform: uppercase;
@@ -152,7 +152,7 @@
         table.data-table th {
             text-align: left;
             padding: 5px 6px;
-            font-size: 8px;
+            font-size: 11px;
             font-weight: 800;
             color: #0f172a;
             text-transform: uppercase;
@@ -166,7 +166,7 @@
         
         table.data-table td {
             padding: 5px 6px;
-            font-size: 9px;
+            font-size: 12px;
             color: #0f172a;
             border-bottom: 1px solid #f3f4f6;
             vertical-align: top;
@@ -177,7 +177,7 @@
         }
         
         .item-code {
-            font-size: 8px;
+            font-size: 11px;
             font-weight: 700;
             color: #45464d;
             display: block;
@@ -186,14 +186,14 @@
         
         .item-title {
             font-weight: 700;
-            font-size: 10px;
+            font-size: 13px;
             color: #0f172a;
             text-transform: uppercase;
             margin-bottom: 1px;
         }
         
         .item-description {
-            font-size: 8px;
+            font-size: 11px;
             color: #45464d;
             max-width: 400px;
             line-height: 1.3;
@@ -221,7 +221,7 @@
         }
         
         .total-label {
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 800;
             color: #0f172a;
             text-transform: uppercase;
@@ -229,7 +229,7 @@
         }
         
         .total-value {
-            font-size: 11px;
+            font-size: 14px;
             font-weight: 700;
             color: #0f172a;
         }
@@ -250,7 +250,7 @@
         }
         
         .stamp-text {
-            font-size: 11px;
+            font-size: 14px;
             font-weight: 700;
             color: #22543d;
             margin-bottom: 2px;
@@ -259,7 +259,7 @@
         }
         
         .stamp-date {
-            font-size: 9px;
+            font-size: 12px;
             color: #2f855a;
             font-weight: 500;
         }
@@ -285,14 +285,14 @@
         }
         
         .signature-name {
-            font-size: 12px;
+            font-size: 15px;
             font-weight: 800;
             color: #0f172a;
             margin-bottom: 1px;
         }
         
         .signature-title {
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 700;
             color: #ef4444;
             text-transform: uppercase;
@@ -301,7 +301,7 @@
         
         .signature-website {
             text-align: right;
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 700;
             color: #0f172a;
             text-transform: uppercase;
@@ -312,7 +312,7 @@
             background: #f7f9fb;
             padding: 10px 25px;
             text-align: center;
-            font-size: 7px;
+            font-size: 10px;
             color: #45464d;
             line-height: 1.4;
         }
@@ -331,7 +331,7 @@
             color: #0f172a;
             font-weight: 700;
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -376,6 +376,12 @@
                     <td class="info-value"><?php echo e(date('M d, Y', strtotime($receipt->date_received))); ?></td>
                     <td class="info-label">Status</td>
                     <td class="info-value"><span class="status-badge"><?php echo e(strtoupper($receipt->stage)); ?></span></td>
+                </tr>
+                <tr>
+                    <td class="info-label">ETA</td>
+                    <td class="info-value"><?php echo e(!empty($receipt->eta) ? date('M d, Y', strtotime($receipt->eta)) : 'N/A'); ?></td>
+                    <td class="info-label">Location Received</td>
+                    <td class="info-value"><?php echo e($receipt->location_received ?? 'N/A'); ?></td>
                 </tr>
             </table>
             
@@ -442,11 +448,12 @@
                             <div class="item-description"><?php echo e($shipment->destination_country); ?></div>
                         </td>
                     </tr>
-                    <?php if($shipment->vessel_name || $shipment->container_number || $shipment->booking_number): ?>
+                    <?php if($shipment->shipping_provider || $shipment->vessel_name || $shipment->container_number || $shipment->booking_number): ?>
                     <tr>
                         <td colspan="2">
                             <span class="item-code">#SHIPPING</span>
-                            <?php if($shipment->vessel_name): ?><strong>Vessel:</strong> <?php echo e($shipment->vessel_name); ?><?php endif; ?>
+                            <?php if($shipment->shipping_provider): ?><strong>Shipping Company:</strong> <?php echo e($shipment->shipping_provider); ?><?php endif; ?>
+                            <?php if($shipment->vessel_name): ?> | <strong>Vessel:</strong> <?php echo e($shipment->vessel_name); ?><?php endif; ?>
                             <?php if($shipment->container_number): ?> | <strong>Container:</strong> <?php echo e($shipment->container_number); ?><?php endif; ?>
                             <?php if($shipment->booking_number): ?> | <strong>Booking:</strong> <?php echo e($shipment->booking_number); ?><?php endif; ?>
                         </td>
@@ -509,7 +516,7 @@
             
             <?php if($receipt->notes): ?>
             <div class="section-title">Additional Notes</div>
-            <p style="color: #45464d; line-height: 1.5; margin-bottom: 10px; font-size: 10px;"><?php echo e($receipt->notes); ?></p>
+            <p style="color: #45464d; line-height: 1.5; margin-bottom: 10px; font-size: 13px;"><?php echo e($receipt->notes); ?></p>
             <?php endif; ?>
             
             <!-- Stamp Section -->

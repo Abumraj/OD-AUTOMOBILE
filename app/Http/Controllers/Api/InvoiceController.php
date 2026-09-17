@@ -185,6 +185,7 @@ class InvoiceController extends Controller
 
             $invoice = (object) array_merge($lineItem, [
                 'invoice_number' => 'PREVIEW',
+                'service_label' => $config['label'],
                 'date_issued' => $validated['date_issued'] ?? now()->toDateString(),
                 'notes' => $validated['notes'] ?? null,
                 'generated_at' => now(),
