@@ -1279,7 +1279,7 @@ class AdminDashboardController extends Controller
         $shippingType = $request->get('shipping_type');
         $auctionSite = $request->get('auction_site');
 
-        $allowedSortFields = ['id', 'date_procured', 'car_make', 'car_model', 'car_year', 'price_usd', 'auction_charge_usd', 'auction_site', 'state', 'trucking', 'shipping', 'arrival_date', 'profit_ngn', 'trucking_fee', 'status', 'created_at'];
+        $allowedSortFields = ['id', 'date_procured', 'car_make', 'car_model', 'car_year', 'vin', 'price_usd', 'auction_charge_usd', 'auction_site', 'state', 'trucking', 'shipping', 'arrival_date', 'profit_ngn', 'trucking_fee', 'status', 'created_at'];
         if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'arrival_date';
         if (!in_array($sortOrder, ['asc', 'desc'], true)) {
             $sortOrder = 'desc';
@@ -1288,7 +1288,7 @@ class AdminDashboardController extends Controller
         if ($search !== '') {
             $searchTerm = '%' . $search . '%';
             $query->where(function ($q) use ($searchTerm) {
-                foreach (['date_procured', 'car_make', 'car_model', 'car_year', 'auction_site', 'state', 'shipping', 'trucking_fee', 'status'] as $field) {
+                foreach (['date_procured', 'car_make', 'car_model', 'car_year', 'vin', 'auction_site', 'state', 'shipping', 'trucking_fee', 'status'] as $field) {
                     $q->orWhere($field, 'like', $searchTerm);
                 }
             });
@@ -1326,6 +1326,7 @@ class AdminDashboardController extends Controller
             'car_make' => 'nullable|string|max:100',
             'car_model' => 'nullable|string|max:100',
             'car_year' => 'nullable|string|max:10',
+            'vin' => 'nullable|string|max:32',
             'price_usd' => 'nullable|numeric',
             'auction_charge_usd' => 'nullable|numeric',
             'auction_site' => 'nullable|string|in:copart,iaai,manheim,avc,dealership',
@@ -1389,6 +1390,7 @@ class AdminDashboardController extends Controller
             'car_make' => 'nullable|string|max:100',
             'car_model' => 'nullable|string|max:100',
             'car_year' => 'nullable|string|max:10',
+            'vin' => 'nullable|string|max:32',
             'price_usd' => 'nullable|numeric',
             'auction_charge_usd' => 'nullable|numeric',
             'auction_site' => 'nullable|string|in:copart,iaai,manheim,avc,dealership',

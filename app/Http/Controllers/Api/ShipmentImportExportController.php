@@ -407,6 +407,7 @@ class ShipmentImportExportController extends Controller
                 $carMake = trim((string) $this->spreadsheetRowValue($row, $headerMap, 'carmaker'));
                 $carModel = trim((string) $this->spreadsheetRowValue($row, $headerMap, 'carmodel'));
                 $carYear = trim((string) $this->spreadsheetRowValue($row, $headerMap, 'year'));
+                $vin = trim((string) $this->spreadsheetRowValue($row, $headerMap, 'vin'));
                 $auctionSite = strtolower(trim((string) $this->spreadsheetRowValue($row, $headerMap, 'auctionsite')));
                 $status = strtolower(trim((string) ($this->spreadsheetRowValue($row, $headerMap, 'status') ?? 'pending')));
 
@@ -428,6 +429,7 @@ class ShipmentImportExportController extends Controller
                     'car_make' => $carMake,
                     'car_model' => $carModel,
                     'car_year' => $carYear ?: null,
+                    'vin' => $vin ?: null,
                     'price_usd' => $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'priceusd')),
                     'auction_charge_usd' => $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'auctionchargeusd')),
                     'auction_site' => $auctionSite,
@@ -456,11 +458,11 @@ class ShipmentImportExportController extends Controller
             $records = DB::table('procurements')->orderBy('created_at', 'desc')->get();
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
-            $headers = ['DATE PROCURED', 'CAR MAKER', 'CAR MODEL', '#', 'YEAR', 'PRICE(USD)', 'AUCTION CHARGE(USD)', 'AUCTION SITE', 'STATE', 'TRUCKING', 'SHIPPING', 'ARRIVAL DATE', 'PROFIT(NGN)', 'TRUCKING FEE', 'STATUS'];
+            $headers = ['DATE PROCURED', 'CAR MAKER', 'CAR MODEL', '#', 'YEAR', 'VIN', 'PRICE(USD)', 'AUCTION CHARGE(USD)', 'AUCTION SITE', 'STATE', 'TRUCKING', 'SHIPPING', 'ARRIVAL DATE', 'PROFIT(NGN)', 'TRUCKING FEE', 'STATUS'];
             $sheet->fromArray($headers, null, 'A1');
             $row = 2;
             foreach ($records as $index => $record) {
-                $sheet->fromArray([$record->date_procured, $record->car_make, $record->car_model, $index + 1, $record->car_year, $record->price_usd, $record->auction_charge_usd, $record->auction_site, $record->state, $record->trucking, $record->shipping, $record->arrival_date, $record->profit_ngn, $record->trucking_fee, $record->status], null, 'A' . $row++);
+                $sheet->fromArray([$record->date_procured, $record->car_make, $record->car_model, $index + 1, $record->car_year, $record->vin, $record->price_usd, $record->auction_charge_usd, $record->auction_site, $record->state, $record->trucking, $record->shipping, $record->arrival_date, $record->profit_ngn, $record->trucking_fee, $record->status], null, 'A' . $row++);
             }
             $tempFile = tempnam(sys_get_temp_dir(), 'procurements_');
             (new Xlsx($spreadsheet))->save($tempFile);

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\AdminDashboardController;
 
 class AdminServiceEmailNotificationsTest extends TestCase
 {
+
     protected function setUp(): void
     {
         parent::setUp();
