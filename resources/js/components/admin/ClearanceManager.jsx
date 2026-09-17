@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
+import InvoiceGenerator from './InvoiceGenerator';
 
 const emptyForm = {
     item: '',
@@ -23,6 +24,8 @@ function ClearanceManager() {
     const [formData, setFormData] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedRecordForInvoice, setSelectedRecordForInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [message, setMessage] = useState('');
@@ -166,6 +169,7 @@ function ClearanceManager() {
                                 <td className="px-md py-sm">{record.total_paid || '—'}</td>
                                 <td className="px-md py-sm">{record.profit || '—'}</td>
                                 <td className="px-md py-sm">
+                                    <button onClick={() => { setSelectedRecordForInvoice(record); setShowInvoiceModal(true); }} className="text-blue-400 mr-sm">Invoice</button>
                                     <button onClick={() => edit(record)} className="text-secondary mr-sm">Edit</button>
                                     <button onClick={() => remove(record.id)} className="text-red-400">Delete</button>
                                 </td>
@@ -254,6 +258,14 @@ function ClearanceManager() {
                         </div>
                     </form>
                 </div>
+            )}
+
+            {showInvoiceModal && selectedRecordForInvoice && (
+                <InvoiceGenerator
+                    service="clearances"
+                    record={selectedRecordForInvoice}
+                    onClose={() => { setShowInvoiceModal(false); setSelectedRecordForInvoice(null); }}
+                />
             )}
         </div>
     );

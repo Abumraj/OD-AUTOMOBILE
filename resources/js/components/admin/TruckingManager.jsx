@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ServiceFilterBar from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
+import InvoiceGenerator from './InvoiceGenerator';
 
 function ProcurementManager() {
     const { confirm } = useConfirmation();
@@ -11,6 +12,8 @@ function ProcurementManager() {
     const [filters, setFilters] = useState({ date_from: '', date_to: '', status: '', shipping_type: '', column: '' });
     const [showModal, setShowModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedRecordForInvoice, setSelectedRecordForInvoice] = useState(null);
     const [notification, setNotification] = useState(null);
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -387,6 +390,7 @@ function ProcurementManager() {
                                 <td className="px-md py-sm text-on-surface">{record.shipping_line_name || '—'}</td>
                                 <td className="px-md py-sm">
                                     <div className="flex gap-sm">
+                                        <button onClick={() => { setSelectedRecordForInvoice(record); setShowInvoiceModal(true); }} className="text-blue-400 hover:opacity-80">Invoice</button>
                                         <button onClick={() => openEditModal(record)} className="text-secondary hover:opacity-80">Edit</button>
                                         <button onClick={() => handleDelete(record.id)} className="text-red-400 hover:opacity-80">Delete</button>
                                     </div>
@@ -573,6 +577,14 @@ function ProcurementManager() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showInvoiceModal && selectedRecordForInvoice && (
+                <InvoiceGenerator
+                    service="truckings"
+                    record={selectedRecordForInvoice}
+                    onClose={() => { setShowInvoiceModal(false); setSelectedRecordForInvoice(null); }}
+                />
             )}
         </div>
     );

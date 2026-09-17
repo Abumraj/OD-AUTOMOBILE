@@ -1,68 +1,63 @@
 import React, { useState, useEffect } from 'react';
 
-function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
+const SERVICE_LABELS = {
+    procurements: 'Procurement',
+    autosales: 'Autosales',
+    truckings: 'Trucking',
+    clearances: 'Clearance',
+};
+
+function InvoiceGenerator({ service, record, onClose, onGenerated }) {
     const [loading, setLoading] = useState(false);
-    const [receipts, setReceipts] = useState([]);
-    const [loadingReceipts, setLoadingReceipts] = useState(true);
+    const [invoices, setInvoices] = useState([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(true);
     const [notification, setNotification] = useState(null);
     const [formData, setFormData] = useState({
-        stage: shipment?.status || 'shipping',
-        date_received: new Date().toISOString().split('T')[0],
-        location_received: '',
-        eta: '',
+        date_issued: new Date().toISOString().split('T')[0],
         notes: '',
-        send_email: false
+        send_email: false,
     });
 
-    useEffect(() => {
-        if (shipment) {
-            setFormData(prev => ({
-                ...prev,
-                location_received: `${shipment.origin_port || ''}, ${shipment.origin_country || ''}`.trim().replace(/^,\s*|,\s*$/g, ''),
-                eta: (shipment.estimated_arrival_date || shipment.eta || '').slice(0, 10)
-            }));
-            fetchReceipts();
-        }
-    }, [shipment]);
+    const customerEmail = record?.customer_email || record?.client_email;
+    const serviceLabel = SERVICE_LABELS[service] || service;
 
-    const fetchReceipts = async () => {
+    useEffect(() => {
+        if (record) {
+            fetchInvoices();
+        }
+    }, [record]);
+
+    const fetchInvoices = async () => {
         try {
-            const response = await fetch(`/api/admin/shipments/${shipment.id}/dock-receipts`);
+            const response = await fetch(`/api/admin/${service}/${record.id}/invoices`);
             const data = await response.json();
-            setReceipts(data);
+            setInvoices(data);
         } catch (error) {
-            console.error('Error fetching receipts:', error);
+            console.error('Error fetching invoices:', error);
         } finally {
-            setLoadingReceipts(false);
+            setLoadingInvoices(false);
         }
     };
 
     const handlePreview = async () => {
         try {
-            // Create form data without send_email for preview
             const previewData = {
-                stage: formData.stage,
-                date_received: formData.date_received,
-                location_received: formData.location_received,
-                eta: formData.eta,
-                notes: formData.notes
+                date_issued: formData.date_issued,
+                notes: formData.notes,
             };
 
-            // Open preview in new window
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `/api/admin/shipments/${shipment.id}/dock-receipt/preview`;
+            form.action = `/api/admin/${service}/${record.id}/invoice/preview`;
             form.target = '_blank';
 
-            // Add CSRF token and data
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
             csrfInput.name = '_token';
             csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
             form.appendChild(csrfInput);
 
-            // Add form data as JSON
-            Object.keys(previewData).forEach(key => {
+            Object.keys(previewData).forEach((key) => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
@@ -76,8 +71,8 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
 
             showNotification('Opening preview in new window...', 'success');
         } catch (error) {
-            console.error('Error previewing receipt:', error);
-            showNotification('Failed to preview receipt', 'error');
+            console.error('Error previewing invoice:', error);
+            showNotification('Failed to preview invoice', 'error');
         }
     };
 
@@ -86,70 +81,54 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
         setLoading(true);
 
         try {
-            const response = await fetch(`/api/admin/shipments/${shipment.id}/dock-receipt`, {
+            const response = await fetch(`/api/admin/${service}/${record.id}/invoice`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                showNotification(data.message || 'Dock receipt generated successfully', 'success');
-                fetchReceipts();
+                showNotification(data.message || 'Invoice generated successfully', 'success');
+                fetchInvoices();
                 if (onGenerated) onGenerated(data);
-                
-                // Auto-download the receipt
+
                 setTimeout(() => {
-                    handleDownload(data.receipt_id);
+                    handleDownload(data.invoice_id);
                 }, 500);
             } else {
-                showNotification(data.error || 'Failed to generate receipt', 'error');
+                showNotification(data.error || 'Failed to generate invoice', 'error');
             }
         } catch (error) {
-            console.error('Error generating receipt:', error);
-            showNotification('Failed to generate receipt', 'error');
+            console.error('Error generating invoice:', error);
+            showNotification('Failed to generate invoice', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDownload = async (receiptId) => {
+    const handleDownload = async (invoiceId) => {
         try {
-            const response = await fetch(`/api/admin/dock-receipts/${receiptId}/download`);
+            const response = await fetch(`/api/admin/invoices/${invoiceId}/download`);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `dock-receipt-${receiptId}.pdf`;
+            a.download = `invoice-${invoiceId}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
-            console.error('Error downloading receipt:', error);
-            showNotification('Failed to download receipt', 'error');
+            console.error('Error downloading invoice:', error);
+            showNotification('Failed to download invoice', 'error');
         }
     };
 
     const showNotification = (message, type) => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), 3000);
-    };
-
-    const getStageLabel = (stage) => {
-        const stages = {
-            pending: 'Pending Processing',
-            auction_won: 'Auction Won',
-            documentation: 'Documentation',
-            shipping: 'Ready for Shipping',
-            in_transit: 'In Transit',
-            customs: 'Customs Clearance',
-            delivered: 'Delivered'
-        };
-        return stages[stage] || stage;
     };
 
     return (
@@ -164,88 +143,33 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
                 <div className="flex items-center justify-between mb-lg">
                     <div>
                         <h3 className="font-headline-md text-white flex items-center gap-sm">
-                            <span className="material-symbols-outlined text-secondary-container">receipt_long</span>
-                            Dock Receipt Generator
+                            <span className="material-symbols-outlined text-secondary-container">request_quote</span>
+                            Invoice Generator
                         </h3>
                         <p className="font-body-sm text-on-surface-variant mt-xs">
-                            Generate official dock receipt for {shipment?.reference_number}
+                            Generate {serviceLabel} invoice for {record?.customer_name || record?.client_name || 'this record'}
                         </p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-on-surface-variant hover:text-white transition-colors"
-                    >
+                    <button onClick={onClose} className="text-on-surface-variant hover:text-white transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
                     <div>
-                        <h4 className="font-title-md text-white mb-md">Generate New Receipt</h4>
+                        <h4 className="font-title-md text-white mb-md">Generate New Invoice</h4>
                         <form onSubmit={handleGenerate} className="space-y-md">
                             <div>
                                 <label className="block font-label-md text-on-surface-variant mb-xs">
-                                    Shipment Stage *
-                                </label>
-                                <select
-                                    required
-                                    value={formData.stage}
-                                    onChange={(e) => setFormData({...formData, stage: e.target.value})}
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
-                                >
-                                    <option value="pending">Pending Processing</option>
-                                    <option value="auction_won">Auction Won</option>
-                                    <option value="documentation">Documentation</option>
-                                    <option value="shipping">Ready for Shipping</option>
-                                    <option value="in_transit">In Transit</option>
-                                    <option value="customs">Customs Clearance</option>
-                                    <option value="delivered">Delivered</option>
-                                </select>
-                                <p className="font-caption text-on-surface-variant mt-xs">
-                                    Select the current stage of the shipment
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block font-label-md text-on-surface-variant mb-xs">
-                                    Date Received *
+                                    Date Issued *
                                 </label>
                                 <input
                                     type="date"
                                     required
-                                    value={formData.date_received}
-                                    onChange={(e) => setFormData({...formData, date_received: e.target.value})}
+                                    value={formData.date_issued}
+                                    onChange={(e) => setFormData({ ...formData, date_issued: e.target.value })}
                                     className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                 />
-                            </div>
-
-                            <div>
-                                <label className="block font-label-md text-on-surface-variant mb-xs">
-                                    Location Received *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.location_received}
-                                    onChange={(e) => setFormData({...formData, location_received: e.target.value})}
-                                    placeholder="e.g., Baltimore Port, USA"
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block font-label-md text-on-surface-variant mb-xs">
-                                    ETA
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.eta}
-                                    onChange={(e) => setFormData({...formData, eta: e.target.value})}
-                                    className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
-                                />
-                                <p className="font-caption text-on-surface-variant mt-xs">
-                                    Estimated time of arrival shown on the receipt
-                                </p>
                             </div>
 
                             <div>
@@ -254,9 +178,9 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
                                 </label>
                                 <textarea
                                     value={formData.notes}
-                                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows="3"
-                                    placeholder="Any additional information for the receipt..."
+                                    placeholder="Any additional information for the invoice..."
                                     className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                 ></textarea>
                             </div>
@@ -266,17 +190,17 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
                                     <input
                                         type="checkbox"
                                         checked={formData.send_email}
-                                        onChange={(e) => setFormData({...formData, send_email: e.target.checked})}
+                                        onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
                                         className="w-5 h-5 rounded border-outline accent-secondary-container"
                                     />
                                     <div className="flex-1">
                                         <div className="font-label-md text-white flex items-center gap-xs">
                                             <span className="material-symbols-outlined text-sm text-secondary-container">email</span>
-                                            Send receipt to customer email
+                                            Send invoice to customer email
                                         </div>
                                         <div className="font-caption text-on-surface-variant mt-xs">
-                                            {shipment?.customer_email ? (
-                                                <>Email will be sent to: <span className="text-white">{shipment.customer_email}</span></>
+                                            {customerEmail ? (
+                                                <>Email will be sent to: <span className="text-white">{customerEmail}</span></>
                                             ) : (
                                                 <span className="text-red-400">No customer email available</span>
                                             )}
@@ -307,7 +231,7 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
                                         </>
                                     ) : (
                                         <>
-                                            <span className="material-symbols-outlined">{formData.send_email ? 'send' : 'receipt_long'}</span>
+                                            <span className="material-symbols-outlined">{formData.send_email ? 'send' : 'request_quote'}</span>
                                             {formData.send_email ? 'Generate & Email' : 'Generate'}
                                         </>
                                     )}
@@ -317,59 +241,51 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
                     </div>
 
                     <div>
-                        <h4 className="font-title-md text-white mb-md">Previous Receipts</h4>
-                        {loadingReceipts ? (
+                        <h4 className="font-title-md text-white mb-md">Previous Invoices</h4>
+                        {loadingInvoices ? (
                             <div className="text-center py-lg text-on-surface-variant">
                                 <span className="material-symbols-outlined animate-spin text-4xl">refresh</span>
                             </div>
-                        ) : receipts.length === 0 ? (
+                        ) : invoices.length === 0 ? (
                             <div className="bg-surface-container-low rounded-lg p-lg text-center">
-                                <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-sm">receipt_long</span>
+                                <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-sm">request_quote</span>
                                 <p className="font-body-md text-on-surface-variant">
-                                    No receipts generated yet
+                                    No invoices generated yet
                                 </p>
                             </div>
                         ) : (
                             <div className="space-y-sm max-h-[500px] overflow-y-auto">
-                                {receipts.map(receipt => (
+                                {invoices.map((invoice) => (
                                     <div
-                                        key={receipt.id}
+                                        key={invoice.id}
                                         className="bg-surface-container-low rounded-lg p-md border border-white/5 hover:border-secondary-container/50 transition-all"
                                     >
                                         <div className="flex items-start justify-between mb-sm">
                                             <div className="flex-1">
                                                 <div className="font-label-md text-white mb-xs">
-                                                    {receipt.receipt_number}
+                                                    {invoice.invoice_number}
                                                 </div>
                                                 <div className="flex items-center gap-xs mb-xs">
-                                                    <span className="material-symbols-outlined text-secondary-container text-sm">local_shipping</span>
+                                                    <span className="material-symbols-outlined text-secondary-container text-sm">payments</span>
                                                     <span className="font-caption text-on-surface-variant">
-                                                        {receipt.stage_name}
+                                                        {invoice.currency === 'USD' ? '$' : '₦'}{Number(invoice.amount || 0).toFixed(2)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-xs">
                                                     <span className="material-symbols-outlined text-on-surface-variant text-sm">calendar_today</span>
                                                     <span className="font-caption text-on-surface-variant">
-                                                        {new Date(receipt.date_received).toLocaleDateString()}
+                                                        {new Date(invoice.date_issued).toLocaleDateString()}
                                                     </span>
                                                 </div>
                                             </div>
                                             <button
-                                                onClick={() => handleDownload(receipt.id)}
+                                                onClick={() => handleDownload(invoice.id)}
                                                 className="bg-secondary-container/20 text-secondary-container px-sm py-xs rounded-lg hover:bg-secondary-container/30 transition-all flex items-center gap-xs"
                                             >
                                                 <span className="material-symbols-outlined text-sm">download</span>
                                                 <span className="font-caption">Download</span>
                                             </button>
                                         </div>
-                                        {receipt.location_received && (
-                                            <div className="flex items-center gap-xs mt-sm pt-sm border-t border-white/5">
-                                                <span className="material-symbols-outlined text-on-surface-variant text-sm">location_on</span>
-                                                <span className="font-caption text-on-surface-variant">
-                                                    {receipt.location_received}
-                                                </span>
-                                            </div>
-                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -381,4 +297,4 @@ function DockReceiptGenerator({ shipment, onClose, onGenerated }) {
     );
 }
 
-export default DockReceiptGenerator;
+export default InvoiceGenerator;

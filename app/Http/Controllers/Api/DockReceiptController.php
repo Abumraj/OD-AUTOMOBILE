@@ -38,6 +38,7 @@ class DockReceiptController extends Controller
             'stage' => 'required|string|in:pending,auction_won,documentation,shipping,in_transit,customs,delivered',
             'date_received' => 'nullable|date',
             'location_received' => 'nullable|string|max:255',
+            'eta' => 'nullable|date',
             'notes' => 'nullable|string',
             'send_email' => 'nullable|boolean',
             'send_whatsapp' => 'nullable|boolean'
@@ -84,6 +85,7 @@ class DockReceiptController extends Controller
                 'vehicle_description' => $vehicleDescription,
                 'date_received' => $validated['date_received'] ?? now()->toDateString(),
                 'location_received' => $location,
+                'eta' => $validated['eta'] ?? ($record->estimated_arrival_date ?? $record->eta ?? null),
                 'notes' => $validated['notes'] ?? null,
                 'generated_by' => 'Admin',
                 'generated_at' => now(),
@@ -215,6 +217,7 @@ class DockReceiptController extends Controller
             'stage' => 'required|string|in:pending,auction_won,documentation,shipping,in_transit,customs,delivered',
             'date_received' => 'nullable|date',
             'location_received' => 'nullable|string|max:255',
+            'eta' => 'nullable|date',
             'notes' => 'nullable|string'
         ]);
 
@@ -236,6 +239,7 @@ class DockReceiptController extends Controller
                 'vehicle_description' => $this->getVehicleDescription($record),
                 'date_received' => $validated['date_received'] ?? now()->toDateString(),
                 'location_received' => $validated['location_received'] ?? ($record->origin_port ?? $record->location ?? 'N/A'),
+                'eta' => $validated['eta'] ?? ($record->estimated_arrival_date ?? $record->eta ?? null),
                 'notes' => $validated['notes'] ?? null,
                 'stage' => $validated['stage'],
                 'generated_at' => now()

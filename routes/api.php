@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DeploymentController;
 use App\Http\Controllers\Api\ShippingConfigController;
 use App\Http\Controllers\Api\ShipmentImportExportController;
 use App\Http\Controllers\Api\DockReceiptController;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ImageUploadController;
 
 Route::middleware('api')->group(function () {
@@ -219,6 +220,25 @@ Route::middleware('api')->group(function () {
         Route::get('/clearances/{recordId}/dock-receipts', [DockReceiptController::class, 'getClearanceReceipts']);
 
         Route::get('/dock-receipts/{receiptId}/download', [DockReceiptController::class, 'downloadReceipt']);
+
+        // Invoices (shipments use the dock receipt instead)
+        Route::post('/procurements/{recordId}/invoice/preview', [InvoiceController::class, 'previewProcurementInvoice']);
+        Route::post('/procurements/{recordId}/invoice', [InvoiceController::class, 'generateProcurementInvoice']);
+        Route::get('/procurements/{recordId}/invoices', [InvoiceController::class, 'getProcurementInvoices']);
+
+        Route::post('/autosales/{recordId}/invoice/preview', [InvoiceController::class, 'previewAutosalesInvoice']);
+        Route::post('/autosales/{recordId}/invoice', [InvoiceController::class, 'generateAutosalesInvoice']);
+        Route::get('/autosales/{recordId}/invoices', [InvoiceController::class, 'getAutosalesInvoices']);
+
+        Route::post('/truckings/{recordId}/invoice/preview', [InvoiceController::class, 'previewTruckingInvoice']);
+        Route::post('/truckings/{recordId}/invoice', [InvoiceController::class, 'generateTruckingInvoice']);
+        Route::get('/truckings/{recordId}/invoices', [InvoiceController::class, 'getTruckingInvoices']);
+
+        Route::post('/clearances/{recordId}/invoice/preview', [InvoiceController::class, 'previewClearanceInvoice']);
+        Route::post('/clearances/{recordId}/invoice', [InvoiceController::class, 'generateClearanceInvoice']);
+        Route::get('/clearances/{recordId}/invoices', [InvoiceController::class, 'getClearanceInvoices']);
+
+        Route::get('/invoices/{invoiceId}/download', [InvoiceController::class, 'downloadInvoice']);
 
         // Analytics
         Route::get('/analytics', [AdminDashboardController::class, 'getAnalytics']);
