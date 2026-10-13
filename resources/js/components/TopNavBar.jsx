@@ -60,6 +60,13 @@ function TopNavBar() {
                     </button>
 
                     <Link
+                        to="/portal"
+                        className="hidden sm:inline-block text-on-surface font-label-md text-label-md px-3 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition-colors text-sm"
+                    >
+                        Client Portal
+                    </Link>
+
+                    <Link
                         to="/quote"
                         className="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-3 md:px-4 py-2 rounded-lg hover:opacity-80 transition-opacity active:scale-95 duration-150 text-sm md:text-base"
                     >

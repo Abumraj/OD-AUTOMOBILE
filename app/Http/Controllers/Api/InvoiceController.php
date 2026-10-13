@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
@@ -55,7 +56,10 @@ class InvoiceController extends Controller
 
             $invoiceNumber = 'INV-' . date('Y') . '-' . str_pad(DB::table('invoices')->count() + 1, 6, '0', STR_PAD_LEFT);
 
-            $invoiceId = DB::table('invoices')->insertGetId([
+            $dateIssued = $validated['date_issued'] ?? now()->toDateString();
+            $portalFields = $this->portalInvoiceFields($record, $dateIssued);
+
+            $invoiceId = DB::table('invoices')->insertGetId($portalFields + [
                 'invoice_number' => $invoiceNumber,
                 'record_type' => $config['table'],
                 'record_id' => $recordId,
@@ -270,6 +274,29 @@ class InvoiceController extends Controller
                 'generated_by' => $invoice->generated_by,
             ];
         }));
+    }
+
+    /**
+     * Customer-portal fields for a new invoice: which customer it belongs to and,
+     * for customers on credit terms, when payment falls due.
+     */
+    private function portalInvoiceFields($record, string $dateIssued): array
+    {
+        $fields = [];
+        $customerId = $record->customer_id ?? null;
+
+        if ($customerId && Schema::hasColumn('invoices', 'customer_id')) {
+            $fields['customer_id'] = $customerId;
+        }
+
+        if ($customerId && Schema::hasColumn('invoices', 'due_date')) {
+            $terms = (int) DB::table('customers')->where('id', $customerId)->value('credit_terms_days');
+            if ($terms > 0) {
+                $fields['due_date'] = date('Y-m-d', strtotime($dateIssued . " +{$terms} days"));
+            }
+        }
+
+        return $fields;
     }
 
     // Note: profit columns are intentionally never read here — invoices show what the

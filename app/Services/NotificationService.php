@@ -27,6 +27,10 @@ class NotificationService
             return false;
         }
 
+        if (!$this->channelAllowed('email', $templateSlug, $to, null)) {
+            return false;
+        }
+
         try {
             $template = DB::table('email_templates')
                 ->where('slug', $templateSlug)
@@ -93,6 +97,10 @@ class NotificationService
             return false;
         }
 
+        if (!$this->channelAllowed('sms', $templateSlug, null, $to)) {
+            return false;
+        }
+
         try {
             $result = $this->termiiService->sendTemplatedSMS($templateSlug, $to, $variables);
             return $result['success'] ?? false;
@@ -110,6 +118,10 @@ class NotificationService
     public function sendWhatsApp($templateSlug, $to, $variables = [], $attachment = null)
     {
         if (empty($to)) {
+            return false;
+        }
+
+        if (!$this->channelAllowed('whatsapp', $templateSlug, null, $to)) {
             return false;
         }
 
@@ -133,6 +145,46 @@ class NotificationService
         } catch (\Exception $e) {
             Log::error('Failed to send WhatsApp notification', ['to' => $to, 'template' => $templateSlug, 'error' => $e->getMessage()]);
             return false;
+        }
+    }
+
+    /**
+     * Honour a business's portal notification preferences. Recipients that are not
+     * portal customers are unaffected. Portal notices carry their own category check.
+     */
+    protected function channelAllowed($channel, $templateSlug, $email = null, $phone = null)
+    {
+        try {
+            $customer = null;
+
+            if ($email) {
+                $needle = strtolower(trim($email));
+                $customer = DB::table('customers')->whereRaw('LOWER(email) = ?', [$needle])->first();
+                if (!$customer) {
+                    $customerId = DB::table('customer_users')->whereRaw('LOWER(email) = ?', [$needle])->value('customer_id');
+                    $customer = $customerId ? DB::table('customers')->where('id', $customerId)->first() : null;
+                }
+            } elseif ($phone) {
+                $customer = DB::table('customers')->where('phone', $phone)->first();
+            }
+
+            if (!$customer || empty($customer->notification_prefs)) {
+                return true;
+            }
+
+            $prefs = json_decode($customer->notification_prefs, true) ?: [];
+            if (array_key_exists($channel, $prefs) && !$prefs[$channel]) {
+                return false;
+            }
+
+            if ($templateSlug !== 'portal-notice' && array_key_exists('shipment_updates', $prefs) && !$prefs['shipment_updates']) {
+                return false;
+            }
+
+            return true;
+        } catch (Throwable $e) {
+            // Before the portal migration has run there is nothing to check.
+            return true;
         }
     }
 

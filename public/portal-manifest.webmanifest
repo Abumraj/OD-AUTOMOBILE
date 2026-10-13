@@ -1,0 +1,14 @@
+{
+    "name": "OD Automotive Business Portal",
+    "short_name": "OD Portal",
+    "description": "Your services, vehicles, invoices and documents from OD Automotive & Logistics.",
+    "start_url": "/portal",
+    "scope": "/portal",
+    "display": "standalone",
+    "background_color": "#121414",
+    "theme_color": "#0d0d6b",
+    "icons": [
+        { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+        { "src": "/logo-dark.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    ]
+}

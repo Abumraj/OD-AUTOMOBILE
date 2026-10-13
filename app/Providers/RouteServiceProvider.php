@@ -18,6 +18,14 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->ip());
         });
 
+        // Portal sign-in, registration and password reset: brute-force protection keyed by IP.
+        RateLimiter::for('portal-auth', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+        RateLimiter::for('portal-reset', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

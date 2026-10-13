@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\ShipmentImportExportController;
 use App\Http\Controllers\Api\DockReceiptController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ImageUploadController;
+use App\Http\Controllers\Api\PortalAdminController;
+use App\Http\Controllers\Api\Portal\PortalAuthController;
+use App\Http\Controllers\Api\Portal\PortalDataController;
+use App\Http\Controllers\Api\Portal\PortalActionController;
 
 Route::middleware('api')->group(function () {
     Route::post('/quotes', [QuoteController::class, 'store']);
@@ -249,6 +253,109 @@ Route::middleware('api')->group(function () {
         Route::post('/admin-users', [AdminDashboardController::class, 'createAdminUser']);
         Route::put('/admin-users/{id}', [AdminDashboardController::class, 'updateAdminUser']);
         Route::delete('/admin-users/{id}', [AdminDashboardController::class, 'deleteAdminUser']);
+
+        // Customer portal management
+        Route::prefix('portal')->group(function () {
+            Route::get('/summary', [PortalAdminController::class, 'summary']);
+            Route::get('/settings', [PortalAdminController::class, 'settings']);
+            Route::put('/settings', [PortalAdminController::class, 'updateSettings']);
+
+            Route::get('/customers', [PortalAdminController::class, 'customers']);
+            Route::post('/customers', [PortalAdminController::class, 'createCustomer']);
+            Route::get('/customers/{id}', [PortalAdminController::class, 'customer']);
+            Route::put('/customers/{id}', [PortalAdminController::class, 'updateCustomer']);
+            Route::delete('/customers/{id}', [PortalAdminController::class, 'deleteCustomer']);
+            Route::post('/customers/{id}/status', [PortalAdminController::class, 'setCustomerStatus']);
+            Route::post('/customers/{id}/link', [PortalAdminController::class, 'linkRecords']);
+            Route::post('/customers/{id}/aliases', [PortalAdminController::class, 'addAliases']);
+            Route::delete('/customers/{id}/aliases/{aliasId}', [PortalAdminController::class, 'removeAlias']);
+            Route::get('/legacy-clients', [PortalAdminController::class, 'legacyClients']);
+            Route::post('/customers/{id}/assign-record', [PortalAdminController::class, 'assignRecord']);
+            Route::post('/customers/{id}/reset-password', [PortalAdminController::class, 'resetCustomerPassword']);
+            Route::post('/customers/{id}/credit', [PortalAdminController::class, 'addCredit']);
+            Route::post('/customers/{id}/documents', [PortalAdminController::class, 'uploadDocument']);
+            Route::get('/documents/{id}/download', [PortalAdminController::class, 'downloadDocument']);
+            Route::delete('/documents/{id}', [PortalAdminController::class, 'deleteDocument']);
+
+            Route::get('/invoices', [PortalAdminController::class, 'invoices']);
+            Route::put('/invoices/{id}', [PortalAdminController::class, 'updateInvoice']);
+            Route::post('/invoices/{id}/payments', [PortalAdminController::class, 'recordPayment']);
+            Route::get('/payments', [PortalAdminController::class, 'payments']);
+            Route::post('/payments/{id}/review', [PortalAdminController::class, 'reviewPayment']);
+            Route::get('/payments/{id}/proof', [PortalAdminController::class, 'paymentProof']);
+
+            Route::get('/requests', [PortalAdminController::class, 'requests']);
+            Route::post('/quotes/{id}/price', [PortalAdminController::class, 'priceQuote']);
+
+            Route::get('/tickets', [PortalAdminController::class, 'tickets']);
+            Route::get('/tickets/{id}', [PortalAdminController::class, 'ticket']);
+            Route::post('/tickets/{id}/reply', [PortalAdminController::class, 'replyTicket']);
+            Route::put('/tickets/{id}/status', [PortalAdminController::class, 'setTicketStatus']);
+        });
+    });
+
+    // Customer (business) portal: public auth routes
+    Route::prefix('portal')->group(function () {
+        Route::get('/config', [PortalAuthController::class, 'config']);
+        Route::post('/register', [PortalAuthController::class, 'register'])->middleware('throttle:portal-auth');
+        Route::post('/login', [PortalAuthController::class, 'login'])->middleware('throttle:portal-auth');
+        Route::post('/logout', [PortalAuthController::class, 'logout']);
+        Route::get('/check-auth', [PortalAuthController::class, 'checkAuth']);
+        Route::post('/forgot-password', [PortalAuthController::class, 'forgotPassword'])->middleware('throttle:portal-reset');
+        Route::post('/reset-password', [PortalAuthController::class, 'resetPassword'])->middleware('throttle:portal-reset');
+
+        // Customer (business) portal: signed-in routes
+        Route::middleware('customer.auth')->group(function () {
+            Route::get('/me', [PortalAuthController::class, 'me']);
+            Route::put('/profile', [PortalAuthController::class, 'updateProfile']);
+            Route::put('/password', [PortalAuthController::class, 'changePassword']);
+            Route::put('/notification-preferences', [PortalAuthController::class, 'updateNotificationPrefs']);
+
+            Route::get('/team', [PortalAuthController::class, 'team']);
+            Route::post('/team', [PortalAuthController::class, 'addTeamMember']);
+            Route::put('/team/{id}', [PortalAuthController::class, 'updateTeamMember']);
+            Route::delete('/team/{id}', [PortalAuthController::class, 'removeTeamMember']);
+            Route::post('/api-token', [PortalAuthController::class, 'createApiToken']);
+            Route::delete('/api-token', [PortalAuthController::class, 'revokeApiToken']);
+
+            Route::get('/dashboard', [PortalDataController::class, 'dashboard']);
+            Route::get('/history', [PortalDataController::class, 'history']);
+            Route::get('/history/export', [PortalDataController::class, 'exportHistory']);
+            Route::get('/vehicles', [PortalDataController::class, 'vehicles']);
+            Route::get('/vehicles/{id}', [PortalDataController::class, 'vehicle']);
+            Route::get('/analytics', [PortalDataController::class, 'analytics']);
+            Route::get('/alerts', [PortalDataController::class, 'alerts']);
+            Route::get('/reorder/{type}/{id}', [PortalDataController::class, 'reorder']);
+
+            Route::get('/documents', [PortalDataController::class, 'documents']);
+            Route::get('/documents/{id}/download', [PortalDataController::class, 'downloadDocument']);
+            Route::post('/documents', [PortalActionController::class, 'uploadDocument']);
+            Route::delete('/documents/{id}', [PortalActionController::class, 'deleteDocument']);
+            Route::get('/dock-receipts/{id}/download', [PortalDataController::class, 'downloadDockReceipt']);
+
+            Route::get('/invoices', [PortalDataController::class, 'invoices']);
+            Route::get('/invoices/export', [PortalDataController::class, 'exportInvoices']);
+            Route::get('/invoices/{id}/download', [PortalDataController::class, 'downloadInvoice']);
+            Route::post('/invoices/{id}/payments', [PortalActionController::class, 'submitPayment']);
+            Route::post('/invoices/{id}/apply-credit', [PortalActionController::class, 'applyCredit']);
+            Route::get('/payments/{id}/proof', [PortalDataController::class, 'paymentProof']);
+            Route::get('/statement', [PortalDataController::class, 'statement']);
+            Route::get('/statement/pdf', [PortalDataController::class, 'statementPdf']);
+            Route::get('/credit', [PortalActionController::class, 'creditLedger']);
+
+            Route::get('/quotes', [PortalDataController::class, 'quotes']);
+            Route::post('/quotes/{id}/respond', [PortalActionController::class, 'respondToQuote']);
+
+            Route::get('/requests', [PortalActionController::class, 'requests']);
+            Route::post('/requests', [PortalActionController::class, 'createRequest']);
+            Route::post('/requests/{id}/decision', [PortalActionController::class, 'decideRequest']);
+
+            Route::get('/tickets', [PortalActionController::class, 'tickets']);
+            Route::post('/tickets', [PortalActionController::class, 'createTicket']);
+            Route::get('/tickets/{id}', [PortalActionController::class, 'ticket']);
+            Route::post('/tickets/{id}/messages', [PortalActionController::class, 'replyTicket']);
+            Route::post('/tickets/{id}/close', [PortalActionController::class, 'closeTicket']);
+        });
     });
 
     Route::get('/health', function () {

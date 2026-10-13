@@ -9,6 +9,7 @@ function AdminSidebar({ mobileOpen, onClose, admin }) {
         { path: '/admin', icon: 'dashboard', label: 'Dashboard' },
         { path: '/admin/analytics', icon: 'analytics', label: 'Analytics' },
         { path: '/admin/client-orders', icon: 'person_search', label: 'Client Orders' },
+        { path: '/admin/portal', icon: 'storefront', label: 'Customer Portal' },
         { path: '/admin/shipments', icon: 'local_shipping', label: 'Shipments' },
         { path: '/admin/procurement', icon: 'inventory_2', label: 'Procurement' },
         { path: '/admin/autosales', icon: 'sell', label: 'Autosales' },

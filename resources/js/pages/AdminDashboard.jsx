@@ -31,6 +31,7 @@ import AdminLoginPage from './admin/AdminLoginPage';
 import AdminUsersPage from './admin/AdminUsersPage';
 import ClientOrdersPage from './admin/ClientOrdersPage';
 import RevenueAnalysisPage from './admin/RevenueAnalysisPage';
+import AdminPortalPage from './admin/AdminPortalPage';
 import { ConfirmationProvider } from '../components/admin/ConfirmationProvider';
 
 function AdminDashboard() {
@@ -98,6 +99,7 @@ function AdminDashboard() {
                         <Route path="/" element={<AdminOverview />} />
                         <Route path="/analytics" element={<AdminAnalyticsPage />} />
                         <Route path="/client-orders" element={<ClientOrdersPage />} />
+                        <Route path="/portal" element={<AdminPortalPage />} />
                         <Route path="/shipments" element={<AdminShipmentsPage />} />
                         <Route path="/procurement" element={<ProcurementPage />} />
                         <Route path="/autosales" element={<AutosalesPage />} />

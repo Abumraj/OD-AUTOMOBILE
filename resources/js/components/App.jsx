@@ -14,6 +14,7 @@ import AboutPage from '../pages/AboutPage';
 import LegalPage from '../pages/LegalPage';
 import AdminDashboard from '../pages/AdminDashboard';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
+import PortalApp from '../pages/PortalApp';
 
 function App() {
     return (
@@ -21,6 +22,7 @@ function App() {
             <Routes>
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin/*" element={<AdminDashboard />} />
+                <Route path="/portal/*" element={<PortalApp />} />
                 <Route path="*" element={
                     <div className="bg-primary-container text-on-background font-body-md overflow-x-hidden min-h-screen">
                         <TopNavBar />
