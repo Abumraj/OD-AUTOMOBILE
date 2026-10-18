@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
+import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
 import ServiceFilterBar from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
 import InvoiceGenerator from './InvoiceGenerator';
@@ -87,7 +88,8 @@ function ClearanceManager() {
             body: JSON.stringify(formData),
         });
         const data = await response.json();
-        setMessage(response.ok ? data.message : data.message || 'Unable to save clearance');
+        const receiptError = response.ok && !editingId ? await flushPendingReceipt('clearances', data.id) : null;
+        setMessage(receiptError ? `Saved, but the receipt was not uploaded: ${receiptError}` : response.ok ? data.message : data.message || 'Unable to save clearance');
         if (response.ok) {
             setShowModal(false);
             setEditingId(null);
@@ -251,6 +253,8 @@ function ClearanceManager() {
                                 <input type="number" step="0.01" value={formData.profit} onChange={(event) => update('profit', event.target.value)} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-white" />
                             </label>
                         </div>
+
+                        <SalesReceiptField recordType="clearances" recordId={editingId} />
 
                         <div className="flex justify-end gap-md">
                             <button type="button" onClick={() => setShowModal(false)} className="px-md py-sm rounded-lg border border-outline-variant">Cancel</button>

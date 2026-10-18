@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import portalApi from '../../services/portalApi';
 import { usePortal } from '../../contexts/PortalContext';
-import { Button, Card, Empty, Modal, Notice, PageHeader, Select, Spinner, StatTile, StatusBadge, TextArea, TextInput, formatDate, formatMoney, titleCase, useAction, useLoad } from '../../components/portal/ui';
+import { Button, Card, DataTable, Empty, Modal, Notice, PageHeader, Select, Spinner, StatTile, StatusBadge, TextArea, TextInput, ViewToggle, formatDate, formatMoney, titleCase, useAction, useLoad, useViewMode } from '../../components/portal/ui';
 
 function PayModal({ invoice, methods, bankDetails, credit, currency, onClose, onDone }) {
     const fileRef = useRef(null);
@@ -87,6 +87,7 @@ export default function PortalInvoicesPage() {
     const [message, setMessage] = useState('');
     const [statementCurrency, setStatementCurrency] = useState('');
     const [showStatement, setShowStatement] = useState(false);
+    const [mode, setMode] = useViewMode('invoices');
 
     const currentStatement = useLoad(
         () => portalApi.get('/statement', statementCurrency ? { currency: statementCurrency } : undefined),
@@ -105,6 +106,7 @@ export default function PortalInvoicesPage() {
                 title="Invoices & payments"
                 subtitle={customer?.credit_terms_days > 0 && terms ? `Your account is on ${customer.credit_terms_days}-day credit terms.` : 'Pay invoices and download statements.'}
                 actions={<>
+                    <ViewToggle mode={mode} onChange={setMode} />
                     <a href={portalApi.url('/invoices/export')} className="rounded-lg border border-outline-variant px-md py-2 text-sm font-semibold text-on-surface hover:bg-surface-container-high">Export CSV</a>
                     <Button variant="ghost" onClick={() => setShowStatement((value) => !value)}>{showStatement ? 'Hide statement' : 'Statement'}</Button>
                 </>}
@@ -157,7 +159,28 @@ export default function PortalInvoicesPage() {
                 </Card>
             )}
 
-            {data.items.length === 0 ? <Empty>No invoices yet. They appear here as soon as OD Automotive issues them.</Empty> : (
+            {data.items.length === 0 ? <Empty>No invoices yet. They appear here as soon as OD Automotive issues them.</Empty> : mode === 'table' ? (
+                <DataTable columns={['Invoice', 'VIN / reference', 'Service', 'Issued', 'Due', { label: 'Amount', right: true }, { label: 'Balance', right: true }, 'Status', '']}>
+                    {data.items.map((invoice) => (
+                        <tr key={invoice.id} className="hover:bg-surface-container-high">
+                            <td className="whitespace-nowrap px-md py-3 font-semibold text-white">{invoice.invoice_number}</td>
+                            <td className="px-md py-3 text-on-surface">{invoice.reference ? (invoice.reference_is_vin ? <span className="font-mono text-xs">VIN {invoice.reference}</span> : invoice.reference) : '—'}</td>
+                            <td className="px-md py-3 text-on-surface-variant">{invoice.service}</td>
+                            <td className="whitespace-nowrap px-md py-3 text-on-surface-variant">{formatDate(invoice.date_issued)}</td>
+                            <td className="whitespace-nowrap px-md py-3 text-on-surface-variant">{invoice.due_date ? formatDate(invoice.due_date) : '—'}</td>
+                            <td className="whitespace-nowrap px-md py-3 text-right text-white">{formatMoney(invoice.amount, invoice.currency)}</td>
+                            <td className="whitespace-nowrap px-md py-3 text-right text-on-surface">{formatMoney(invoice.balance, invoice.currency)}</td>
+                            <td className="px-md py-3"><StatusBadge status={invoice.overdue ? 'overdue' : invoice.status} /></td>
+                            <td className="whitespace-nowrap px-md py-3 text-right">
+                                <a href={portalApi.url(`/invoices/${invoice.id}/download`)} className="mr-3 text-secondary hover:underline">PDF</a>
+                                {can('pay') && ['unpaid', 'partial'].includes(invoice.status) && paymentMethods.some((method) => method.kind === 'manual' || method.key === 'account_credit') && (
+                                    <button onClick={() => setPaying(invoice)} className="font-semibold text-secondary hover:underline">Pay</button>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
+            ) : (
                 <div className="space-y-3">
                     {data.items.map((invoice) => (
                         <Card key={invoice.id}>
@@ -167,6 +190,7 @@ export default function PortalInvoicesPage() {
                                         <span className="font-semibold text-white">{invoice.invoice_number}</span>
                                         <StatusBadge status={invoice.overdue ? 'overdue' : invoice.status} />
                                     </div>
+                                    {invoice.reference_is_vin && <div className="mt-1 font-mono text-xs text-on-surface">VIN {invoice.reference}</div>}
                                     <div className="mt-1 text-sm text-on-surface-variant">{invoice.service}{invoice.description ? ` · ${invoice.description}` : ''}</div>
                                     <div className="text-xs text-on-surface-variant">Issued {formatDate(invoice.date_issued)}{invoice.due_date ? ` · Due ${formatDate(invoice.due_date)}` : ''}</div>
                                 </div>

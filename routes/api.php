@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\DockReceiptController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\PortalAdminController;
+use App\Http\Controllers\Api\ServiceReceiptController;
 use App\Http\Controllers\Api\Portal\PortalAuthController;
 use App\Http\Controllers\Api\Portal\PortalDataController;
 use App\Http\Controllers\Api\Portal\PortalActionController;
@@ -254,6 +255,12 @@ Route::middleware('api')->group(function () {
         Route::put('/admin-users/{id}', [AdminDashboardController::class, 'updateAdminUser']);
         Route::delete('/admin-users/{id}', [AdminDashboardController::class, 'deleteAdminUser']);
 
+        // Optional vehicle sales receipts on any service record
+        Route::get('/receipts', [ServiceReceiptController::class, 'index']);
+        Route::post('/receipts', [ServiceReceiptController::class, 'store']);
+        Route::get('/receipts/{id}/download', [ServiceReceiptController::class, 'download']);
+        Route::delete('/receipts/{id}', [ServiceReceiptController::class, 'destroy']);
+
         // Customer portal management
         Route::prefix('portal')->group(function () {
             Route::get('/summary', [PortalAdminController::class, 'summary']);
@@ -332,6 +339,10 @@ Route::middleware('api')->group(function () {
             Route::post('/documents', [PortalActionController::class, 'uploadDocument']);
             Route::delete('/documents/{id}', [PortalActionController::class, 'deleteDocument']);
             Route::get('/dock-receipts/{id}/download', [PortalDataController::class, 'downloadDockReceipt']);
+            Route::get('/receipts', [PortalDataController::class, 'receipts']);
+            Route::post('/receipts', [PortalActionController::class, 'uploadReceipt']);
+            Route::get('/receipts/{id}/download', [PortalDataController::class, 'downloadReceipt']);
+            Route::delete('/receipts/{id}', [PortalActionController::class, 'deleteReceipt']);
 
             Route::get('/invoices', [PortalDataController::class, 'invoices']);
             Route::get('/invoices/export', [PortalDataController::class, 'exportInvoices']);

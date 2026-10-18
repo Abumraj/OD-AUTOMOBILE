@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ShippingLineChart from './ShippingLineChart';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const formatMonthLabel = (monthValue) => {
@@ -215,6 +216,14 @@ function DashboardAnalytics() {
                             <Line type="monotone" dataKey="shipments" stroke="#667eea" strokeWidth={2} dot={{ fill: '#667eea', r: 4 }} />
                         </LineChart>
                     </ResponsiveContainer>
+                </div>
+
+                <div className="bg-surface-container rounded-xl p-lg border border-white/10 lg:col-span-2">
+                    <h3 className="font-title-lg text-white mb-md flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-secondary-container">directions_boat</span>
+                        Shipping Line Usage
+                    </h3>
+                    <ShippingLineChart lines={analytics.shipping_lines || []} />
                 </div>
             </div>
         </div>

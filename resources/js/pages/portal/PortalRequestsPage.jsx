@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import portalApi from '../../services/portalApi';
 import { usePortal } from '../../contexts/PortalContext';
@@ -15,6 +15,7 @@ const EMPTY_FORM = { type: 'quote', vehicle_year: '', vehicle_make: '', vehicle_
 
 function NewRequestForm({ allowed, prefill, onDone }) {
     const { busy, error, run } = useAction();
+    const receiptRef = useRef(null);
     const [form, setForm] = useState({ ...EMPTY_FORM, ...(prefill || {}), type: allowed.includes(prefill?.type) ? prefill.type : allowed[0] || 'quote' });
     const [message, setMessage] = useState('');
     const set = (key) => (event) => setForm({ ...form, [key]: event.target.value });
@@ -25,10 +26,21 @@ function NewRequestForm({ allowed, prefill, onDone }) {
         setMessage('');
         const payload = { ...form };
         Object.keys(payload).forEach((key) => payload[key] === '' && delete payload[key]);
-        const result = await run(() => portalApi.post('/requests', payload));
+
+        // The vehicle sales receipt is optional; a request with one is sent as a file upload.
+        const receipt = receiptRef.current?.files?.[0];
+        const result = await run(() => {
+            if (!receipt) return portalApi.post('/requests', payload);
+            const body = new FormData();
+            Object.entries(payload).forEach(([key, value]) => body.append(key, value));
+            body.append('receipt', receipt);
+            return portalApi.upload('/requests', body);
+        });
+
         if (result) {
             setMessage(result.message);
             setForm({ ...EMPTY_FORM, type: form.type });
+            if (receiptRef.current) receiptRef.current.value = '';
             onDone();
         }
     };
@@ -61,6 +73,11 @@ function NewRequestForm({ allowed, prefill, onDone }) {
                 </>
             )}
             <TextArea label={isAuction ? 'Requirements, lot link or colour preferences' : 'Notes'} rows={3} value={form.notes} onChange={set('notes')} />
+            <label className="block">
+                <span className="mb-1 block text-sm font-medium text-on-surface-variant">Vehicle sales receipt <span className="font-normal">(optional)</span></span>
+                <input ref={receiptRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="block w-full text-sm text-on-surface" />
+                <span className="mt-1 block text-xs text-on-surface-variant/70">PDF or photo, up to 8 MB. It is saved with this request.</span>
+            </label>
             <Button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</Button>
         </form>
     );

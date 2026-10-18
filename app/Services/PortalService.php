@@ -711,18 +711,90 @@ class PortalService
         return array_intersect_key((array) $record, array_flip($fields));
     }
 
+    /** The record's VIN, or null. Treats empty strings as missing. */
+    public static function vinOf($record): ?string
+    {
+        $row = (array) $record;
+        foreach (['vin', 'vehicle_vin'] as $column) {
+            $value = trim((string) ($row[$column] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * VINs of the records invoices point at, keyed "table:id".
+     *
+     * @param iterable<object> $invoices
+     * @return array<string,string>
+     */
+    public function vinsForInvoices(iterable $invoices): array
+    {
+        $ids = [];
+        foreach ($invoices as $invoice) {
+            $ids[$invoice->record_type][] = (int) $invoice->record_id;
+        }
+
+        $vins = [];
+        foreach ($ids as $table => $recordIds) {
+            if (!isset(self::SERVICES[$table]) || !Schema::hasTable($table)) {
+                continue;
+            }
+            $columns = array_values(array_filter(['vin', 'vehicle_vin'], fn($column) => Schema::hasColumn($table, $column)));
+            if (!$columns) {
+                continue;
+            }
+            foreach (DB::table($table)->whereIn('id', array_unique($recordIds))->get(array_merge(['id'], $columns)) as $row) {
+                if ($vin = self::vinOf($row)) {
+                    $vins[$table . ':' . $row->id] = $vin;
+                }
+            }
+        }
+
+        return $vins;
+    }
+
+    /** How many sales receipts each of the customer's records has, keyed "table:id". */
+    public function receiptCounts(int $customerId): array
+    {
+        if (!Schema::hasTable('service_receipts')) {
+            return [];
+        }
+
+        $counts = [];
+        foreach (array_keys(self::SERVICES) as $table) {
+            if ($table === 'invoices' || !Schema::hasTable($table) || !Schema::hasColumn($table, 'customer_id')) {
+                continue;
+            }
+            $rows = DB::table('service_receipts')->where('record_type', $table)
+                ->whereIn('record_id', fn($query) => $query->select('id')->from($table)->where('customer_id', $customerId))
+                ->selectRaw('record_id, COUNT(*) as c')->groupBy('record_id')->pluck('c', 'record_id');
+            foreach ($rows as $recordId => $count) {
+                $counts[$table . ':' . $recordId] = (int) $count;
+            }
+        }
+
+        return $counts;
+    }
+
     public function normalize(string $table, object $record): array
     {
         $config = self::SERVICES[$table];
         $row = (array) $record;
         $vehicle = $this->vehicleLabel($row);
-        $vin = $row['vin'] ?? $row['vehicle_vin'] ?? null;
+        $vin = self::vinOf($row);
 
-        $reference = match ($table) {
+        // The VIN identifies the vehicle across every service, so it leads; the old
+        // reference (tracking number, item, record number) is the fallback.
+        $defaultReference = match ($table) {
             'shipments' => $row['tracking_number'] ?? ('#' . $row['id']),
             'clearances' => $row['item'] ?? ('#' . $row['id']),
             default => '#' . $row['id'],
         };
+        $reference = $vin ?? $defaultReference;
 
         $status = $row['status'] ?? $row['shipment_status'] ?? null;
         $date = $row['trucking_date'] ?? $row['sale_date'] ?? $row['date_stamp'] ?? $row['created_at'] ?? null;
@@ -735,6 +807,8 @@ class PortalService
             'label' => $config['label'],
             'id' => $row['id'],
             'reference' => $reference,
+            'reference_default' => $defaultReference,
+            'reference_is_vin' => $vin !== null,
             'vehicle' => $vehicle,
             'vin' => $vin,
             'status' => $status,
@@ -803,6 +877,12 @@ class PortalService
 
         usort($items, fn($a, $b) => strcmp((string) $b['date'], (string) $a['date']));
 
+        $receipts = $this->receiptCounts($customerId);
+        foreach ($items as &$item) {
+            $item['receipts'] = $receipts[$item['table'] . ':' . $item['id']] ?? 0;
+        }
+        unset($item);
+
         return $items;
     }
 
@@ -815,12 +895,13 @@ class PortalService
 
         $shipments = DB::table('shipments')->where('customer_id', $customerId)->whereNotIn('status', ['delivered', 'cancelled'])->get();
         foreach ($shipments as $shipment) {
+            $label = self::vinOf($shipment) ?? $shipment->tracking_number;
             $eta = $shipment->estimated_arrival_date ?? $shipment->eta ?? null;
             if ($eta && substr((string) $eta, 0, 10) < $today && !$shipment->actual_arrival_date) {
                 $alerts[] = [
                     'severity' => 'warning', 'kind' => 'delay',
                     'title' => 'Shipment past its estimated arrival',
-                    'message' => "{$shipment->tracking_number} was expected on " . substr((string) $eta, 0, 10) . ' and has not arrived yet.',
+                    'message' => "{$label} was expected on " . substr((string) $eta, 0, 10) . ' and has not arrived yet.',
                     'link' => '/portal/vehicles/' . $shipment->id,
                 ];
             }
@@ -828,7 +909,7 @@ class PortalService
                 $alerts[] = [
                     'severity' => 'critical', 'kind' => 'unpaid_fee',
                     'title' => 'Unpaid shipping fee',
-                    'message' => "The shipping fee for {$shipment->tracking_number} is unpaid and may hold up release.",
+                    'message' => "The shipping fee for {$label} is unpaid and may hold up release.",
                     'link' => '/portal/vehicles/' . $shipment->id,
                 ];
             }
@@ -846,7 +927,7 @@ class PortalService
                     $alerts[] = [
                         'severity' => 'warning', 'kind' => 'unpaid_fee',
                         'title' => 'Unpaid trucking fee',
-                        'message' => ucfirst(rtrim($table, 's')) . " #{$row->id} has an unpaid trucking fee.",
+                        'message' => ucfirst(rtrim($table, 's')) . ' ' . (self::vinOf($row) ?? "#{$row->id}") . ' has an unpaid trucking fee.',
                         'link' => '/portal/history',
                     ];
                 }
@@ -914,6 +995,7 @@ class PortalService
         $byService = [];
         $byReference = [];
         $byCurrency = [];
+        $vins = $this->vinsForInvoices($invoices);
         foreach ($invoices as $invoice) {
             $currency = $invoice->currency ?: $default;
             $amount = (float) $invoice->amount;
@@ -924,8 +1006,10 @@ class PortalService
             $label = $invoice->service_label ?: 'Other';
             $byService[$currency][$label] = ($byService[$currency][$label] ?? 0) + $amount;
 
-            if ($invoice->reference_number) {
-                $byReference[$currency][$invoice->reference_number] = ($byReference[$currency][$invoice->reference_number] ?? 0) + $amount;
+            // Costs group by vehicle: the VIN when the record has one, otherwise the old reference.
+            $reference = $vins[$invoice->record_type . ':' . $invoice->record_id] ?? $invoice->reference_number;
+            if ($reference) {
+                $byReference[$currency][$reference] = ($byReference[$currency][$reference] ?? 0) + $amount;
             }
 
             $byCurrency[$currency]['invoiced'] = ($byCurrency[$currency]['invoiced'] ?? 0) + $amount;

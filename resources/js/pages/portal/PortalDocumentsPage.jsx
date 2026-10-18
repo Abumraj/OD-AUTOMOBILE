@@ -82,6 +82,7 @@ export default function PortalDocumentsPage() {
     const hrefFor = (item) => {
         if (item.kind === 'invoice') return portalApi.url(`/invoices/${item.id}/download`);
         if (item.kind === 'dock_receipt') return portalApi.url(`/dock-receipts/${item.id}/download`);
+        if (item.kind === 'receipt') return portalApi.url(`/receipts/${item.id}/download`);
         return portalApi.url(`/documents/${item.id}/download`);
     };
 
@@ -96,7 +97,7 @@ export default function PortalDocumentsPage() {
             />
 
             <div className="flex flex-wrap gap-2">
-                {[['all', 'All'], ['invoice', 'Invoices'], ['dock_receipt', 'Dock receipts'], ['file', 'Files']].map(([value, label]) => (
+                {[['all', 'All'], ['invoice', 'Invoices'], ['receipt', 'Sales receipts'], ['dock_receipt', 'Dock receipts'], ['file', 'Files']].map(([value, label]) => (
                     <button key={value} onClick={() => setFilter(value)} className={`rounded-lg border px-md py-1.5 text-sm ${filter === value ? 'border-secondary bg-secondary text-on-secondary' : 'border-outline-variant text-on-surface'}`}>{label}</button>
                 ))}
             </div>

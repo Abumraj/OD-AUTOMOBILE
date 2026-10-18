@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
 import { exportToCSV } from '../../utils/csvExport';
 import DockReceiptGenerator from './DockReceiptGenerator';
 import ServiceFilterBar from './ServiceFilterBar';
@@ -211,9 +212,10 @@ function ShipmentsManager() {
             const data = await response.json();
 
             if (response.ok) {
+                const receiptError = editingShipment ? null : await flushPendingReceipt('shipments', data.shipment_id);
                 showNotification(
-                    editingShipment ? 'Shipment updated successfully' : 'Shipment created successfully',
-                    'success'
+                    receiptError ? `Shipment created, but the receipt was not uploaded: ${receiptError}` : editingShipment ? 'Shipment updated successfully' : 'Shipment created successfully',
+                    receiptError ? 'error' : 'success'
                 );
                 setShowModal(false);
                 resetForm();
@@ -1348,6 +1350,8 @@ function ShipmentsManager() {
                                     className="w-full bg-surface-container-lowest border border-white/20 text-white px-md py-sm rounded-lg focus:outline-none focus:border-secondary-container"
                                 ></textarea>
                             </div>
+
+                            <SalesReceiptField recordType="shipments" recordId={editingShipment?.id} />
 
                             <div className="flex justify-end gap-md pt-md">
                                 <button

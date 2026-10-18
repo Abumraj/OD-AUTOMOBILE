@@ -294,6 +294,36 @@ class AdminDashboardController extends Controller
         return response()->json($kanbanData);
     }
 
+    /**
+     * How often each shipping line is used across shipments, truckings and clearances.
+     * Shipments without a line chosen fall back to the free-text provider when it names a known line.
+     */
+    private function shippingLineUsage(): array
+    {
+        $lines = DB::table('shipping_lines')->get(['id', 'name']);
+        $byName = $lines->mapWithKeys(fn($line) => [strtolower(trim($line->name)) => $line->id]);
+        $usage = $lines->mapWithKeys(fn($line) => [$line->id => ['name' => $line->name, 'shipments' => 0, 'truckings' => 0, 'clearances' => 0]])->all();
+        $usage[0] = ['name' => 'Not specified', 'shipments' => 0, 'truckings' => 0, 'clearances' => 0];
+
+        foreach (DB::table('shipments')->get(['shipping_line_id', 'shipping_provider']) as $shipment) {
+            $lineId = $shipment->shipping_line_id
+                ?? $byName->get(strtolower(trim((string) $shipment->shipping_provider)))
+                ?? 0;
+            $usage[isset($usage[$lineId]) ? $lineId : 0]['shipments']++;
+        }
+
+        foreach (['truckings', 'clearances'] as $table) {
+            foreach (DB::table($table)->select('shipping_line_id', DB::raw('COUNT(*) as c'))->groupBy('shipping_line_id')->get() as $row) {
+                $lineId = $row->shipping_line_id && isset($usage[$row->shipping_line_id]) ? $row->shipping_line_id : 0;
+                $usage[$lineId][$table] += (int) $row->c;
+            }
+        }
+
+        return collect($usage)->map(fn($row) => $row + ['total' => $row['shipments'] + $row['truckings'] + $row['clearances']])
+            ->filter(fn($row) => $row['total'] > 0)
+            ->sortByDesc('total')->values()->all();
+    }
+
     public function getAnalytics()
     {
         // Shipments over time (last 6 months)
@@ -396,6 +426,7 @@ class AdminDashboardController extends Controller
             'quotes_vs_shipments' => $quotesVsShipments,
             'monthly_profit_over_time' => $monthlyProfitOverTime,
             'service_profit_breakdown' => $serviceProfitBreakdown,
+            'shipping_lines' => $this->shippingLineUsage(),
         ]);
     }
 
@@ -1244,6 +1275,7 @@ class AdminDashboardController extends Controller
         if (!DB::table('autosales')->where('id', $id)->exists()) {
             return response()->json(['error' => 'Autosale record not found'], 404);
         }
+        app(\App\Services\ReceiptService::class)->deleteForRecord('autosales', (int) $id);
         DB::table('autosales')->where('id', $id)->delete();
         DB::table('activity_stream')->insert([
             'action' => 'Autosale Deleted',
@@ -1443,6 +1475,7 @@ class AdminDashboardController extends Controller
             return response()->json(['error' => 'Procurement record not found'], 404);
         }
 
+        app(\App\Services\ReceiptService::class)->deleteForRecord('procurements', (int) $id);
         DB::table('procurements')->where('id', $id)->delete();
 
         DB::table('activity_stream')->insert([
@@ -1573,6 +1606,7 @@ class AdminDashboardController extends Controller
     public function deleteClearance($id)
     {
         if (!DB::table('clearances')->where('id', $id)->exists()) return response()->json(['error' => 'Clearance record not found'], 404);
+        app(\App\Services\ReceiptService::class)->deleteForRecord('clearances', (int) $id);
         DB::table('clearances')->where('id', $id)->delete();
         DB::table('activity_stream')->insert(['action' => 'Clearance Deleted', 'description' => 'Clearance record deleted', 'location' => 'Admin Dashboard', 'created_at' => now(), 'updated_at' => now()]);
         return response()->json(['success' => true, 'message' => 'Clearance record deleted successfully']);
@@ -1887,6 +1921,7 @@ class AdminDashboardController extends Controller
             return response()->json(['error' => 'Trucking record not found'], 404);
         }
 
+        app(\App\Services\ReceiptService::class)->deleteForRecord('truckings', (int) $id);
         DB::table('truckings')->where('id', $id)->delete();
 
         DB::table('activity_stream')->insert([
@@ -2422,6 +2457,7 @@ class AdminDashboardController extends Controller
         }
 
         DB::table('shipment_updates')->where('shipment_id', $id)->delete();
+        app(\App\Services\ReceiptService::class)->deleteForRecord('shipments', (int) $id);
         DB::table('shipments')->where('id', $id)->delete();
 
         DB::table('activity_stream')->insert([

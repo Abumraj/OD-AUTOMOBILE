@@ -326,6 +326,21 @@ class PortalDemo extends Command
                 'path' => $path, 'mime' => 'application/pdf', 'size' => Storage::disk('local')->size($path), 'visible_to_customer' => true,
             ]);
 
+            if (Schema::hasTable('service_receipts')) {
+                $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 100]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+                foreach ([
+                    ['shipments', $shipments['DEMO-10003-AUTO'], 'admin', 'Demo', 'sales-receipt-lexus-rx350.pdf'],
+                    ['procurements', $procurementId, 'customer', 'Ada Demo', 'sales-receipt-ford-f150.pdf'],
+                ] as [$table, $recordId, $byType, $byName, $name]) {
+                    $receiptPath = "receipts/{$table}/{$recordId}/{$name}";
+                    Storage::disk('local')->put($receiptPath, $pdf);
+                    $this->insert('service_receipts', [
+                        'record_type' => $table, 'record_id' => $recordId, 'uploaded_by_type' => $byType, 'uploaded_by_name' => $byName,
+                        'original_name' => $name, 'path' => $receiptPath, 'mime' => 'application/pdf', 'size' => strlen($pdf),
+                    ]);
+                }
+            }
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -375,6 +390,24 @@ class PortalDemo extends Command
             if ($shipmentIds) {
                 $removed['shipment_updates'] = DB::table('shipment_updates')->whereIn('shipment_id', $shipmentIds)->delete();
                 $removed['dock_receipts'] = DB::table('dock_receipts')->whereIn('shipment_id', $shipmentIds)->delete();
+            }
+
+            if (Schema::hasTable('service_receipts')) {
+                $receipts = app(\App\Services\ReceiptService::class);
+                foreach (self::EMAIL_COLUMNS as $table => $column) {
+                    if ($table === 'invoices' || !Schema::hasTable($table)) {
+                        continue;
+                    }
+                    $ids = DB::table($table)->where(function ($query) use ($column, $customerId, $table) {
+                        $query->where($column, 'like', '%' . self::DOMAIN);
+                        if ($customerId && Schema::hasColumn($table, 'customer_id')) {
+                            $query->orWhere('customer_id', $customerId);
+                        }
+                    })->pluck('id');
+                    foreach ($ids as $recordId) {
+                        $receipts->deleteForRecord($table, (int) $recordId);
+                    }
+                }
             }
 
             foreach (self::EMAIL_COLUMNS as $table => $column) {

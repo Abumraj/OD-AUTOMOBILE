@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\DockReceiptController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Controller;
 use App\Services\PortalService;
+use App\Services\ReceiptService;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 /** Read-only views of everything OD has done for the signed-in customer. */
 class PortalDataController extends Controller
 {
-    public function __construct(private PortalService $portal)
+    public function __construct(private PortalService $portal, private ReceiptService $receipts)
     {
     }
 
@@ -64,8 +66,8 @@ class PortalDataController extends Controller
         $customer = $request->attributes->get('portal_customer');
         $items = $this->portal->history($customer->id, $request->only(['type', 'status', 'from', 'to', 'search']));
 
-        return $this->csv('od-service-history-' . date('Ymd') . '.csv', ['Service', 'Reference', 'Vehicle', 'VIN', 'Status', 'Date', 'Amount'], array_map(fn($item) => [
-            $item['label'], $item['reference'], $item['vehicle'], $item['vin'], $item['status'], substr((string) $item['date'], 0, 10), $item['amount'],
+        return $this->csv('od-service-history-' . date('Ymd') . '.csv', ['Service', 'Reference', 'OD reference', 'Vehicle', 'VIN', 'Status', 'Date', 'Amount'], array_map(fn($item) => [
+            $item['label'], $item['reference'], $item['reference_default'], $item['vehicle'], $item['vin'], $item['status'], substr((string) $item['date'], 0, 10), $item['amount'],
         ], $items));
     }
 
@@ -75,8 +77,11 @@ class PortalDataController extends Controller
     {
         $customer = $request->attributes->get('portal_customer');
 
+        $receiptCounts = $this->portal->receiptCounts($customer->id);
+
         $shipments = DB::table('shipments')->where('customer_id', $customer->id)->orderByDesc('id')->get()
             ->map(fn($shipment) => $this->portal->normalize('shipments', $shipment) + [
+                'receipts' => $receiptCounts['shipments:' . $shipment->id] ?? 0,
                 'progress' => (int) ($shipment->progress_percentage ?? 0),
                 'eta' => $shipment->estimated_arrival_date ?? $shipment->eta ?? null,
                 'route' => trim(($shipment->origin_port ?? '') . ' → ' . ($shipment->destination_port ?? ''), ' →'),
@@ -113,6 +118,7 @@ class PortalDataController extends Controller
             'updates' => $updates,
             'dock_receipts' => $receipts,
             'documents' => $documents,
+            'sales_receipts' => $this->receipts->forRecord('shipments', (int) $shipment->id),
             'invoices' => $invoices,
             'tickets' => $tickets,
         ]);
@@ -172,10 +178,67 @@ class PortalDataController extends Controller
             'date' => $receipt->generated_at,
         ]);
 
-        $all = collect()->concat($uploaded)->concat($invoices)->concat($receipts)
+        $salesReceipts = $this->customerSalesReceipts($customer->id)->map(fn($receipt) => [
+            'kind' => 'receipt',
+            'id' => $receipt->id,
+            'title' => $receipt->original_name,
+            'category' => 'sales_receipt',
+            'source' => $receipt->uploaded_by_type === 'admin' ? 'OD Automotive' : 'You',
+            'record_type' => $receipt->record_type,
+            'record_id' => $receipt->record_id,
+            'size' => $receipt->size,
+            'date' => $receipt->created_at,
+        ]);
+
+        $all = collect()->concat($uploaded)->concat($invoices)->concat($receipts)->concat($salesReceipts)
             ->sortByDesc('date')->values();
 
         return response()->json(['count' => $all->count(), 'items' => $all]);
+    }
+
+    /** Vehicle sales receipts on any record the customer owns. */
+    private function customerSalesReceipts(int $customerId)
+    {
+        $rows = collect();
+        foreach (ReceiptService::TABLES as $table) {
+            $rows = $rows->concat(
+                DB::table('service_receipts')->where('record_type', $table)
+                    ->whereIn('record_id', fn($query) => $query->select('id')->from($table)->where('customer_id', $customerId))
+                    ->get()
+            );
+        }
+
+        return $rows->sortByDesc('id')->values();
+    }
+
+    public function receipts(Request $request)
+    {
+        $customer = $request->attributes->get('portal_customer');
+        $validated = $request->validate([
+            'record_type' => ['required', Rule::in(ReceiptService::TABLES)],
+            'record_id' => 'required|integer',
+        ]);
+
+        $owned = DB::table($validated['record_type'])->where('id', $validated['record_id'])->where('customer_id', $customer->id)->exists();
+        if (!$owned) {
+            return response()->json(['message' => 'Record not found.'], 404);
+        }
+
+        return response()->json($this->receipts->forRecord($validated['record_type'], (int) $validated['record_id']));
+    }
+
+    public function downloadReceipt(Request $request, $id)
+    {
+        $customer = $request->attributes->get('portal_customer');
+        $receipt = DB::table('service_receipts')->where('id', $id)->first();
+        $owned = $receipt && in_array($receipt->record_type, ReceiptService::TABLES, true)
+            && DB::table($receipt->record_type)->where('id', $receipt->record_id)->where('customer_id', $customer->id)->exists();
+
+        if (!$owned || !Storage::disk('local')->exists($receipt->path)) {
+            return response()->json(['message' => 'Receipt not found.'], 404);
+        }
+
+        return Storage::disk('local')->download($receipt->path, $receipt->original_name);
     }
 
     /** Dock receipts belonging to any record the customer owns. */
@@ -255,14 +318,18 @@ class PortalDataController extends Controller
 
         $payments = DB::table('payments')->whereIn('invoice_id', $invoices->pluck('id'))->orderByDesc('id')->get()->groupBy('invoice_id');
 
-        $items = $invoices->map(function ($invoice) use ($payments, $today) {
+        $vins = $this->portal->vinsForInvoices($invoices);
+
+        $items = $invoices->map(function ($invoice) use ($payments, $today, $vins) {
             $balance = round((float) $invoice->amount - (float) $invoice->amount_paid, 2);
+            $vin = $vins[$invoice->record_type . ':' . $invoice->record_id] ?? null;
 
             return [
                 'id' => $invoice->id,
                 'invoice_number' => $invoice->invoice_number,
                 'service' => $invoice->service_label,
-                'reference' => $invoice->reference_number,
+                'reference' => $vin ?? $invoice->reference_number,
+                'reference_is_vin' => $vin !== null,
                 'description' => $invoice->description,
                 'amount' => (float) $invoice->amount,
                 'amount_paid' => (float) $invoice->amount_paid,

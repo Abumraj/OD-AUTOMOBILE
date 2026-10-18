@@ -81,3 +81,38 @@ sending. Portal notices use the `portal-notice` email and SMS templates.
 An owner can generate a read-only token in **Settings**. Send it as `Authorization: Bearer <token>` to the
 `GET` endpoints, for example `/api/portal/invoices`, `/api/portal/history` and `/api/portal/statement`.
 Tokens are stored hashed and cannot write.
+
+## VIN-first references
+
+Wherever the portal names a service (dashboard, history, vehicles, invoices, analytics, alerts), the vehicle's
+VIN leads when the record has one (`vin`, then `vehicle_vin`). Records without a VIN keep the old reference:
+the tracking number for shipments, the item for clearances, `#id` otherwise. The API exposes both
+(`reference`, `reference_default`, `reference_is_vin`). Invoices take the VIN of the record they point at.
+
+## Vehicle sales receipts (optional, everywhere)
+
+Any service record (`shipments`, `procurements`, `autosales`, `truckings`, `clearances`, `quotes`,
+`auction_requests`) can carry one or more sales receipts (PDF or photo, up to 8 MB). Files live privately in
+`storage/app/receipts/` and rows in `service_receipts`.
+
+- **Admin**: the Shipments, Procurement, Autosales, Trucking and Clearance forms have an optional receipt
+  field (`resources/js/components/SalesReceiptField.jsx`). On a new record the file is uploaded right after the
+  record is saved. API: `/api/admin/receipts`.
+- **Business**: an optional field on the "New request" form, and an upload on every history row and on the vehicle
+  page. API: `/api/portal/receipts`. A business can only touch records it owns and can only remove receipts it
+  uploaded itself. Receipts also show in the document vault.
+- A receipt chosen on a request that is waiting for approval is held on disk and attached when it is approved
+  (deleted if it is declined). Deleting a record removes its receipts.
+
+## Card / table views and charts
+
+The portal's Vehicles, Service history and Invoices pages switch between cards and a table; the choice is
+remembered per page in the browser. Analytics shows a chart beside each list (spend by month, cost by service,
+highest costs by vehicle, vehicles by status) using Recharts and the validated categorical palette.
+
+## Admin shipping line analytics
+
+Admin → Analytics has a Shipping Line Usage chart: lines ranked by use across shipments, trucking and clearance,
+with a chart/table switch and the most-used line called out. Shipments with no line chosen fall back to the
+free-text provider when it matches a known line. Records with no line at all are reported beside the chart
+instead of being ranked.

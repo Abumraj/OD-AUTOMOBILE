@@ -226,3 +226,79 @@ export function ProgressBar({ value }) {
         </div>
     );
 }
+
+/** Remembers the card/table choice per page in this browser. */
+export function useViewMode(key, fallback = 'cards') {
+    const storageKey = `od-portal-view-${key}`;
+    const [mode, setMode] = useState(() => {
+        try {
+            const saved = window.localStorage.getItem(storageKey);
+            return saved === 'cards' || saved === 'table' ? saved : fallback;
+        } catch (error) {
+            return fallback;
+        }
+    });
+
+    const update = (value) => {
+        setMode(value);
+        try {
+            window.localStorage.setItem(storageKey, value);
+        } catch (error) {
+            // Private mode or blocked storage: the choice just won't persist.
+        }
+    };
+
+    return [mode, update];
+}
+
+export function ViewToggle({ mode, onChange }) {
+    const options = [['cards', 'grid_view', 'Cards'], ['table', 'table_rows', 'Table']];
+    return (
+        <div className="inline-flex overflow-hidden rounded-lg border border-outline-variant" role="group" aria-label="Switch between card and table view">
+            {options.map(([value, icon, label]) => (
+                <button
+                    key={value}
+                    type="button"
+                    onClick={() => onChange(value)}
+                    aria-pressed={mode === value}
+                    title={`${label} view`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm ${mode === value ? 'bg-secondary text-on-secondary' : 'text-on-surface hover:bg-surface-container-high'}`}
+                >
+                    <span className="material-symbols-outlined text-base">{icon}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                </button>
+            ))}
+        </div>
+    );
+}
+
+/** Shared look for portal tables: scrolls sideways on small screens instead of squashing. */
+export function DataTable({ columns, children }) {
+    return (
+        <div className="overflow-x-auto rounded-xl border border-white/10 bg-surface-container">
+            <table className="w-full min-w-[640px] text-sm">
+                <thead className="border-b border-white/10 text-left text-xs uppercase text-on-surface-variant">
+                    <tr>
+                        {columns.map((column) => (
+                            <th key={column.label || column} className={`px-md py-3 font-semibold ${column.right ? 'text-right' : ''}`}>{column.label || column}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">{children}</tbody>
+            </table>
+        </div>
+    );
+}
+
+/** A reference line that leads with the VIN and keeps the OD reference as the secondary. */
+export function ReferenceText({ item }) {
+    if (item.reference_is_vin) {
+        return (
+            <span>
+                <span className="font-mono text-xs">VIN {item.reference}</span>
+                {item.reference_default && item.reference_default !== item.reference && <span className="text-on-surface-variant/70"> · {item.reference_default}</span>}
+            </span>
+        );
+    }
+    return <span>{item.reference}</span>;
+}

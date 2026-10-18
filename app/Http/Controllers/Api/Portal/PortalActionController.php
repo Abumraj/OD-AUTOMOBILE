@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Portal;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Controller;
 use App\Services\PortalService;
+use App\Services\ReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +17,7 @@ class PortalActionController extends Controller
     private const DOCUMENT_TABLES = ['shipments', 'procurements', 'autosales', 'truckings', 'clearances', 'quotes', 'auction_requests'];
     private const MANUAL_METHODS = ['bank_transfer', 'swift_wire', 'usdt', 'cash_pos'];
 
-    public function __construct(private PortalService $portal)
+    public function __construct(private PortalService $portal, private ReceiptService $receipts)
     {
     }
 
@@ -83,7 +84,9 @@ class PortalActionController extends Controller
             'estimated_value' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:2000',
             'phone' => 'nullable|string|max:50',
+            'receipt' => 'nullable|' . ReceiptService::FILE_RULE,
         ]);
+        unset($validated['receipt']);
 
         if (!in_array($validated['type'], $allowed, true)) {
             return response()->json(['message' => 'This service cannot be requested from the portal right now.'], 422);
@@ -95,11 +98,22 @@ class PortalActionController extends Controller
             && (float) $estimated >= (float) $customer->approval_threshold
             && !in_array($user->role, ['owner', 'finance'], true);
 
+        // The sales receipt is optional. It waits on disk until the record it belongs to exists.
+        $payload = $validated;
+        if ($file = $request->file('receipt')) {
+            $payload['receipt_file'] = [
+                'path' => $file->store("receipts/pending/{$customer->id}", 'local'),
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ];
+        }
+
         $requestId = DB::table('portal_requests')->insertGetId([
             'customer_id' => $customer->id,
             'requested_by' => $user->id,
             'type' => $validated['type'],
-            'payload' => json_encode($validated),
+            'payload' => json_encode($payload),
             'estimated_value' => $estimated,
             'status' => $needsApproval ? 'awaiting_approval' : 'submitted',
             'created_at' => now(),
@@ -147,6 +161,10 @@ class PortalActionController extends Controller
         ]);
 
         if ($validated['decision'] === 'decline') {
+            $pending = json_decode($row->payload, true)['receipt_file']['path'] ?? null;
+            if ($pending) {
+                Storage::disk('local')->delete($pending);
+            }
             DB::table('portal_requests')->where('id', $row->id)->update(['status' => 'declined']);
 
             return response()->json(['success' => true, 'status' => 'declined']);
@@ -211,7 +229,13 @@ class PortalActionController extends Controller
             $table = 'quotes';
         }
 
+        if (!empty($payload['receipt_file'])) {
+            $this->receipts->attachStored($table, $linkedId, $payload['receipt_file'], 'customer', $requester->name ?? null);
+            unset($payload['receipt_file']);
+        }
+
         DB::table('portal_requests')->where('id', $requestId)->update([
+            'payload' => json_encode($payload),
             'status' => 'submitted',
             'linked_table' => $table,
             'linked_id' => $linkedId,
@@ -317,6 +341,53 @@ class PortalActionController extends Controller
         $this->portal->logActivity('upload_file', $customer->company_name, 'uploaded a document via the portal');
 
         return response()->json(['success' => true, 'id' => $id], 201);
+    }
+
+    public function uploadReceipt(Request $request)
+    {
+        $customer = $request->attributes->get('portal_customer');
+        $user = $request->attributes->get('portal_user');
+        if (!PortalAuthController::can($user, 'documents')) {
+            return $this->deny();
+        }
+
+        $validated = $request->validate([
+            'record_type' => ['required', Rule::in(ReceiptService::TABLES)],
+            'record_id' => 'required|integer',
+            'file' => 'required|' . ReceiptService::FILE_RULE,
+        ]);
+
+        $owned = DB::table($validated['record_type'])->where('id', $validated['record_id'])->where('customer_id', $customer->id)->exists();
+        if (!$owned) {
+            return response()->json(['message' => 'That record does not belong to your account.'], 422);
+        }
+
+        $id = $this->receipts->store($validated['record_type'], (int) $validated['record_id'], $request->file('file'), 'customer', $user->name);
+        $this->portal->logActivity('receipt_long', $customer->company_name, 'uploaded a vehicle sales receipt via the portal');
+
+        return response()->json(['success' => true, 'id' => $id], 201);
+    }
+
+    public function deleteReceipt(Request $request, $id)
+    {
+        $customer = $request->attributes->get('portal_customer');
+        $user = $request->attributes->get('portal_user');
+        if (!PortalAuthController::can($user, 'documents')) {
+            return $this->deny();
+        }
+
+        $receipt = DB::table('service_receipts')->where('id', $id)->first();
+        $owned = $receipt && DB::table($receipt->record_type)->where('id', $receipt->record_id)->where('customer_id', $customer->id)->exists();
+        if (!$owned) {
+            return response()->json(['message' => 'Receipt not found.'], 404);
+        }
+        if ($receipt->uploaded_by_type !== 'customer') {
+            return $this->deny('Receipts added by OD Automotive can only be removed by OD.');
+        }
+
+        $this->receipts->delete($receipt);
+
+        return response()->json(['success' => true]);
     }
 
     public function deleteDocument(Request $request, $id)

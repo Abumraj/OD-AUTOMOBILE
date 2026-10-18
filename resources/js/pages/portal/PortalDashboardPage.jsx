@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import portalApi from '../../services/portalApi';
 import { usePortal } from '../../contexts/PortalContext';
-import { Card, Empty, Notice, PageHeader, Spinner, StatTile, StatusBadge, formatDate, formatMoney, titleCase, useLoad } from '../../components/portal/ui';
+import { Card, Empty, Notice, PageHeader, ReferenceText, Spinner, StatTile, StatusBadge, formatDate, formatMoney, titleCase, useLoad } from '../../components/portal/ui';
 
 const severityTone = { critical: 'error', warning: 'warning', info: 'info' };
 
@@ -67,7 +67,7 @@ export default function PortalDashboardPage() {
                                 <li key={item.key} className="flex items-center justify-between gap-3 py-3">
                                     <div className="min-w-0">
                                         <div className="truncate font-semibold text-white">{item.label} · {item.vehicle || item.reference}</div>
-                                        <div className="text-xs text-on-surface-variant">{item.reference} · {formatDate(item.date)}</div>
+                                        <div className="text-xs text-on-surface-variant"><ReferenceText item={item} /> · {formatDate(item.date)}</div>
                                     </div>
                                     <StatusBadge status={item.status} />
                                 </li>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
 import ServiceFilterBar from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
 import InvoiceGenerator from './InvoiceGenerator';
@@ -161,7 +162,8 @@ function ProcurementManager() {
             const data = await response.json();
 
             if (response.ok) {
-                showNotification(editingRecord ? 'Trucking record updated successfully' : 'Trucking record created successfully', 'success');
+                const receiptError = editingRecord ? null : await flushPendingReceipt('truckings', data.id);
+                showNotification(receiptError ? `Trucking record created, but the receipt was not uploaded: ${receiptError}` : editingRecord ? 'Trucking record updated successfully' : 'Trucking record created successfully', receiptError ? 'error' : 'success');
                 setShowModal(false);
                 resetForm();
                 fetchTruckings();
@@ -569,6 +571,8 @@ function ProcurementManager() {
                                 <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} />
                                 <label className="text-on-surface-variant">Active</label>
                             </div>
+
+                            <SalesReceiptField recordType="truckings" recordId={editingRecord?.id} />
 
                             <div className="flex justify-end gap-md pt-md">
                                 <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-md py-sm rounded-lg border border-outline-variant text-on-surface">Cancel</button>
