@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\ProfitGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -15,6 +18,27 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ShipmentImportExportController extends Controller
 {
+    /** Regular admins never receive a profit column in an export. */
+    private function dropProfitColumns(Worksheet $sheet): void
+    {
+        if (ProfitGuard::allowed()) {
+            return;
+        }
+
+        for ($index = Coordinate::columnIndexFromString($sheet->getHighestColumn()); $index >= 1; $index--) {
+            $header = (string) $sheet->getCell(Coordinate::stringFromColumnIndex($index) . '1')->getValue();
+            if (ProfitGuard::isProfitKey($header)) {
+                $sheet->removeColumnByIndex($index);
+            }
+        }
+    }
+
+    /** A regular admin cannot import profit figures either: those cells are ignored. */
+    private function importedProfit($value)
+    {
+        return ProfitGuard::allowed() ? $value : null;
+    }
+
     private function parseSpreadsheetAmount($value): float
     {
         $normalized = preg_replace('/[^0-9.\-]/', '', (string) $value);
@@ -284,7 +308,7 @@ class ShipmentImportExportController extends Controller
                     $color = trim((string) $this->spreadsheetRowValue($row, $headerMap, 'color'));
                     $vin = trim((string) $this->spreadsheetRowValue($row, $headerMap, 'vin'));
                     $amount = $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'amount', 'priceusd', 'price'));
-                    $profit = $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profit', 'profitngn'));
+                    $profit = $this->importedProfit($this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profit', 'profitngn')));
 
                     if ($carMake === '' || $carModel === '') {
                         $errors[] = 'Row ' . ($index + 2) . ': car make and model are required';
@@ -376,6 +400,7 @@ class ShipmentImportExportController extends Controller
                 $row++;
             }
 
+            $this->dropProfitColumns($sheet);
             $writer = new Xlsx($spreadsheet);
             $filename = 'autosales_export_' . date('Y-m-d_His') . '.xlsx';
             $tempFile = tempnam(sys_get_temp_dir(), 'autosales_');
@@ -437,7 +462,7 @@ class ShipmentImportExportController extends Controller
                     'trucking' => $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'trucking')),
                     'shipping' => strtolower(trim((string) ($this->spreadsheetRowValue($row, $headerMap, 'shipping') ?? 'container'))),
                     'arrival_date' => $this->parseSpreadsheetDate($this->spreadsheetRowValue($row, $headerMap, 'arrivaldate')),
-                    'profit_ngn' => $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profitngn')),
+                    'profit_ngn' => $this->importedProfit($this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profitngn'))),
                     'trucking_fee' => strtolower(trim((string) ($this->spreadsheetRowValue($row, $headerMap, 'truckingfee') ?? 'unpaid'))),
                     'status' => $status,
                     'is_active' => true,
@@ -464,6 +489,7 @@ class ShipmentImportExportController extends Controller
             foreach ($records as $index => $record) {
                 $sheet->fromArray([$record->date_procured, $record->car_make, $record->car_model, $index + 1, $record->car_year, $record->vin, $record->price_usd, $record->auction_charge_usd, $record->auction_site, $record->state, $record->trucking, $record->shipping, $record->arrival_date, $record->profit_ngn, $record->trucking_fee, $record->status], null, 'A' . $row++);
             }
+            $this->dropProfitColumns($sheet);
             $tempFile = tempnam(sys_get_temp_dir(), 'procurements_');
             (new Xlsx($spreadsheet))->save($tempFile);
             return response()->download($tempFile, 'procurements_export_' . date('Y-m-d_His') . '.xlsx')->deleteFileAfterSend(true);
@@ -507,7 +533,7 @@ class ShipmentImportExportController extends Controller
                     'status' => in_array($status, ['cleared', 'not_cleared'], true) ? $status : 'not_cleared',
                     'date_stamp' => $this->parseSpreadsheetDate($this->spreadsheetRowValue($row, $headerMap, 'datestamp', 'date')),
                     'total_paid' => $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'totalpaid', 'amount')),
-                    'profit' => $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profit')),
+                    'profit' => $this->importedProfit($this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profit'))),
                     'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -529,6 +555,7 @@ class ShipmentImportExportController extends Controller
             $sheet->fromArray(['ITEM', 'CLIENT NAME', 'SHIPMENT TYPE', 'SHIPPING LINE', 'STATUS', 'DATE STAMP', 'TOTAL PAID', 'PROFIT'], null, 'A1');
             $row = 2;
             foreach ($records as $record) $sheet->fromArray([$record->item, $record->client_name, $record->shipping_type_code, $record->shipping_line_code, $record->status, $record->date_stamp, $record->total_paid, $record->profit], null, 'A' . $row++);
+            $this->dropProfitColumns($sheet);
             $tempFile = tempnam(sys_get_temp_dir(), 'clearances_');
             (new Xlsx($spreadsheet))->save($tempFile);
             return response()->download($tempFile, 'clearances_export_' . date('Y-m-d_His') . '.xlsx')->deleteFileAfterSend(true);
@@ -579,7 +606,7 @@ class ShipmentImportExportController extends Controller
                     $paymentStatus = strtolower(trim((string) ($this->spreadsheetRowValue($row, $headerMap, 'paymentstatus') ?? 'unpaid')));
                     $shipmentStatus = strtolower(trim((string) ($this->spreadsheetRowValue($row, $headerMap, 'shipmentstatus') ?? 'pending')));
                     $amount = $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'amount'));
-                    $profit = $this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profit'));
+                    $profit = $this->importedProfit($this->parseSpreadsheetAmount($this->spreadsheetRowValue($row, $headerMap, 'profit')));
 
                     if ($customerName === '') {
                         $errors[] = 'Row ' . ($index + 2) . ': client name is required';
@@ -708,6 +735,7 @@ class ShipmentImportExportController extends Controller
                 $row++;
             }
 
+            $this->dropProfitColumns($sheet);
             $writer = new Xlsx($spreadsheet);
             $filename = 'truckings_export_' . date('Y-m-d_His') . '.xlsx';
             $tempFile = tempnam(sys_get_temp_dir(), 'truckings_');

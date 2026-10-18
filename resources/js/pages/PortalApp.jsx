@@ -7,6 +7,7 @@ import PortalDashboardPage from './portal/PortalDashboardPage';
 import PortalHistoryPage from './portal/PortalHistoryPage';
 import { PortalVehicleDetailPage, PortalVehiclesPage } from './portal/PortalVehiclesPage';
 import PortalDocumentsPage from './portal/PortalDocumentsPage';
+import PortalShipmentPage from './portal/PortalShipmentPage';
 import PortalInvoicesPage from './portal/PortalInvoicesPage';
 import PortalRequestsPage from './portal/PortalRequestsPage';
 import { PortalTicketDetailPage, PortalTicketsPage } from './portal/PortalTicketsPage';
@@ -18,6 +19,7 @@ const NAV = [
     { to: '/portal', end: true, icon: 'dashboard', label: 'Dashboard' },
     { to: '/portal/history', icon: 'history', label: 'Service history' },
     { to: '/portal/vehicles', icon: 'directions_car', label: 'Vehicles' },
+    { to: '/portal/shipment', icon: 'local_shipping', label: 'Shipment' },
     { to: '/portal/requests', icon: 'add_task', label: 'Requests & quotes' },
     { to: '/portal/invoices', icon: 'receipt_long', label: 'Invoices & payments' },
     { to: '/portal/documents', icon: 'folder_open', label: 'Documents' },
@@ -104,6 +106,7 @@ function PortalShell() {
                     <Route path="/history" element={<PortalHistoryPage />} />
                     <Route path="/vehicles" element={<PortalVehiclesPage />} />
                     <Route path="/vehicles/:id" element={<PortalVehicleDetailPage />} />
+                    <Route path="/shipment" element={<PortalShipmentPage />} />
                     <Route path="/requests" element={<PortalRequestsPage />} />
                     <Route path="/quotes" element={<Navigate to="/portal/requests" replace />} />
                     <Route path="/invoices" element={<PortalInvoicesPage />} />

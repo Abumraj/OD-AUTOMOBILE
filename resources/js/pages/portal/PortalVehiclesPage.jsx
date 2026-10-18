@@ -1,68 +1,26 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import portalApi from '../../services/portalApi';
+import { rankItems } from '../../utils/vinSearch';
 import SalesReceiptField from '../../components/SalesReceiptField';
 import { usePortal } from '../../contexts/PortalContext';
-import { Card, DataTable, Empty, Notice, PageHeader, ProgressBar, ReferenceText, Spinner, StatusBadge, ViewToggle, formatDate, formatMoney, titleCase, useLoad, useViewMode } from '../../components/portal/ui';
+import { Card, DataTable, Empty, MatchTag, Notice, PageHeader, ProgressBar, ReferenceText, Spinner, StatusBadge, ViewToggle, formatDate, formatMoney, titleCase, useLoad, useViewMode } from '../../components/portal/ui';
 
-/** Lower-case and drop spaces/dashes so "1hgcm 82633a" still finds a VIN. */
-const squash = (value) => String(value ?? '').toLowerCase().replace(/[\s\-_/.]+/g, '');
-
-/**
- * How well one search term matches a vehicle. The VIN is the primary key, so any VIN match
- * outranks every match on the other properties. Returns { score, field } or null.
- */
-function matchTerm(item, term) {
-    const vin = squash(item.vin);
-    if (vin) {
-        if (vin === term) return { score: 1000, field: 'VIN' };
-        if (vin.startsWith(term)) return { score: 900, field: 'VIN' };
-        if (vin.endsWith(term)) return { score: 850, field: 'VIN' };
-        if (vin.includes(term)) return { score: 800, field: 'VIN' };
-    }
-
-    const primary = [item.vehicle, item.reference_default, item.details?.reference_number, item.details?.tracking_number].map(squash);
-    if (primary.some((value) => value && value.includes(term))) return { score: 200, field: 'Vehicle or reference' };
-
-    const d = item.details || {};
-    const secondary = [item.status, item.route, d.vessel_name, d.container_number, d.booking_number, d.shipping_provider, d.origin_port, d.destination_port, d.origin_country, d.destination_country, d.car_color, d.vehicle_make, d.vehicle_model, d.vehicle_year, d.year, d.car_model]
-        .map(squash);
-    if (secondary.some((value) => value && value.includes(term))) return { score: 100, field: 'Other details' };
-
-    return null;
-}
-
-/** Every word must match something; the VIN-heavy matches float to the top. */
-function rankVehicles(items, query) {
-    const terms = query.split(/\s+/).map(squash).filter(Boolean);
-    if (terms.length === 0) return items.map((item) => ({ item, field: null }));
-
-    return items
-        .map((item, index) => {
-            const hits = terms.map((term) => matchTerm(item, term));
-            if (hits.some((hit) => hit === null)) return null;
-            const best = hits.reduce((top, hit) => (hit.score > top.score ? hit : top), hits[0]);
-            return { item, index, field: best.field, score: hits.reduce((sum, hit) => sum + hit.score, 0) };
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.score - a.score || a.index - b.index);
-}
-
-function MatchTag({ field }) {
-    if (!field) return null;
-    return (
-        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${field === 'VIN' ? 'border-secondary/50 text-secondary' : 'border-white/15 text-on-surface-variant'}`}>
-            {field === 'VIN' ? 'VIN match' : field}
-        </span>
-    );
-}
+// VIN is matched first; these are the properties searched after it.
+const VEHICLE_FIELDS = {
+    primary: (item) => [item.vehicle, item.reference_default, item.details?.reference_number, item.details?.tracking_number],
+    secondary: (item) => {
+        const d = item.details || {};
+        return [item.status, item.route, d.vessel_name, d.container_number, d.booking_number, d.shipping_provider, d.origin_port, d.destination_port, d.origin_country, d.destination_country, d.car_color, d.vehicle_make, d.vehicle_model, d.vehicle_year, d.year, d.car_model];
+    },
+};
 
 export function PortalVehiclesPage() {
     const navigate = useNavigate();
     const [mode, setMode] = useViewMode('vehicles');
     const [query, setQuery] = useState('');
     const { data, error, loading } = useLoad(() => portalApi.get('/vehicles'));
-    const results = useMemo(() => rankVehicles(data?.items || [], query), [data, query]);
+    const results = useMemo(() => rankItems(data?.items || [], query, VEHICLE_FIELDS), [data, query]);
     const searching = query.trim() !== '';
 
     if (loading) return <Spinner />;

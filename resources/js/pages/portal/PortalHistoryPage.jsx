@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import portalApi from '../../services/portalApi';
 import SalesReceiptField from '../../components/SalesReceiptField';
 import { usePortal } from '../../contexts/PortalContext';
-import { Card, DataTable, Empty, Notice, PageHeader, ReferenceText, Spinner, StatusBadge, TextInput, ViewToggle, formatDate, titleCase, useLoad, useViewMode } from '../../components/portal/ui';
+import { Card, DataTable, Empty, Notice, PageHeader, Pagination, ReferenceText, Spinner, StatusBadge, TextInput, ViewToggle, formatDate, titleCase, useLoad, usePagination, useViewMode } from '../../components/portal/ui';
 
 const TYPES = [
     ['', 'All services'],
@@ -53,19 +53,37 @@ function ItemDetails({ item, onReorder }) {
     );
 }
 
+const selectClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-high px-3 py-2 text-on-surface';
+
 export default function PortalHistoryPage() {
     const navigate = useNavigate();
     const [mode, setMode] = useViewMode('history');
-    const [filters, setFilters] = useState({ type: '', search: '', from: '', to: '' });
+    const [filters, setFilters] = useState({ type: '', status: '', search: '', from: '', to: '' });
     const [applied, setApplied] = useState(filters);
     const [expanded, setExpanded] = useState(null);
+    const [statusOptions, setStatusOptions] = useState([]);
     const { data, error, loading } = useLoad(() => portalApi.get('/history', applied), [JSON.stringify(applied)]);
+    const pager = usePagination(data?.items || [], 10);
+
+    // Keep the last known options while a new search loads, so the dropdown doesn't flicker empty.
+    useEffect(() => {
+        if (data?.statuses) setStatusOptions(data.statuses);
+    }, [data]);
 
     const set = (key) => (event) => setFilters({ ...filters, [key]: event.target.value });
+    // Statuses differ per service, so changing the service clears a status that may not exist for it.
+    const setType = (event) => setFilters({ ...filters, type: event.target.value, status: '' });
+
     const submit = (event) => {
         event.preventDefault();
         setApplied(filters);
     };
+    const clear = () => {
+        const empty = { type: '', status: '', search: '', from: '', to: '' };
+        setFilters(empty);
+        setApplied(empty);
+    };
+    const filtered = Object.values(applied).some(Boolean);
 
     const exportUrl = portalApi.url('/history/export', applied);
 
@@ -92,18 +110,27 @@ export default function PortalHistoryPage() {
             />
 
             <Card>
-                <form onSubmit={submit} className="grid gap-3 md:grid-cols-5">
-                    <label className="block md:col-span-1">
+                <form onSubmit={submit} className="grid gap-3 md:grid-cols-6">
+                    <label className="block">
                         <span className="mb-1 block text-sm text-on-surface-variant">Service</span>
-                        <select value={filters.type} onChange={set('type')} className="w-full rounded-lg border border-outline-variant bg-surface-container-high px-3 py-2 text-on-surface">
+                        <select value={filters.type} onChange={setType} className={selectClass}>
                             {TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                    </label>
+                    <label className="block">
+                        <span className="mb-1 block text-sm text-on-surface-variant">Status</span>
+                        <select value={filters.status} onChange={set('status')} className={selectClass}>
+                            <option value="">All statuses</option>
+                            {statusOptions.map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}
+                            {filters.status && !statusOptions.includes(filters.status) && <option value={filters.status}>{titleCase(filters.status)}</option>}
                         </select>
                     </label>
                     <TextInput label="Search" placeholder="VIN, vehicle, reference" value={filters.search} onChange={set('search')} />
                     <TextInput label="From" type="date" value={filters.from} onChange={set('from')} />
                     <TextInput label="To" type="date" value={filters.to} onChange={set('to')} />
-                    <div className="flex items-end">
-                        <button className="w-full rounded-lg bg-secondary px-md py-2 text-sm font-semibold text-on-secondary">Apply</button>
+                    <div className="flex items-end gap-2">
+                        <button className="flex-1 rounded-lg bg-secondary px-md py-2 text-sm font-semibold text-on-secondary">Apply</button>
+                        {filtered && <button type="button" onClick={clear} className="rounded-lg border border-outline-variant px-3 py-2 text-sm text-on-surface hover:bg-surface-container-high">Clear</button>}
                     </div>
                 </form>
             </Card>
@@ -113,9 +140,7 @@ export default function PortalHistoryPage() {
 
             {data && (data.items.length === 0 ? <Empty>No services match these filters.</Empty> : (
                 <div className="space-y-2">
-                    <div className="text-sm text-on-surface-variant">{data.count} record{data.count === 1 ? '' : 's'}</div>
-
-                    {mode === 'cards' ? data.items.map((item) => {
+                    {mode === 'cards' ? pager.rows.map((item) => {
                         const open = expanded === item.key;
                         return (
                             <div key={item.key} className="overflow-hidden rounded-xl border border-white/10 bg-surface-container">
@@ -135,12 +160,13 @@ export default function PortalHistoryPage() {
                             </div>
                         );
                     }) : (
-                        <DataTable columns={['Service', 'VIN / reference', 'Vehicle', 'Status', 'Date', { label: 'Amount', right: true }, { label: 'Receipt', right: true }, '']}>
-                            {data.items.map((item) => {
+                        <DataTable columns={['#', 'Service', 'VIN / reference', 'Vehicle', 'Status', 'Date', { label: 'Amount', right: true }, { label: 'Receipt', right: true }, '']}>
+                            {pager.rows.map((item, index) => {
                                 const open = expanded === item.key;
                                 return (
                                     <React.Fragment key={item.key}>
                                         <tr onClick={() => setExpanded(open ? null : item.key)} className="cursor-pointer hover:bg-surface-container-high">
+                                            <td className="w-12 px-md py-3 text-on-surface-variant">{pager.start + index + 1}</td>
                                             <td className="px-md py-3 font-semibold text-white">{item.label}</td>
                                             <td className="px-md py-3 text-on-surface"><ReferenceText item={item} /></td>
                                             <td className="px-md py-3 text-on-surface">{item.vehicle || '—'}</td>
@@ -152,7 +178,7 @@ export default function PortalHistoryPage() {
                                         </tr>
                                         {open && (
                                             <tr className="bg-surface-container-low">
-                                                <td colSpan={8}><ItemDetails item={item} onReorder={reorder} /></td>
+                                                <td colSpan={9}><ItemDetails item={item} onReorder={reorder} /></td>
                                             </tr>
                                         )}
                                     </React.Fragment>
@@ -160,6 +186,8 @@ export default function PortalHistoryPage() {
                             })}
                         </DataTable>
                     )}
+
+                    <Pagination pager={pager} />
                 </div>
             ))}
         </div>

@@ -56,9 +56,16 @@ class PortalDataController extends Controller
     public function history(Request $request)
     {
         $customer = $request->attributes->get('portal_customer');
-        $items = $this->portal->history($customer->id, $request->only(['type', 'status', 'from', 'to', 'search']));
+        $filters = $request->only(['type', 'status', 'from', 'to', 'search']);
+        $items = $this->portal->history($customer->id, $filters);
 
-        return response()->json(['count' => count($items), 'items' => $items]);
+        // Offer the statuses that exist for the chosen filters, ignoring the status filter itself.
+        $statusSource = !empty($filters['status'])
+            ? $this->portal->history($customer->id, array_diff_key($filters, ['status' => 1]))
+            : $items;
+        $statuses = collect($statusSource)->pluck('status')->filter()->unique()->sort()->values();
+
+        return response()->json(['count' => count($items), 'items' => $items, 'statuses' => $statuses]);
     }
 
     public function exportHistory(Request $request)
@@ -69,6 +76,64 @@ class PortalDataController extends Controller
         return $this->csv('od-service-history-' . date('Ymd') . '.csv', ['Service', 'Reference', 'OD reference', 'Vehicle', 'VIN', 'Status', 'Date', 'Amount'], array_map(fn($item) => [
             $item['label'], $item['reference'], $item['reference_default'], $item['vehicle'], $item['vin'], $item['status'], substr((string) $item['date'], 0, 10), $item['amount'],
         ], $items));
+    }
+
+    // ------------------------------------------------------------------ trucking
+
+    /**
+     * The customer's trucking jobs with everything the page filters on. Filtering, searching and
+     * paging happen in the browser; this returns the full (small) list plus the filter options.
+     */
+    public function truckings(Request $request)
+    {
+        $customer = $request->attributes->get('portal_customer');
+        $lines = DB::table('shipping_lines')->pluck('name', 'id');
+        $receiptCounts = $this->portal->receiptCounts($customer->id);
+
+        $rows = DB::table('truckings')->where('customer_id', $customer->id)
+            ->orderByRaw('COALESCE(trucking_date, created_at) DESC')->orderByDesc('id')->get();
+
+        $items = $rows->map(function ($record) use ($lines, $receiptCounts) {
+            $row = (array) $record;
+            $lineId = $row['shipping_line_id'] ?? null;
+
+            // Explicit fields only: profit and admin notes never leave the server.
+            return $this->portal->normalize('truckings', $record) + [
+                'shipping_line_id' => $lineId,
+                'shipping_line' => $lineId ? ($lines[$lineId] ?? null) : null,
+                'shipping_type' => $row['shipping_type'] ?? null,
+                'auction_site' => $row['auction_site'] ?? null,
+                'trucking_date' => $row['trucking_date'] ?? null,
+                'trucking_fee_status' => $row['trucking_fee_status'] ?? null,
+                'payment_status' => $row['payment_status'] ?? null,
+                'shipment_status' => $row['shipment_status'] ?? null,
+                'location' => $row['location'] ?? null,
+                'tracking' => $row['tracking'] ?? null,
+                'origin' => $row['origin_port'] ?? null,
+                'destination' => $row['destination_port'] ?? null,
+                'color' => $row['color'] ?? null,
+                'receipts' => $receiptCounts['truckings:' . $row['id']] ?? 0,
+            ];
+        })->values();
+
+        $distinct = fn(string $key) => $items->pluck($key)->filter(fn($value) => $value !== null && $value !== '')->unique()->sort()->values();
+
+        return response()->json([
+            'count' => $items->count(),
+            'items' => $items,
+            'facets' => [
+                'statuses' => $distinct('status'),
+                'payment_statuses' => $distinct('payment_status'),
+                'fee_statuses' => $distinct('trucking_fee_status'),
+                'shipment_statuses' => $distinct('shipment_status'),
+                'shipping_types' => $distinct('shipping_type'),
+                'auction_sites' => $distinct('auction_site'),
+                'shipping_lines' => $items->filter(fn($item) => $item['shipping_line_id'])
+                    ->unique('shipping_line_id')->map(fn($item) => ['id' => $item['shipping_line_id'], 'name' => $item['shipping_line']])
+                    ->sortBy('name')->values(),
+                'has_unassigned_line' => $items->contains(fn($item) => !$item['shipping_line_id']),
+            ],
+        ]);
     }
 
     // ------------------------------------------------------------------ vehicles

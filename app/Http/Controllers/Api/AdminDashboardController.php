@@ -1149,7 +1149,11 @@ class AdminDashboardController extends Controller
         if ($search !== '') {
             $searchTerm = '%' . $search . '%';
             $query->where(function ($q) use ($searchTerm) {
-                foreach (['sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount', 'profit'] as $field) {
+                $searchable = ['sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount'];
+                if (\App\Support\ProfitGuard::allowed()) {
+                    $searchable[] = 'profit';
+                }
+                foreach ($searchable as $field) {
                     $q->orWhere($field, 'like', $searchTerm);
                 }
             });
@@ -1888,7 +1892,7 @@ class AdminDashboardController extends Controller
             'destination_port' => $validated['destination_port'] ?? null,
             'destination_country' => $validated['destination_country'] ?? null,
             'amount' => $validated['amount'] ?? null,
-            'profit' => $validated['profit'] ?? null,
+            'profit' => array_key_exists('profit', $validated) ? $validated['profit'] : ($record->profit ?? null),
             'notes' => $validated['notes'] ?? null,
             'admin_notes' => $validated['admin_notes'] ?? null,
             'is_active' => $validated['is_active'] ?? true,

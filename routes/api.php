@@ -54,7 +54,7 @@ Route::middleware('api')->group(function () {
     Route::get('/admin/check-auth', [AdminDashboardController::class, 'checkAuth']);
 
     // Protected admin routes
-    Route::prefix('admin')->middleware('admin.auth')->group(function () {
+    Route::prefix('admin')->middleware(['admin.auth', 'admin.profit'])->group(function () {
         Route::get('/stats', [AdminDashboardController::class, 'getStats']);
         Route::get('/client-orders', [AdminDashboardController::class, 'getClientOrders']);
         Route::get('/kanban', [AdminDashboardController::class, 'getKanbanData']);
@@ -329,6 +329,7 @@ Route::middleware('api')->group(function () {
             Route::get('/history', [PortalDataController::class, 'history']);
             Route::get('/history/export', [PortalDataController::class, 'exportHistory']);
             Route::get('/vehicles', [PortalDataController::class, 'vehicles']);
+            Route::get('/truckings', [PortalDataController::class, 'truckings']);
             Route::get('/vehicles/{id}', [PortalDataController::class, 'vehicle']);
             Route::get('/analytics', [PortalDataController::class, 'analytics']);
             Route::get('/alerts', [PortalDataController::class, 'alerts']);

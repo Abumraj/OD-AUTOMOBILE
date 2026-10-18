@@ -302,3 +302,96 @@ export function ReferenceText({ item }) {
     }
     return <span>{item.reference}</span>;
 }
+
+/** Small tag showing why a search result matched (VIN first, then other details). */
+export function MatchTag({ field }) {
+    if (!field) return null;
+    return (
+        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${field === 'VIN' ? 'border-secondary/50 text-secondary' : 'border-white/15 text-on-surface-variant'}`}>
+            {field === 'VIN' ? 'VIN match' : field}
+        </span>
+    );
+}
+
+export const PAGE_SIZES = [10, 25, 50, 100];
+
+/** Slices a list into pages and resets to page 1 whenever the list or page size changes. */
+export function usePagination(items, initialSize = 10) {
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(initialSize);
+    const total = items.length;
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const current = Math.min(page, pages);
+    const start = (current - 1) * pageSize;
+
+    useEffect(() => setPage(1), [total, pageSize]);
+
+    return {
+        page: current,
+        pages,
+        pageSize,
+        total,
+        start, // zero-based index of the first row on this page, for row numbering
+        rows: items.slice(start, start + pageSize),
+        setPage,
+        setPageSize,
+    };
+}
+
+/** Previous / next with page numbers and a rows-per-page choice. */
+export function Pagination({ pager }) {
+    const { page, pages, pageSize, total, start, setPage, setPageSize } = pager;
+    if (total === 0) return null;
+
+    // First, last, and a window around the current page, with gaps marked.
+    const numbers = [];
+    for (let number = 1; number <= pages; number += 1) {
+        if (number === 1 || number === pages || Math.abs(number - page) <= 1) numbers.push(number);
+        else if (numbers[numbers.length - 1] !== '…') numbers.push('…');
+    }
+
+    const button = 'min-w-[2.25rem] rounded-lg border px-2 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-40';
+
+    return (
+        <nav className="flex flex-col items-center justify-between gap-3 py-2 text-sm sm:flex-row" aria-label="Pagination">
+            <div className="flex items-center gap-3 text-on-surface-variant">
+                <span>Showing {start + 1}–{Math.min(start + pageSize, total)} of {total}</span>
+                <label className="flex items-center gap-2">
+                    <span className="hidden sm:inline">Rows</span>
+                    <select
+                        value={pageSize}
+                        onChange={(event) => setPageSize(Number(event.target.value))}
+                        aria-label="Rows per page"
+                        className="rounded-lg border border-outline-variant bg-surface-container-high px-2 py-1 text-on-surface"
+                    >
+                        {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                    </select>
+                </label>
+            </div>
+
+            {pages > 1 && (
+                <div className="flex items-center gap-1">
+                    <button type="button" className={`${button} border-outline-variant text-on-surface`} disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="Previous page">
+                        <span className="material-symbols-outlined align-middle text-base">chevron_left</span>
+                    </button>
+                    {numbers.map((number, index) => (number === '…'
+                        ? <span key={`gap${index}`} className="px-1 text-on-surface-variant">…</span>
+                        : (
+                            <button
+                                key={number}
+                                type="button"
+                                onClick={() => setPage(number)}
+                                aria-current={number === page ? 'page' : undefined}
+                                className={`${button} ${number === page ? 'border-secondary bg-secondary font-semibold text-on-secondary' : 'border-outline-variant text-on-surface hover:bg-surface-container-high'}`}
+                            >
+                                {number}
+                            </button>
+                        )))}
+                    <button type="button" className={`${button} border-outline-variant text-on-surface`} disabled={page === pages} onClick={() => setPage(page + 1)} aria-label="Next page">
+                        <span className="material-symbols-outlined align-middle text-base">chevron_right</span>
+                    </button>
+                </div>
+            )}
+        </nav>
+    );
+}

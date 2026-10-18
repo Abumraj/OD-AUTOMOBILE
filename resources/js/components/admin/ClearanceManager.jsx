@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
+import { useAdmin } from '../../contexts/AdminContext';
 import ServiceFilterBar from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
 import InvoiceGenerator from './InvoiceGenerator';
@@ -19,6 +20,7 @@ const emptyForm = {
 
 function ClearanceManager() {
     const { confirm } = useConfirmation();
+    const { isSuperAdmin } = useAdmin();
     const [records, setRecords] = useState([]);
     const [types, setTypes] = useState([]);
     const [lines, setLines] = useState([]);
@@ -153,7 +155,7 @@ function ClearanceManager() {
                 <table className="min-w-full border-separate border-spacing-0">
                     <thead>
                         <tr className="bg-[#0B3D2E] text-left">
-                            {['SN', 'ITEM', 'CLIENT NAME', 'SHIPMENT TYPE', 'SHIPPING LINE', 'STATUS', 'DATE STAMP', 'TOTAL PAID', 'PROFIT', 'Actions'].map((heading) => (
+                            {['SN', 'ITEM', 'CLIENT NAME', 'SHIPMENT TYPE', 'SHIPPING LINE', 'STATUS', 'DATE STAMP', 'TOTAL PAID', 'PROFIT', 'Actions'].filter((heading) => isSuperAdmin || heading !== 'PROFIT').map((heading) => (
                                 <th key={heading} className="px-md py-sm font-label-md text-white">{heading}</th>
                             ))}
                         </tr>
@@ -169,7 +171,7 @@ function ClearanceManager() {
                                 <td className={`px-md py-sm uppercase ${record.status === 'cleared' ? 'text-green-400' : 'text-amber-400'}`}>{record.status.replace('_', ' ')}</td>
                                 <td className="px-md py-sm">{record.date_stamp || '—'}</td>
                                 <td className="px-md py-sm">{record.total_paid || '—'}</td>
-                                <td className="px-md py-sm">{record.profit || '—'}</td>
+                                {isSuperAdmin && <td className="px-md py-sm">{record.profit || '—'}</td>}
                                 <td className="px-md py-sm">
                                     <button onClick={() => { setSelectedRecordForInvoice(record); setShowInvoiceModal(true); }} className="text-blue-400 mr-sm">Invoice</button>
                                     <button onClick={() => edit(record)} className="text-secondary mr-sm">Edit</button>
@@ -248,10 +250,12 @@ function ClearanceManager() {
                                 <input type="number" step="0.01" value={formData.total_paid} onChange={(event) => update('total_paid', event.target.value)} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-white" />
                             </label>
 
-                            <label className="text-white">
+                            {isSuperAdmin && (
+<label className="text-white">
                                 Profit
                                 <input type="number" step="0.01" value={formData.profit} onChange={(event) => update('profit', event.target.value)} className="w-full mt-xs rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-white" />
                             </label>
+)}
                         </div>
 
                         <SalesReceiptField recordType="clearances" recordId={editingId} />

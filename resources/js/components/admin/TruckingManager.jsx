@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
+import { useAdmin } from '../../contexts/AdminContext';
 import ServiceFilterBar from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
 import InvoiceGenerator from './InvoiceGenerator';
 
 function ProcurementManager() {
     const { confirm } = useConfirmation();
+    const { isSuperAdmin } = useAdmin();
     const [records, setRecords] = useState([]);
     const [shippingLines, setShippingLines] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -367,7 +369,7 @@ function ProcurementManager() {
                 <table className="min-w-full border-separate border-spacing-0">
                     <thead>
                         <tr className="bg-surface-container-high text-left">
-                            {['#', 'DATE', 'CAR MAKER', 'CAR MODEL', 'YEAR', 'SHIPPING TYPE', 'COLOR', 'CLIENT NAME', 'VIN', 'AMOUNT', 'PROFIT', 'PAYMENT STATUS', 'SHIPMENT STATUS', 'LOCATION', 'TRACKING', 'SHIPPING'].map((heading) => <th key={heading} className="px-md py-sm font-label-md text-on-surface-variant">{heading}</th>)}
+                            {['#', 'DATE', 'CAR MAKER', 'CAR MODEL', 'YEAR', 'SHIPPING TYPE', 'COLOR', 'CLIENT NAME', 'VIN', 'AMOUNT', 'PROFIT', 'PAYMENT STATUS', 'SHIPMENT STATUS', 'LOCATION', 'TRACKING', 'SHIPPING'].filter((heading) => isSuperAdmin || heading !== 'PROFIT').map((heading) => <th key={heading} className="px-md py-sm font-label-md text-on-surface-variant">{heading}</th>)}
                             <th className="px-md py-sm font-label-md text-on-surface-variant">Actions</th>
                         </tr>
                     </thead>
@@ -384,7 +386,7 @@ function ProcurementManager() {
                                 <td className="px-md py-sm text-on-surface">{record.customer_name || '—'}</td>
                                 <td className="px-md py-sm text-on-surface">{record.vin || '—'}</td>
                                 <td className="px-md py-sm text-on-surface">${Number(record.amount || 0).toFixed(2)}</td>
-                                <td className="px-md py-sm text-on-surface">${Number(record.profit || 0).toFixed(2)}</td>
+                                {isSuperAdmin && <td className="px-md py-sm text-on-surface">${Number(record.profit || 0).toFixed(2)}</td>}
                                 <td className="px-md py-sm"><span className={`px-2 py-1 rounded-full text-xs uppercase font-medium ${getFeeColor(record.payment_status || record.trucking_fee_status)}`}>{record.payment_status || record.trucking_fee_status || 'unpaid'}</span></td>
                                 <td className="px-md py-sm"><span className={`px-2 py-1 rounded-full text-xs uppercase font-medium ${getStatusColor(record.shipment_status || record.status)}`}>{record.shipment_status || record.status || 'pending'}</span></td>
                                 <td className="px-md py-sm text-on-surface">{record.location || '—'}</td>
@@ -551,10 +553,12 @@ function ProcurementManager() {
                                     <label className="block text-sm mb-xs text-on-surface-variant">Amount</label>
                                     <input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface" />
                                 </div>
-                                <div>
+                                {isSuperAdmin && (
+<div>
                                     <label className="block text-sm mb-xs text-on-surface-variant">Profit</label>
                                     <input type="number" step="0.01" value={formData.profit} onChange={(e) => setFormData({ ...formData, profit: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface-container-high px-md py-sm text-on-surface" />
                                 </div>
+)}
                             </div>
 
                             <div>

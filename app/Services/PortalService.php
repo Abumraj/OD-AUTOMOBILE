@@ -847,7 +847,11 @@ class PortalService
             }
 
             $query = DB::table($table)->where('customer_id', $customerId);
-            if (!empty($filters['status']) && Schema::hasColumn($table, 'status')) {
+            if (!empty($filters['status'])) {
+                // A service with no status column can never match a status filter.
+                if (!Schema::hasColumn($table, 'status')) {
+                    continue;
+                }
                 $query->where('status', $filters['status']);
             }
 
