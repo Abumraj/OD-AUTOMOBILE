@@ -42,8 +42,8 @@ function Details({ item }) {
         ['VIN', item.vin], ['Colour', item.color], ['Auction site', item.auction_site ? titleCase(item.auction_site) : null],
         ['Pickup', item.origin], ['Delivered to', item.destination], ['Current location', item.location],
         ['Tracking', item.tracking], ['Shipping line', item.shipping_line], ['Shipping type', item.shipping_type ? titleCase(item.shipping_type) : null],
-        ['Shipment status', item.shipment_status], ['Payment', item.payment_status], ['Trucking fee', item.trucking_fee_status ? titleCase(item.trucking_fee_status) : null],
-        ['Trucking date', item.trucking_date ? formatDate(item.trucking_date) : null],
+        ['Shipment status', item.shipment_status], ['Payment', item.payment_status], ['Shipping fee', item.trucking_fee_status ? titleCase(item.trucking_fee_status) : null],
+        ['Shipping date', item.trucking_date ? formatDate(item.trucking_date) : null],
         ['Amount', item.amount !== null ? formatMoney(item.amount, 'USD') : null],
     ].filter(([, value]) => value);
 
@@ -115,20 +115,20 @@ export default function PortalShipmentPage() {
         <div className="space-y-md">
             <PageHeader
                 title="Shipment"
-                subtitle="Trucking jobs for your vehicles: pickup from the auction, delivery to the port, and what you owe."
+                subtitle="Shipping jobs for your vehicles: pickup from the auction, delivery to the port, and what you owe."
                 actions={<ViewToggle mode={mode} onChange={setMode} />}
             />
 
             {data.count > 0 && (
                 <div className="grid grid-cols-2 gap-md lg:grid-cols-4">
-                    <StatTile label="Trucking jobs" value={data.count} icon="local_shipping" />
+                    <StatTile label="Shipping jobs" value={data.count} icon="local_shipping" />
                     <StatTile label="Pending" value={count((item) => item.status === 'pending')} icon="hourglass_top" tone="text-amber-300" />
                     <StatTile label="Arrived at port" value={count((item) => item.status === 'arrived')} icon="task_alt" tone="text-green-400" />
-                    <StatTile label="Trucking fee unpaid" value={count((item) => item.trucking_fee_status === 'unpaid')} icon="payments" tone={count((item) => item.trucking_fee_status === 'unpaid') ? 'text-amber-300' : 'text-white'} />
+                    <StatTile label="Shipping fee unpaid" value={count((item) => item.trucking_fee_status === 'unpaid')} icon="payments" tone={count((item) => item.trucking_fee_status === 'unpaid') ? 'text-amber-300' : 'text-white'} />
                 </div>
             )}
 
-            {data.count === 0 ? <Empty>No trucking jobs yet. They appear here once OD Automotive books one for you.</Empty> : (
+            {data.count === 0 ? <Empty>No shipping jobs yet. They appear here once OD Automotive books one for you.</Empty> : (
                 <>
                     <Card>
                         <div className="relative mb-md">
@@ -147,7 +147,7 @@ export default function PortalShipmentPage() {
                             <Filter label="Status" value={filters.status} onChange={set('status')} options={facets.statuses} anyLabel="All statuses" />
                             <Filter label="Shipment status" value={filters.shipment_status} onChange={set('shipment_status')} options={facets.shipment_statuses} anyLabel="Any" />
                             <Filter label="Payment" value={filters.payment_status} onChange={set('payment_status')} options={facets.payment_statuses} anyLabel="Any" />
-                            <Filter label="Trucking fee" value={filters.fee_status} onChange={set('fee_status')} options={facets.fee_statuses} anyLabel="Any" />
+                            <Filter label="Shipping fee" value={filters.fee_status} onChange={set('fee_status')} options={facets.fee_statuses} anyLabel="Any" />
                             <Filter
                                 label="Shipping line"
                                 value={filters.line}
@@ -165,7 +165,7 @@ export default function PortalShipmentPage() {
                                 </select>
                             </label>
                             <label className="block">
-                                <span className="mb-1 block text-sm text-on-surface-variant">Trucking date from</span>
+                                <span className="mb-1 block text-sm text-on-surface-variant">Shipping date from</span>
                                 <input type="date" value={filters.from} onChange={(event) => set('from')(event.target.value)} className={selectClass} />
                             </label>
                             <label className="block">
@@ -184,7 +184,7 @@ export default function PortalShipmentPage() {
                         </div>
                     </Card>
 
-                    {results.length === 0 ? <Empty>No trucking job matches these filters.</Empty> : (
+                    {results.length === 0 ? <Empty>No shipping job matches these filters.</Empty> : (
                         <div className="space-y-2">
                             {mode === 'cards' ? (
                                 <div className="grid gap-md md:grid-cols-2 xl:grid-cols-3">
@@ -219,7 +219,7 @@ export default function PortalShipmentPage() {
                                     })}
                                 </div>
                             ) : (
-                                <DataTable columns={['#', 'VIN / reference', 'Vehicle', 'Date', 'Route', 'Shipping line', 'Status', 'Trucking fee', 'Payment', { label: 'Amount', right: true }, '']}>
+                                <DataTable columns={['#', 'VIN / reference', 'Vehicle', 'Date', 'Route', 'Shipping line', 'Status', 'Shipping fee', 'Payment', { label: 'Amount', right: true }, '']}>
                                     {pager.rows.map(({ item, field }, index) => {
                                         const open = expanded === item.key;
                                         return (
