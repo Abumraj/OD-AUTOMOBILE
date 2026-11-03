@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAdmin } from '../../contexts/AdminContext';
 
 function AdminSettingsPage() {
+    const { canManageSignature } = useAdmin();
     const settingsCategories = [
         {
             title: 'General Settings',
@@ -65,6 +67,13 @@ function AdminSettingsPage() {
             icon: 'inventory_2',
             path: '/admin/settings/shipping',
             color: 'bg-indigo-500/20 text-indigo-400'
+        },
+        {
+            title: 'Documents & Signature',
+            description: 'Upload the signature printed on invoices and dock receipts',
+            icon: 'draw',
+            path: '/admin/settings/documents',
+            color: 'bg-teal-500/20 text-teal-400'
         }
     ];
 
@@ -78,7 +87,7 @@ function AdminSettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
-                {settingsCategories.map((category) => (
+                {settingsCategories.filter((category) => canManageSignature || category.path !== '/admin/settings/documents').map((category) => (
                     <Link
                         key={category.path}
                         to={category.path}

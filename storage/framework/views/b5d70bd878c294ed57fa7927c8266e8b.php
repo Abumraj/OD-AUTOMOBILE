@@ -36,6 +36,11 @@
             padding-bottom: 10px;
         }
 
+        /* Currency symbols use DejaVu Sans: dompdf's built-in Helvetica has no Naira sign and prints "?". */
+        .cur {
+            font-family: 'DejaVu Sans', sans-serif;
+        }
+
         .logo {
             max-width: 70px;
             height: auto;
@@ -240,6 +245,16 @@
             border-bottom: 2px solid #0f172a;
         }
 
+        .signature-image {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .signature-line-under {
+            height: 0;
+            margin-bottom: 5px;
+        }
+
         .signature-name {
             font-size: 12px;
             font-weight: 800;
@@ -357,7 +372,7 @@
                             <span class="item-code">#<?php echo e(strtoupper($invoice->service_label)); ?></span>
                             <div class="item-title"><?php echo e($invoice->description); ?></div>
                         </td>
-                        <td><?php echo e($invoice->currency === 'USD' ? '$' : '₦'); ?><?php echo e(number_format($invoice->amount, 2)); ?></td>
+                        <td><span class="cur"><?php echo e($invoice->currency === 'USD' ? '$' : '₦'); ?></span><?php echo e(number_format($invoice->amount, 2)); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -366,7 +381,7 @@
                 <div class="totals-wrapper">
                     <div class="total-row grand-total">
                         <span class="total-label">Total Due</span>
-                        <span class="total-value"><?php echo e($invoice->currency === 'USD' ? '$' : '₦'); ?><?php echo e(number_format($invoice->amount, 2)); ?></span>
+                        <span class="total-value"><span class="cur"><?php echo e($invoice->currency === 'USD' ? '$' : '₦'); ?></span><?php echo e(number_format($invoice->amount, 2)); ?></span>
                     </div>
                 </div>
             </div>
@@ -378,9 +393,14 @@
 
             <div class="signature-section">
                 <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">Authorized Officer</div>
-                    <div class="signature-title">/ OD Automotive</div>
+                    <?php if(!empty($documentSignature['data_uri'])): ?>
+                        <img src="<?php echo e($documentSignature['data_uri']); ?>" alt="Signature" class="signature-image" style="width: <?php echo e($documentSignature['width']); ?>px; height: <?php echo e($documentSignature['height']); ?>px;">
+                        <div class="signature-line signature-line-under"></div>
+                    <?php else: ?>
+                        <div class="signature-line"></div>
+                    <?php endif; ?>
+                    <div class="signature-name"><?php echo e($documentSignature['name'] ?? 'Authorized Officer'); ?></div>
+                    <div class="signature-title">/ <?php echo e($documentSignature['title'] ?? 'OD Automotive'); ?></div>
                 </div>
                 <div class="signature-website">
                     OD Automotive

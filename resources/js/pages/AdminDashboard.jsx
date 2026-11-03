@@ -21,6 +21,7 @@ import SocialMediaSettingsPage from './admin/settings/SocialMediaSettingsPage';
 import PerformanceSettingsPage from './admin/settings/PerformanceSettingsPage';
 import TrackingSettingsPage from './admin/settings/TrackingSettingsPage';
 import ShippingConfigPage from './admin/settings/ShippingConfigPage';
+import DocumentSettingsPage from './admin/settings/DocumentSettingsPage';
 import AdminMessagesPage from './admin/AdminMessagesPage';
 import AdminAuctionsPage from './admin/AdminAuctionsPage';
 import AdminLegalPagesPage from './admin/AdminLegalPagesPage';
@@ -125,6 +126,7 @@ function AdminDashboard() {
                         <Route path="/settings/performance" element={<PerformanceSettingsPage />} />
                         <Route path="/settings/tracking" element={<TrackingSettingsPage />} />
                         <Route path="/settings/shipping" element={<ShippingConfigPage />} />
+                        <Route path="/settings/documents" element={<DocumentSettingsPage />} />
                         <Route path="/revenue-analysis" element={admin?.role === 'superadmin' ? <RevenueAnalysisPage /> : <AdminOverview />} />
                         <Route path="/admin-users" element={<AdminUsersPage />} />
                     </Routes>

@@ -284,6 +284,16 @@
             border-bottom: 2px solid #0f172a;
         }
         
+        .signature-image {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .signature-line-under {
+            height: 0;
+            margin-bottom: 5px;
+        }
+
         .signature-name {
             font-size: 15px;
             font-weight: 800;
@@ -517,16 +527,21 @@
             
             <!-- Stamp Section -->
             <div class="stamp-section">
-                <div class="stamp-text">✓ RECEIVED FOR SHIPMENT</div>
+                <div class="stamp-text"><span style="font-family: 'DejaVu Sans', sans-serif;">✓</span> RECEIVED FOR SHIPMENT</div>
                 <div class="stamp-date">{{ $generated_date }}</div>
             </div>
             
             <!-- Signature Section -->
             <div class="signature-section">
                 <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">Authorized Officer</div>
-                    <div class="signature-title">/ OD Automotive</div>
+                    @if(!empty($documentSignature['data_uri']))
+                        <img src="{{ $documentSignature['data_uri'] }}" alt="Signature" class="signature-image" style="width: {{ $documentSignature['width'] }}px; height: {{ $documentSignature['height'] }}px;">
+                        <div class="signature-line signature-line-under"></div>
+                    @else
+                        <div class="signature-line"></div>
+                    @endif
+                    <div class="signature-name">{{ $documentSignature['name'] ?? 'Authorized Officer' }}</div>
+                    <div class="signature-title">/ {{ $documentSignature['title'] ?? 'OD Automotive' }}</div>
                 </div>
                 <div class="signature-website">
                     OD Automotive

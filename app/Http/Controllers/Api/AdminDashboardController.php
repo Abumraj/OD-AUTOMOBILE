@@ -144,7 +144,8 @@ class AdminDashboardController extends Controller
                 'id' => $admin->id,
                 'name' => $admin->name,
                 'email' => $admin->email,
-                'role' => $admin->role ?? 'admin'
+                'role' => $admin->role ?? 'admin',
+                'can_manage_signature' => \App\Services\DocumentBranding::adminMayManage($admin->id, $admin->role ?? 'admin')
             ]
         ]);
     }
@@ -169,7 +170,8 @@ class AdminDashboardController extends Controller
                     'id' => $request->session()->get('admin_id'),
                     'name' => $request->session()->get('admin_name'),
                     'email' => $request->session()->get('admin_email'),
-                    'role' => $request->session()->get('admin_role', 'admin')
+                    'role' => $request->session()->get('admin_role', 'admin'),
+                    'can_manage_signature' => \App\Services\DocumentBranding::adminMayManage($request->session()->get('admin_id'), (string) $request->session()->get('admin_role', 'admin'))
                 ]
             ]);
         }
@@ -4014,6 +4016,7 @@ class AdminDashboardController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role ?? 'admin',
+                    'can_manage_signature' => (bool) ($user->can_manage_signature ?? false),
                     'is_active' => (bool) $user->is_active,
                     'last_login_at' => $user->last_login_at,
                     'created_at' => $user->created_at,
@@ -4037,10 +4040,11 @@ class AdminDashboardController extends Controller
             'email' => 'required|email|unique:admin_users,email',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,superadmin',
+            'can_manage_signature' => 'sometimes|boolean',
             'is_active' => 'boolean'
         ]);
 
-        $userId = DB::table('admin_users')->insertGetId([
+        $newUser = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -4048,7 +4052,12 @@ class AdminDashboardController extends Controller
             'is_active' => $validated['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now()
-        ]);
+        ];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('admin_users', 'can_manage_signature')) {
+            $newUser['can_manage_signature'] = (bool) ($validated['can_manage_signature'] ?? false);
+        }
+
+        $userId = DB::table('admin_users')->insertGetId($newUser);
 
         DB::table('activity_logs')->insert([
             'icon' => 'person_add',
@@ -4085,6 +4094,7 @@ class AdminDashboardController extends Controller
             'email' => 'sometimes|email|unique:admin_users,email,' . $id,
             'password' => 'sometimes|string|min:6',
             'role' => 'sometimes|in:admin,superadmin',
+            'can_manage_signature' => 'sometimes|boolean',
             'is_active' => 'sometimes|boolean'
         ]);
 
@@ -4093,6 +4103,9 @@ class AdminDashboardController extends Controller
         if (isset($validated['email'])) $updateData['email'] = $validated['email'];
         if (isset($validated['password'])) $updateData['password'] = Hash::make($validated['password']);
         if (isset($validated['role'])) $updateData['role'] = $validated['role'];
+        if (array_key_exists('can_manage_signature', $validated) && \Illuminate\Support\Facades\Schema::hasColumn('admin_users', 'can_manage_signature')) {
+            $updateData['can_manage_signature'] = (bool) $validated['can_manage_signature'];
+        }
         if (isset($validated['is_active'])) $updateData['is_active'] = $validated['is_active'];
         $updateData['updated_at'] = now();
 

@@ -13,7 +13,8 @@ function AdminUsersPage() {
         email: '',
         password: '',
         role: 'admin',
-        is_active: true
+        is_active: true,
+        can_manage_signature: false
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -48,7 +49,8 @@ function AdminUsersPage() {
                 email: user.email,
                 password: '',
                 role: user.role,
-                is_active: user.is_active
+                is_active: user.is_active,
+                can_manage_signature: Boolean(user.can_manage_signature)
             });
         } else {
             setEditingUser(null);
@@ -57,7 +59,8 @@ function AdminUsersPage() {
                 email: '',
                 password: '',
                 role: 'admin',
-                is_active: true
+                is_active: true,
+                can_manage_signature: false
             });
         }
         setShowModal(true);
@@ -73,7 +76,8 @@ function AdminUsersPage() {
             email: '',
             password: '',
             role: 'admin',
-            is_active: true
+            is_active: true,
+            can_manage_signature: false
         });
         setError('');
     };
@@ -163,6 +167,26 @@ function AdminUsersPage() {
         }
     };
 
+    const handleToggleSignature = async (user) => {
+        try {
+            const response = await fetch(`/api/admin/admin-users/${user.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ can_manage_signature: !user.can_manage_signature })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'Failed to update user');
+            }
+
+            setSuccess(`${user.name} ${!user.can_manage_signature ? 'can now' : 'can no longer'} manage the document signature.`);
+            fetchUsers();
+        } catch (error) {
+            setError(error.message);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -208,6 +232,7 @@ function AdminUsersPage() {
                             <th className="text-left px-6 py-4 font-label-lg text-on-surface">Name</th>
                             <th className="text-left px-6 py-4 font-label-lg text-on-surface">Email</th>
                             <th className="text-left px-6 py-4 font-label-lg text-on-surface">Role</th>
+                            <th className="text-left px-6 py-4 font-label-lg text-on-surface">Signature</th>
                             <th className="text-left px-6 py-4 font-label-lg text-on-surface">Status</th>
                             <th className="text-left px-6 py-4 font-label-lg text-on-surface">Last Login</th>
                             <th className="text-right px-6 py-4 font-label-lg text-on-surface">Actions</th>
@@ -233,6 +258,23 @@ function AdminUsersPage() {
                                     }`}>
                                         {user.role === 'superadmin' ? 'Superadmin' : 'Admin'}
                                     </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    {user.role === 'superadmin' ? (
+                                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400" title="Super admins can always manage the signature">Always</span>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleToggleSignature(user)}
+                                            title="Click to change whether this admin may manage the signature on invoices and dock receipts"
+                                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                user.can_manage_signature
+                                                    ? 'bg-green-500/20 text-green-400'
+                                                    : 'bg-white/10 text-on-surface-variant'
+                                            }`}
+                                        >
+                                            {user.can_manage_signature ? 'Allowed' : 'Not allowed'}
+                                        </button>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4">
                                     <button
@@ -347,6 +389,23 @@ function AdminUsersPage() {
                                     className="w-4 h-4 text-secondary bg-surface-container-low border-outline-variant rounded focus:ring-2 focus:ring-secondary"
                                 />
                                 <label htmlFor="is_active" className="font-label-md text-on-surface">Active</label>
+                            </div>
+
+                            <div className="rounded-lg border border-outline-variant p-3">
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="can_manage_signature"
+                                        checked={formData.role === 'superadmin' || formData.can_manage_signature}
+                                        disabled={formData.role === 'superadmin'}
+                                        onChange={(e) => setFormData({ ...formData, can_manage_signature: e.target.checked })}
+                                        className="w-4 h-4 text-secondary bg-surface-container-low border-outline-variant rounded focus:ring-2 focus:ring-secondary"
+                                    />
+                                    <label htmlFor="can_manage_signature" className="font-label-md text-on-surface">Can manage the document signature</label>
+                                </div>
+                                <p className="mt-1 text-xs text-on-surface-variant">
+                                    Lets this admin upload or remove the signature printed on invoices and dock receipts. Super admins can always do this.
+                                </p>
                             </div>
 
                             {error && (

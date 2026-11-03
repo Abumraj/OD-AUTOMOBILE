@@ -44,7 +44,11 @@ function AdminSidebar({ mobileOpen, onClose, admin }) {
         { path: '/admin/settings/performance', icon: 'speed', label: 'Performance' },
         { path: '/admin/settings/tracking', icon: 'location_on', label: 'Tracking' },
         { path: '/admin/settings/shipping', icon: 'inventory_2', label: 'Shipping Config' },
+        { path: '/admin/settings/documents', icon: 'draw', label: 'Documents & Signature' },
     ];
+
+    const mayManageSignature = admin?.role === 'superadmin' || Boolean(admin?.can_manage_signature);
+    const visibleSettingsItems = settingsItems.filter((item) => mayManageSignature || item.path !== '/admin/settings/documents');
 
     const isActive = (path) => {
         if (path === '/admin') {
@@ -111,7 +115,7 @@ function AdminSidebar({ mobileOpen, onClose, admin }) {
                         
                         {settingsOpen && (
                             <div className="ml-4 border-l-2 border-outline-variant">
-                                {settingsItems.map((item) => (
+                                {visibleSettingsItems.map((item) => (
                                     <Link
                                         key={item.path}
                                         to={item.path}

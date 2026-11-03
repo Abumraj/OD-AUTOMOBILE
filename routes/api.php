@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\PortalAdminController;
 use App\Http\Controllers\Api\ServiceReceiptController;
+use App\Http\Controllers\Api\DocumentBrandingController;
 use App\Http\Controllers\Api\Portal\PortalAuthController;
 use App\Http\Controllers\Api\Portal\PortalDataController;
 use App\Http\Controllers\Api\Portal\PortalActionController;
@@ -254,6 +255,14 @@ Route::middleware('api')->group(function () {
         Route::post('/admin-users', [AdminDashboardController::class, 'createAdminUser']);
         Route::put('/admin-users/{id}', [AdminDashboardController::class, 'updateAdminUser']);
         Route::delete('/admin-users/{id}', [AdminDashboardController::class, 'deleteAdminUser']);
+
+        // Signature printed on invoices and dock receipts
+        Route::middleware('admin.signature')->group(function () {
+            Route::get('/document-signature', [DocumentBrandingController::class, 'show']);
+            Route::get('/document-signature/image', [DocumentBrandingController::class, 'image']);
+            Route::post('/document-signature', [DocumentBrandingController::class, 'update']);
+            Route::delete('/document-signature', [DocumentBrandingController::class, 'destroy']);
+        });
 
         // Optional vehicle sales receipts on any service record
         Route::get('/receipts', [ServiceReceiptController::class, 'index']);
