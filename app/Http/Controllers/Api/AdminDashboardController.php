@@ -1140,7 +1140,7 @@ class AdminDashboardController extends Controller
         $customer = $request->get('customer');
         $allowedSortFields = ['id', 'sale_date', 'car_make', 'car_model', 'car_year', 'sale_type', 'color', 'vin', 'amount', 'profit', 'created_at'];
 
-        if (!in_array($sortBy, $allowedSortFields, true)) {
+        if (!in_array($sortBy, array_merge($allowedSortFields, ['updated_at']), true)) {
             $sortBy = 'created_at';
         }
         if (!in_array($sortOrder, ['asc', 'desc'], true)) {
@@ -1165,6 +1165,7 @@ class AdminDashboardController extends Controller
         if ($status) $query->where('sale_type', $status);
         if ($shippingType) $query->where('shipping_type', $shippingType);
         if ($customer) $query->where('customer_name', 'like', '%' . $customer . '%');
+        $this->applyPaymentAndUpdatedFilters($query, $request, 'autosales', null);
 
         return response()->json($query->orderBy($sortBy, $sortOrder)->get());
     }
@@ -1305,6 +1306,25 @@ class AdminDashboardController extends Controller
         return $data;
     }
 
+    /**
+     * Filters every service list shares: payment status (only where the service has one) and
+     * "recently updated". The column names come from the lists below, never from the request.
+     *
+     * @param string|null $paymentSql SQL expression that yields the record's payment state, or null if the service has none
+     */
+    private function applyPaymentAndUpdatedFilters($query, Request $request, string $table, ?string $paymentSql): void
+    {
+        $payment = strtolower(trim((string) $request->get('payment_status', '')));
+        if ($paymentSql && $payment !== '') {
+            $query->whereRaw($paymentSql . ' = ?', [$payment]);
+        }
+
+        $hours = ['24h' => 24, '7d' => 24 * 7, '30d' => 24 * 30][(string) $request->get('updated_within', '')] ?? null;
+        if ($hours) {
+            $query->where($table . '.updated_at', '>=', now()->subHours($hours));
+        }
+    }
+
     // Procurement Management
     public function getProcurements(Request $request)
     {
@@ -1318,7 +1338,7 @@ class AdminDashboardController extends Controller
         $auctionSite = $request->get('auction_site');
 
         $allowedSortFields = ['id', 'date_procured', 'car_make', 'car_model', 'car_year', 'vin', 'price_usd', 'auction_charge_usd', 'auction_site', 'state', 'trucking', 'shipping', 'arrival_date', 'profit_ngn', 'trucking_fee', 'status', 'created_at'];
-        if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'arrival_date';
+        if (!in_array($sortBy, array_merge($allowedSortFields, ['updated_at']), true)) $sortBy = 'arrival_date';
         if (!in_array($sortOrder, ['asc', 'desc'], true)) {
             $sortOrder = 'desc';
         }
@@ -1336,6 +1356,7 @@ class AdminDashboardController extends Controller
         if ($status) $query->where('status', $status);
         if ($shippingType) $query->where('shipping', $shippingType);
         if ($auctionSite) $query->where('auction_site', $auctionSite);
+        $this->applyPaymentAndUpdatedFilters($query, $request, 'procurements', 'LOWER(TRIM(procurements.trucking_fee))');
         if ($sortBy === 'arrival_date' && $sortOrder === 'asc') {
             return response()->json($query->orderByRaw('arrival_date IS NULL ASC')->orderBy('arrival_date', 'asc')->get());
         }
@@ -1510,7 +1531,7 @@ class AdminDashboardController extends Controller
         $shippingType = $request->get('shipping_type');
         $client = $request->get('client');
         $allowedSortFields = ['id', 'item', 'client_name', 'status', 'date_stamp', 'total_paid', 'profit', 'created_at'];
-        if (!in_array($sortBy, $allowedSortFields, true)) $sortBy = 'date_stamp';
+        if (!in_array($sortBy, array_merge($allowedSortFields, ['updated_at']), true)) $sortBy = 'date_stamp';
         if (!in_array($sortOrder, ['asc', 'desc'], true)) $sortOrder = 'desc';
 
         $query = DB::table('clearances')
@@ -1530,6 +1551,7 @@ class AdminDashboardController extends Controller
         if ($status) $query->where('clearances.status', $status);
         if ($shippingType) $query->whereRaw('LOWER(shipping_types.code) = ?', [strtolower($shippingType)]);
         if ($client) $query->where('clearances.client_name', 'like', '%' . $client . '%');
+        $this->applyPaymentAndUpdatedFilters($query, $request, 'clearances', null);
         return response()->json($query->orderBy('clearances.' . $sortBy, $sortOrder)->get());
     }
 
@@ -1621,7 +1643,7 @@ class AdminDashboardController extends Controller
     // Trucking Management
     public function getTruckings(Request $request)
     {
-        $sortBy = $request->get('sort_by', 'eta');
+        $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'asc');
         $search = $request->get('search', '');
         $dateFrom = $request->get('date_from');
@@ -1654,8 +1676,8 @@ class AdminDashboardController extends Controller
             'created_at'
         ];
 
-        if (!in_array($sortBy, $allowedSortFields)) {
-            $sortBy = 'eta';
+        if (!in_array($sortBy, array_merge($allowedSortFields, ['updated_at']))) {
+            $sortBy = 'created_at';
         }
 
         if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
@@ -1694,6 +1716,7 @@ class AdminDashboardController extends Controller
         if ($status) $query->where('truckings.status', $status);
         if ($shippingType) $query->where('truckings.shipping_type', $shippingType);
         if ($customer) $query->where('truckings.customer_name', 'like', '%' . $customer . '%');
+        $this->applyPaymentAndUpdatedFilters($query, $request, 'truckings', "LOWER(TRIM(COALESCE(NULLIF(truckings.payment_status, ''), NULLIF(truckings.trucking_fee_status, ''), 'unpaid')))");
 
         $truckings = $query->orderBy('truckings.' . $sortBy, $sortOrder)->get()->map(function ($record) {
             return [
@@ -1727,6 +1750,7 @@ class AdminDashboardController extends Controller
                 'admin_notes' => $record->admin_notes,
                 'is_active' => $record->is_active,
                 'created_at' => $record->created_at,
+                'updated_at' => $record->updated_at,
             ];
         });
 
@@ -1986,7 +2010,7 @@ class AdminDashboardController extends Controller
             'c_number'
         ];
 
-        if (!in_array($sortBy, $allowedSortFields)) {
+        if (!in_array($sortBy, array_merge($allowedSortFields, ['updated_at']))) {
             $sortBy = 'eta';
         }
 
@@ -2032,6 +2056,7 @@ class AdminDashboardController extends Controller
         if ($status) $query->where('shipments.status', $status);
         if ($shippingType) $query->whereRaw('LOWER(shipping_types.code) = ?', [strtolower($shippingType)]);
         if ($customer) $query->where('shipments.customer_name', 'like', '%' . $customer . '%');
+        $this->applyPaymentAndUpdatedFilters($query, $request, 'shipments', "LOWER(TRIM(COALESCE(NULLIF(shipments.shipping_fee_status, ''), 'unpaid')))");
 
         if ($sortBy === 'eta' && $sortOrder === 'asc') {
             $query->orderByRaw('shipments.eta IS NULL ASC')->orderBy('shipments.eta', 'asc');
@@ -2091,7 +2116,8 @@ class AdminDashboardController extends Controller
                     'notes' => $shipment->notes,
                     'admin_notes' => $shipment->admin_notes,
                     'is_active' => $shipment->is_active,
-                    'created_at' => $shipment->created_at
+                    'created_at' => $shipment->created_at,
+                    'updated_at' => $shipment->updated_at
                 ];
             });
 
@@ -2503,6 +2529,7 @@ class AdminDashboardController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+        DB::table('shipments')->where('id', $id)->update(['updated_at' => now()]);
 
         // Notify customer about new update (silently fail if not possible)
         try {

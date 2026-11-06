@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
 import { useAdmin } from '../../contexts/AdminContext';
-import ServiceFilterBar from './ServiceFilterBar';
+import ServiceFilterBar, { PAYMENT_OPTIONS, appendListFilters } from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
 import InvoiceGenerator from './InvoiceGenerator';
 
@@ -28,6 +28,7 @@ function AutosalesManager() {
     const fetchRecords = async () => {
         try {
             const params = new URLSearchParams({ search, sort_by: 'sale_date', sort_order: 'desc', date_from: filters.date_from, date_to: filters.date_to, status: filters.status, shipping_type: filters.shipping_type, customer: filters.column });
+            appendListFilters(params, filters);
             const response = await fetch(`/api/admin/autosales?${params}`);
             const data = await response.json();
             setRecords(Array.isArray(data) ? data : []);

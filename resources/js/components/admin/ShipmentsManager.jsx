@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SalesReceiptField, { flushPendingReceipt } from '../SalesReceiptField';
 import { exportToCSV } from '../../utils/csvExport';
 import DockReceiptGenerator from './DockReceiptGenerator';
-import ServiceFilterBar from './ServiceFilterBar';
+import ServiceFilterBar, { PAYMENT_OPTIONS, appendListFilters } from './ServiceFilterBar';
 import { useConfirmation } from './ConfirmationProvider';
 
 function ShipmentsManager() {
@@ -180,6 +180,7 @@ function ShipmentsManager() {
     const fetchShipments = async () => {
         try {
             const params = new URLSearchParams({ sort_by: sortBy, sort_order: sortOrder, search: searchQuery, date_from: dateFilters.date_from, date_to: dateFilters.date_to, eta_from: dateFilters.eta_from, eta_to: dateFilters.eta_to, status: dateFilters.status, shipping_type: dateFilters.shipping_type, customer: dateFilters.column });
+            appendListFilters(params, dateFilters);
             const response = await fetch(`/api/admin/shipments?${params}`);
             const data = await response.json();
             setShipments(data);
@@ -546,7 +547,7 @@ function ShipmentsManager() {
                 </div>
             )}
 
-            <ServiceFilterBar filters={dateFilters} onChange={setDateFilters} showEta columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered', 'cancelled'].map((value) => ({ value, label: value.replace('_', ' ') }))} />
+            <ServiceFilterBar paymentOptions={PAYMENT_OPTIONS} filters={dateFilters} onChange={setDateFilters} showEta columnLabel="Customer" columnPlaceholder="Filter customer" statusOptions={['pending', 'auction_won', 'documentation', 'shipping', 'in_transit', 'customs', 'delivered', 'cancelled'].map((value) => ({ value, label: value.replace('_', ' ') }))} />
 
             {viewMode === 'table' ? (
                 <div className="overflow-x-auto">
